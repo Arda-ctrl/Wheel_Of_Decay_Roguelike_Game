@@ -2,19 +2,24 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] public float moveSpeed;
-    [SerializeField] public Rigidbody2D theRB;
-    [SerializeField] public Transform gunArm;
-    [SerializeField] public GameObject bulletToFire;
-    [SerializeField] public Transform firePoint;
-    [SerializeField] public float timeBetweenShots;
+    public static PlayerController instance;
+    public float moveSpeed;
+    public Rigidbody2D theRB;
+    public Transform gunArm;
+    public GameObject bulletToFire;
+    public Transform firePoint;
+    public float timeBetweenShots;
 
 
     private Vector2 moveInput;
     private Camera theCam;
     private float shotCounter;
+    public SpriteRenderer bodySR; 
 
-
+    void Awake()
+    {
+        instance = this;
+    }
     void Start()
     {
         theCam = Camera.main;
