@@ -17,7 +17,11 @@ public class PlayerBullet : MonoBehaviour
         Instantiate(impactEffect, transform.position, transform.rotation);
         Destroy(gameObject);
 
+        AudioManager.instance.PlaySFX(4);
+
         if (other.CompareTag("Enemy")) other.GetComponent<EnemyController>().DamageEnemy(damageToGive);
+
+        if (other.CompareTag("Box")) other.GetComponent<Breakables>().DropItem();
     }
     private void OnBecameInvisible()
     {

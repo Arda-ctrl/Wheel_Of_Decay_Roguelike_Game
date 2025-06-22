@@ -36,6 +36,7 @@ public class PlayerHealthController : MonoBehaviour
     {
         if (invisCount <= 0)
         {
+            AudioManager.instance.PlaySFX(11);
             currentHealth--;
 
             invisCount = damageInvisibleLenght;
@@ -47,10 +48,33 @@ public class PlayerHealthController : MonoBehaviour
                 PlayerController.instance.gameObject.SetActive(false);
 
                 UI_Controller.instance.deathScreen.SetActive(true);
+
+                AudioManager.instance.PlayGameOver();
+                AudioManager.instance.PlaySFX(8);
             }
 
             UI_Controller.instance.healthSlider.value = currentHealth;
             UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
         }
     }
+    public void MakeInvincible(float lenght)
+    {
+        invisCount = lenght;
+
+        PlayerController.instance.bodySR.color = new Color(PlayerController.instance.bodySR.color.r, PlayerController.instance.bodySR.color.g, PlayerController.instance.bodySR.color.b, .5f);
+
+    }
+    public void HealPlayer(int healAmount)
+    {
+        currentHealth += healAmount;
+        if (currentHealth > maxHealth)
+        {
+            currentHealth = maxHealth;
+        }
+
+        UI_Controller.instance.healthSlider.value = currentHealth;
+        UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
+    }
+    
+    
 }
