@@ -63,6 +63,17 @@ public class RoomGenerator : MonoBehaviour
             fromPoint.connectedTo = toPoint;
             toPoint.connectedTo = fromPoint;
 
+            DoorTrigger doorA = fromPoint.GetComponent<DoorTrigger>();
+            if (doorA != null)
+            {
+                doorA.connectionPoint = fromPoint;
+            }
+
+            DoorTrigger doorB = toPoint.GetComponent<DoorTrigger>();
+            if (doorB != null)
+            {
+                doorB.connectionPoint = toPoint;
+            }
             spawnedRooms.Add(newRoomInteractive);
 
             RoomInitializer initializer = newRoomGO.GetComponent<RoomInitializer>();

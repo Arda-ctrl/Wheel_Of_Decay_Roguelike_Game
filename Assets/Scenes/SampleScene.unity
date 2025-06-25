@@ -5259,6 +5259,7 @@ MonoBehaviour:
   roomPool:
   - {fileID: 11400000, guid: cee44541533f00e46949f532975b3549, type: 2}
   - {fileID: 11400000, guid: 2e756b39f6ca7f649b1323a757b0d665, type: 2}
+  - {fileID: 11400000, guid: cf99d411043604f4cabf22802238f002, type: 2}
   numberOfRooms: 8
   roomSpacing: 0
 --- !u!4 &2079797803
