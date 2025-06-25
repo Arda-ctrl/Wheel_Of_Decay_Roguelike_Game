@@ -17,12 +17,14 @@ public class EnemyController : MonoBehaviour
     public float shootRange;
 
     public SpriteRenderer theBody;
-    void Start()
-    {
 
+    private RoomInitializer currentRoom; // 🔥 Burada!
+
+    public void Init(RoomInitializer room)
+    {
+        currentRoom = room;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (theBody.isVisible && PlayerController.instance.gameObject.activeInHierarchy)
@@ -39,6 +41,7 @@ public class EnemyController : MonoBehaviour
             moveDirection.Normalize();
 
             theRB.linearVelocity = moveDirection * moveSpeed;
+
             if (shouldShoot && Vector3.Distance(transform.position, PlayerController.instance.transform.position) < shootRange)
             {
                 fireCounter -= Time.deltaTime;
@@ -55,33 +58,27 @@ public class EnemyController : MonoBehaviour
             theRB.linearVelocity = Vector2.zero;
         }
 
-        if (moveDirection != Vector3.zero)
-        {
-            anim.SetBool("isMoving", true);
-        }
-        else
-        {
-            anim.SetBool("isMoving", false);
-        }
+        anim.SetBool("isMoving", moveDirection != Vector3.zero);
     }
+
     public void DamageEnemy(int damage)
     {
         health -= damage;
-        
         AudioManager.instance.PlaySFX(2);
 
         if (health <= 0)
         {
+            // 🔥 Odaya haber ver
+            if (currentRoom != null)
+                currentRoom.EnemyKilled();
+
             Destroy(gameObject);
 
             AudioManager.instance.PlaySFX(1);
 
             int selectedSplatter = Random.Range(0, deathSplatters.Length);
-
             int rotation = Random.Range(0, 4);
-
             Instantiate(deathSplatters[selectedSplatter], transform.position, Quaternion.Euler(0f, 0f, rotation * 90f));
         }
-
     }
 }

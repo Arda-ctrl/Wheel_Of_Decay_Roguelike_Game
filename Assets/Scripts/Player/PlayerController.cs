@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour
         instance = this;
     }
     void Start()
-    {
+    {       
         theCam = Camera.main;
 
         activeMoveSpeed = moveSpeed;

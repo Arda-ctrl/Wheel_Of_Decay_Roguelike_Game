@@ -20,6 +20,8 @@ public class Breakables : MonoBehaviour
     {
         Destroy(gameObject);
 
+        AudioManager.instance.PlaySFX(0);
+
         if (shouldDropItem)
         {
             float dropChance = Random.Range(0f, 100f);
