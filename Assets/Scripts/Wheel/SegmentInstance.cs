@@ -1,11 +1,13 @@
 using UnityEngine;
 
+// SegmentInstance: Yerleştirilen segmentin görselini ve bilgisini tutar.
 public class SegmentInstance : MonoBehaviour
 {
     [HideInInspector] public SegmentData data;
     [HideInInspector] public int startSlotIndex;
 
     private SpriteRenderer sr;
+    private const int SegmentOrderInLayer = 10; // Slotlar 0 ise segmentler 10'da olacak
 
     private void Awake()
     {
@@ -19,7 +21,14 @@ public class SegmentInstance : MonoBehaviour
     {
         this.data = data;
         this.startSlotIndex = slotIndex;
-        if (sr != null && data.icon != null)
+        UpdateVisual();
+        if (sr != null)
+            sr.sortingOrder = SegmentOrderInLayer;
+    }
+
+    private void UpdateVisual()
+    {
+        if (sr != null && data != null && data.icon != null)
             sr.sprite = data.icon;
     }
 }

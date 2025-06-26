@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// SlotController: Her slotun tıklanabilirliğini ve WheelManager ile iletişimini sağlar.
 public class SlotController : MonoBehaviour
 {
 	public int slotIndex;
@@ -7,9 +8,6 @@ public class SlotController : MonoBehaviour
 
 	private void OnMouseDown()
 	{
-		if (wheelManager != null)
-		{
-			wheelManager.OnSlotClicked(slotIndex);
-		}
+		wheelManager?.OnSlotClicked(slotIndex);
 	}
 }

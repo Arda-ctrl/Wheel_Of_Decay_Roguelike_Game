@@ -1,21 +1,27 @@
+// WheelManager.cs
+// Çark üzerindeki slotları ve segment yerleştirmeyi yöneten ana sınıf.
 using UnityEngine;
+using System.Collections;
 
 public class WheelManager : MonoBehaviour
 {
     [Header("Slot Ayarları")]
-    public GameObject wheelSlotPrefab; // Tek dilim prefab’ı
-    public Transform slotParent;       // Tüm slotların child’ı olacak obje
-    public int slotCount = 36;
+    [SerializeField] private GameObject wheelSlotPrefab; // Tek dilim prefab'ı
+    [SerializeField] private Transform slotParent;       // Tüm slotların child'ı olacak obje
+    [SerializeField] private int slotCount = 36;
         
-    public GameObject segmentSelectionUI;
-
     [Header("Segment Yerleştirme")]
-    public GameObject segmentPrefab;   // SegmentInstance prefab’ı
-    public SegmentData testSegment;    // Test amaçlı inspector’dan atanacak segment
+    [SerializeField] private GameObject segmentPrefab;   // SegmentInstance prefab'ı
+    [SerializeField] private SegmentData testSegment;    // Test amaçlı inspector'dan atanacak segment
 
-    [Header("Debug / Test Ayarları")]
-    [Tooltip("Test segmentin yerleştirileceği slot indeksi (0 - slotCount-1)")]
-    public int selectedSlotIndex = 0;
+    [Header("Çark Döndürme Ayarları")]
+    [SerializeField] private float spinDuration = 3f; // Dönüş süresi (saniye)
+    [SerializeField] private float minSpinRounds = 3f; // Minimum tam tur
+    [SerializeField] private float maxSpinRounds = 6f; // Maksimum tam tur
+    [SerializeField] private AnimationCurve spinCurve = AnimationCurve.EaseInOut(0,0,1,1); // Hız eğrisi
+    [SerializeField] private float delayBeforeRemove = 0.5f; // Segment silinmeden önce bekleme süresi
+    [SerializeField] private float delayBeforeReset = 0.5f; // Çark eski haline dönmeden önce bekleme süresi
+    public Transform indicatorTip; // İğnenin ucu referansı
 
     [HideInInspector]
     public Transform[] slots;
@@ -26,13 +32,14 @@ public class WheelManager : MonoBehaviour
     private SegmentData selectedSegmentForPlacement;
     private int selectedSlotForPlacement = -1;
 
+    private GameObject tempSegmentInstance = null; // Geçici segment görseli
+
+    private bool isSpinning = false;
 
     private void Start()
     {
         GenerateSlots();
-
-        // Inspector’dan girilen index ile segmenti yerleştir
-        PlaceSegment(testSegment, selectedSlotIndex);
+        // Test amaçlı otomatik segment yerleştirme kaldırıldı.
     }
 
     private void GenerateSlots()
@@ -59,60 +66,55 @@ public class WheelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Segmenti belirtilen başlangıç slotuna yerleştirir. Segmentin boyutuna göre birden fazla slot kaplayabilir.
+    /// Belirtilen segmenti, slotIndex'ten başlayarak uygun slotlara yerleştirir.
     /// </summary>
     public void PlaceSegment(SegmentData data, int slotIndex)
     {
         if (data == null) return;
-        if (slotIndex < 0 || slotIndex >= slots.Length) return;
-
         int size = data.size;
-
-        // Slot dışına taşıyor mu?
-        if (slotIndex + size > slotCount)
-        {
-            Debug.LogWarning("Segment sığmıyor: Slot dışına taşıyor.");
-            return;
-        }
-
-        // O slotlar boş mu?
+        int half = size / 2;
+        int startSlot = (slotIndex - half + slotCount) % slotCount;
+        if (!AreSlotsAvailable(startSlot, size)) return;
         for (int i = 0; i < size; i++)
         {
-            if (slotOccupied[slotIndex + i])
-            {
-                Debug.LogWarning($"Slot {slotIndex + i} zaten dolu. Segment yerleştirilemez.");
-                return;
-            }
+            int idx = (startSlot + i) % slotCount;
+            slotOccupied[idx] = true;
         }
-
-        // Slotları meşgul et
-        for (int i = 0; i < size; i++)
-        {
-            slotOccupied[slotIndex + i] = true;
-        }
-
-        // Segmenti yerleştir (görsel olarak sadece ilk slota)
-        GameObject go = Instantiate(segmentPrefab, slots[slotIndex]);
-        go.name = $"Segment_{slotIndex}_{data.segmentName}";
-
+        GameObject go = Instantiate(segmentPrefab, slots[startSlot]);
+        go.name = $"Segment_{startSlot}_{data.segmentName}";
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;
-
         var inst = go.GetComponent<SegmentInstance>();
         if (inst != null)
-            inst.Init(data, slotIndex);
+            inst.Init(data, startSlot);
     }
 
- // Inspector’dan atanacak Canvas veya panel
+    /// <summary>
+    /// Belirtilen slot aralığı segment yerleşimi için uygun mu?
+    /// </summary>
+    private bool AreSlotsAvailable(int startIndex, int size)
+    {
+        if (size > slotCount) return false;
+        for (int i = 0; i < size; i++)
+        {
+            int idx = (startIndex + i) % slotCount;
+            if (slotOccupied[idx])
+            {
+                Debug.LogWarning($"Slot {idx} zaten dolu. Segment yerleştirilemez.");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Inspector'dan atanacak Canvas veya panel
 
     public void SelectSegmentForPlacement(SegmentData segment)
     {
         selectedSegmentForPlacement = segment;
         selectedSlotForPlacement = -1;
         Debug.Log($"Segment seçildi: {segment.segmentName}");
-
-        if (segmentSelectionUI != null)
-            segmentSelectionUI.SetActive(false);
+        RemoveTempSegment(); // Önceki geçici segmenti kaldır
     }
 
     public void OnSlotClicked(int slotIndex)
@@ -122,29 +124,37 @@ public class WheelManager : MonoBehaviour
             Debug.Log("Önce segment seçmelisin.");
             return;
         }
-
         int size = selectedSegmentForPlacement.size;
-
-        if (slotIndex + size > slotCount)
-        {
-            Debug.LogWarning("Segment seçilen slotta sığmıyor.");
+        int half = size / 2;
+        int startSlot = (slotIndex - half + slotCount) % slotCount;
+        if (!AreSlotsAvailable(startSlot, size))
             return;
-        }
-
-        for (int i = 0; i < size; i++)
-        {
-            if (slotOccupied[slotIndex + i])
-            {
-                Debug.LogWarning("Seçilen slotlar dolu.");
-                return;
-            }
-        }
-
         selectedSlotForPlacement = slotIndex;
-        Debug.Log($"Segment yerleştirilecek slot seçildi: {slotIndex}");
+        Debug.Log($"Segment yerleştirilecek slot seçildi: {slotIndex} (başlangıç: {startSlot})");
+        ShowTempSegment(selectedSegmentForPlacement, startSlot);
     }
 
-    
+    private void ShowTempSegment(SegmentData data, int slotIndex)
+    {
+        RemoveTempSegment();
+        if (data == null || slotIndex < 0 || slotIndex >= slots.Length) return;
+        tempSegmentInstance = Instantiate(segmentPrefab, slots[slotIndex]);
+        tempSegmentInstance.name = $"TempSegment_{slotIndex}_{data.segmentName}";
+        tempSegmentInstance.transform.localPosition = Vector3.zero;
+        tempSegmentInstance.transform.localRotation = Quaternion.identity;
+        var inst = tempSegmentInstance.GetComponent<SegmentInstance>();
+        if (inst != null)
+            inst.Init(data, slotIndex);
+        // Şeffaflık kaldırıldı, segment tam opak olacak
+    }
+
+    private void RemoveTempSegment()
+    {
+        if (tempSegmentInstance != null)
+            Destroy(tempSegmentInstance);
+        tempSegmentInstance = null;
+    }
+
     public void ConfirmPlacement()
     {
         if (selectedSegmentForPlacement == null || selectedSlotForPlacement == -1)
@@ -152,13 +162,137 @@ public class WheelManager : MonoBehaviour
             Debug.LogWarning("Segment veya slot seçilmedi.");
             return;
         }
-
+        // Kalıcı olarak yerleştir
         PlaceSegment(selectedSegmentForPlacement, selectedSlotForPlacement);
-
+        RemoveTempSegment();
         selectedSegmentForPlacement = null;
         selectedSlotForPlacement = -1;
     }
 
+    public void SpinWheel()
+    {
+        if (!isSpinning)
+            StartCoroutine(SpinWheelCoroutine());
+    }
 
+    private System.Collections.IEnumerator SpinWheelCoroutine()
+    {
+        isSpinning = true;
+        float duration = spinDuration;
+        float elapsed = 0f;
+        float startAngle = slotParent.localEulerAngles.z;
+        float totalRounds = Random.Range(minSpinRounds, maxSpinRounds);
+        float anglePerSlot = 360f / slotCount;
+        int targetSlot = Random.Range(0, slotCount); // Rastgele bir slot seç
+        float slotAngle = (targetSlot + 0.5f) * anglePerSlot;
+        float endAngle = startAngle + 360f * totalRounds + slotAngle;
 
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            float easedT = spinCurve.Evaluate(t);
+            float angle = Mathf.Lerp(startAngle, endAngle, easedT);
+            slotParent.localEulerAngles = new Vector3(0, 0, angle);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        slotParent.localEulerAngles = new Vector3(0, 0, endAngle);
+        isSpinning = false;
+        OnSpinEnd();
+    }
+
+    private void OnSpinEnd()
+    {
+        StartCoroutine(SpinEndSequence());
+    }
+
+    private IEnumerator SpinEndSequence()
+    {
+        int selectedSlot = GetSlotUnderIndicator();
+        Debug.Log($"Dönüş bitti! İğne ucuna en yakın slot: {selectedSlot}");
+        yield return new WaitForSeconds(delayBeforeRemove); // Segment silinmeden önce bekle
+        RemoveSegmentAtSlot(selectedSlot);
+        StartCoroutine(SmoothResetWheel());
+    }
+
+    private IEnumerator SmoothResetWheel()
+    {
+        yield return new WaitForSeconds(delayBeforeReset); // Çark eski haline dönmeden önce bekle
+        float duration = 1f; // Sıfırlama animasyon süresi
+        float elapsed = 0f;
+        float startAngle = slotParent.localEulerAngles.z;
+        float endAngle = 0f;
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            float easedT = Mathf.SmoothStep(0, 1, t);
+            float angle = Mathf.Lerp(startAngle, endAngle, easedT);
+            slotParent.localEulerAngles = new Vector3(0, 0, angle);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        slotParent.localEulerAngles = new Vector3(0, 0, endAngle);
+    }
+
+    private int GetSlotUnderIndicator()
+    {
+        if (indicatorTip == null)
+        {
+            Debug.LogWarning("indicatorTip atanmadı!");
+            return 0;
+        }
+        float minDist = float.MaxValue;
+        int closestSlot = 0;
+        Vector3 tipPos = indicatorTip.position;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            Transform center = slots[i].Find("SlotCenter");
+            Vector3 centerPos = center != null ? center.position : slots[i].position;
+            float dist = Vector3.Distance(tipPos, centerPos);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closestSlot = i;
+            }
+        }
+        return closestSlot;
+    }
+
+    private void RemoveSegmentAtSlot(int slotIndex)
+    {
+        int maxSize = 3; // En büyük segment boyutu
+        for (int offset = maxSize - 1; offset >= 0; offset--)
+        {
+            int i = (slotIndex - offset + slotCount) % slotCount;
+            Transform slot = slots[i];
+            foreach (Transform child in slot)
+            {
+                SegmentInstance inst = child.GetComponent<SegmentInstance>();
+                if (inst != null && inst.data != null)
+                {
+                    int segStart = inst.startSlotIndex;
+                    int segEnd = (segStart + inst.data.size - 1) % slotCount;
+                    int size = inst.data.size;
+                    // Dairesel aralık kontrolü
+                    bool inRange = false;
+                    if (segStart <= segEnd)
+                        inRange = (slotIndex >= segStart && slotIndex <= segEnd);
+                    else
+                        inRange = (slotIndex >= segStart || slotIndex <= segEnd);
+                    if (inRange)
+                    {
+                        Destroy(child.gameObject);
+                        for (int j = 0; j < size; j++)
+                        {
+                            int idx = (segStart + j) % slotCount;
+                            slotOccupied[idx] = false;
+                        }
+                        Debug.Log($"Slot {slotIndex} segmentin parçasıydı, segment {segStart}-{segEnd} silindi.");
+                        return;
+                    }
+                }
+            }
+        }
+        Debug.Log($"Slot {slotIndex} zaten boş.");
+    }
 }
