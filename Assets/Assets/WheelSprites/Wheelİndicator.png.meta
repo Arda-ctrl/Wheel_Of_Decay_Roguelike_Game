@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      "Wheel\u0130ndicator_0": 1977783779973582133
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
