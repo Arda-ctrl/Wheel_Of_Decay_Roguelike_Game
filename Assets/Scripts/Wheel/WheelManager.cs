@@ -52,7 +52,7 @@ public class WheelManager : MonoBehaviour
         {
             GameObject slot = Instantiate(wheelSlotPrefab, slotParent);
             slot.name = "Slot_" + i;
-            slot.transform.localRotation = Quaternion.Euler(0f, 0f, -i * angleStep);
+            slot.transform.localRotation = Quaternion.Euler(0f, 0f, -(i * angleStep));
             slots[i] = slot.transform;
 
             // SlotController ayarla
@@ -81,7 +81,7 @@ public class WheelManager : MonoBehaviour
             slotOccupied[idx] = true;
         }
         GameObject go = Instantiate(segmentPrefab, slots[startSlot]);
-        go.name = $"Segment_{startSlot}_{data.segmentName}";
+        go.name = $"Segment_{startSlot}_{data.segmentID}";
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;
         var inst = go.GetComponent<SegmentInstance>();
@@ -113,7 +113,7 @@ public class WheelManager : MonoBehaviour
     {
         selectedSegmentForPlacement = segment;
         selectedSlotForPlacement = -1;
-        Debug.Log($"Segment seçildi: {segment.segmentName}");
+        Debug.Log($"Segment seçildi: {segment.segmentID}");
         RemoveTempSegment(); // Önceki geçici segmenti kaldır
     }
 
@@ -139,7 +139,7 @@ public class WheelManager : MonoBehaviour
         RemoveTempSegment();
         if (data == null || slotIndex < 0 || slotIndex >= slots.Length) return;
         tempSegmentInstance = Instantiate(segmentPrefab, slots[slotIndex]);
-        tempSegmentInstance.name = $"TempSegment_{slotIndex}_{data.segmentName}";
+        tempSegmentInstance.name = $"TempSegment_{slotIndex}_{data.segmentID}";
         tempSegmentInstance.transform.localPosition = Vector3.zero;
         tempSegmentInstance.transform.localRotation = Quaternion.identity;
         var inst = tempSegmentInstance.GetComponent<SegmentInstance>();
@@ -184,19 +184,33 @@ public class WheelManager : MonoBehaviour
         float totalRounds = Random.Range(minSpinRounds, maxSpinRounds);
         float anglePerSlot = 360f / slotCount;
         int targetSlot = Random.Range(0, slotCount); // Rastgele bir slot seç
-        float slotAngle = (targetSlot + 0.5f) * anglePerSlot;
-        float endAngle = startAngle + 360f * totalRounds + slotAngle;
+        
+        // Hedef açıyı tam sayıya yuvarlayalım
+        float slotAngle = Mathf.Round((targetSlot * anglePerSlot + 5f) * 10f) / 10f; // 0.1 hassasiyetle yuvarlama
+        float endAngle = startAngle + (360f * Mathf.Floor(totalRounds)) + slotAngle;
+        endAngle = Mathf.Round(endAngle * 10f) / 10f; // 0.1 hassasiyetle yuvarlama
 
         while (elapsed < duration)
         {
             float t = elapsed / duration;
             float easedT = spinCurve.Evaluate(t);
             float angle = Mathf.Lerp(startAngle, endAngle, easedT);
+            // Animasyon sırasında da açıyı yuvarla
+            angle = Mathf.Round(angle * 10f) / 10f; // 0.1 hassasiyetle yuvarlama
             slotParent.localEulerAngles = new Vector3(0, 0, angle);
+            
             elapsed += Time.deltaTime;
             yield return null;
         }
-        slotParent.localEulerAngles = new Vector3(0, 0, endAngle);
+
+        // Animasyon sonunda kesinlikle hedef açıda olalım
+        float finalAngle = (targetSlot * anglePerSlot + 5f);
+        finalAngle = Mathf.Round(finalAngle * 10f) / 10f; // 0.1 hassasiyetle yuvarlama
+        // 360'a göre modulo al
+        finalAngle = ((finalAngle % 360f) + 360f) % 360f;
+        
+        slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
+        
         isSpinning = false;
         OnSpinEnd();
     }
@@ -209,8 +223,7 @@ public class WheelManager : MonoBehaviour
     private IEnumerator SpinEndSequence()
     {
         int selectedSlot = GetSlotUnderIndicator();
-        Debug.Log($"Dönüş bitti! İğne ucuna en yakın slot: {selectedSlot}");
-        yield return new WaitForSeconds(delayBeforeRemove); // Segment silinmeden önce bekle
+        yield return new WaitForSeconds(delayBeforeRemove);
         RemoveSegmentAtSlot(selectedSlot);
         StartCoroutine(SmoothResetWheel());
     }

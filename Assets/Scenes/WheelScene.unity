@@ -366,7 +366,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   delayBeforeRemove: 0.5
-  delayBeforeReset: 2
+  delayBeforeReset: 0.5
   indicatorTip: {fileID: 762672283}
   slots: []
   slotOccupied: 

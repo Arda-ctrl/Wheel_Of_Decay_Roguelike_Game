@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: BasicAttackMedium
+  m_Name: BasicAttack
   m_EditorClassIdentifier: 
-  segmentName: BasicAttackBig
-  size: 2
+  segmentID: basicattack
+  size: 1
   effectType: 0
-  effectValue: 10
-  icon: {fileID: 4424534295672062651, guid: 709ad1681d972ba40abf46eef3817454, type: 3}
+  effectValue: 5
+  icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}

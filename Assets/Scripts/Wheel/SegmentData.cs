@@ -15,7 +15,7 @@ public enum EffectType
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
 {
-	public string segmentName; // Segmentin adı
+	public string segmentID; // Segmentin ID'si (örn: "BW", "BA1" gibi)
 	[Range(1, 3)]
 	public int size = 1; // Kaç slot kaplıyor (1–3 arası)
 
