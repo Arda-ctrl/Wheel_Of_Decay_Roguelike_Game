@@ -9,13 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: BasicDefence
+  m_Script: {fileID: 11500000, guid: 80ab2529404356f4888d3bc856a01840, type: 3}
+  m_Name: AttackBoostEffect
   m_EditorClassIdentifier: 
-  segmentID: basidefence
-  size: 1
-  attributeType: 1
-  type: 2
-  rarity: 0
-  description: 
-  icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}
+  effectName: attackboost
+  effectDescription: 
+  damageMultiplier: 1.5
+  duration: 10

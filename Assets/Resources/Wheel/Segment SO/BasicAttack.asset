@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   segmentID: basicattack
   size: 1
-  effectType: 0
-  effectValue: 5
+  attributeType: 0
+  type: 3
+  rarity: 0
+  description: 
   icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}
