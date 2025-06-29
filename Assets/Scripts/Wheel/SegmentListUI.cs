@@ -12,6 +12,10 @@ public class SegmentListUI : MonoBehaviour
     public GameObject segmentSelectionUI; // UI panelini referans olarak ekle
     public int numberOfSegmentsToShow = 3; // Gösterilecek segment sayısı
 
+    [Header("Text Settings")]
+    [SerializeField] private TMP_Text segmentNameText;    // Segment adı için
+    [SerializeField] private TMP_Text descriptionText;    // Açıklama için
+
     private SegmentData[] allSegments;
 
     private void Start()
@@ -67,13 +71,34 @@ public class SegmentListUI : MonoBehaviour
             GameObject btnGO = Instantiate(segmentButtonPrefab, contentParent);
             btnGO.name = $"SegmentBtn_{segment.segmentID}";
 
-            TMP_Text textComp = btnGO.GetComponentInChildren<TMP_Text>();
-            if (textComp != null)
-                textComp.text = segment.segmentID;
+            // Segment adı için
+            TMP_Text nameText = btnGO.transform.Find("NameText")?.GetComponent<TMP_Text>();
+            if (nameText != null)
+                nameText.text = segment.segmentID;
 
+            // Açıklama için
+            TMP_Text descText = btnGO.transform.Find("DescriptionText")?.GetComponent<TMP_Text>();
+            if (descText != null)
+            {
+                string description = segment.description;
+                if (segment.effect != null)
+                {
+                    description += $"\n{segment.effect.effectDescription}";
+                }
+                descText.text = description;
+            }
+
+            // İkon için
             Image iconImage = btnGO.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImage != null)
                 iconImage.sprite = segment.icon;
+
+            // Rarity ve Type bilgisi için
+            TMP_Text infoText = btnGO.transform.Find("InfoText")?.GetComponent<TMP_Text>();
+            if (infoText != null)
+            {
+                infoText.text = $"Type: {segment.type} | Rarity: {segment.rarity}";
+            }
 
             btnGO.GetComponent<Button>().onClick.AddListener(() =>
             {

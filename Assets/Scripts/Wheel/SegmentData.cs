@@ -43,14 +43,16 @@ public abstract class SegmentEffect : ScriptableObject
     /// </summary>
     /// <param name="player">Oyuncu referansı</param>
     /// <param name="segmentData">Segment verisi</param>
-    public abstract void OnSegmentActivated(GameObject player, SegmentData segmentData);
+    /// <param name="stackCount">Eklenecek/çıkarılacak stack sayısı</param>
+    public abstract void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1);
     
     /// <summary>
     /// Segment deaktif olduğunda çalışacak özellik.
     /// </summary>
     /// <param name="player">Oyuncu referansı</param>
     /// <param name="segmentData">Segment verisi</param>
-    public virtual void OnSegmentDeactivated(GameObject player, SegmentData segmentData)
+    /// <param name="stackCount">Eklenecek/çıkarılacak stack sayısı</param>
+    public virtual void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
         // Varsayılan olarak hiçbir şey yapma
     }

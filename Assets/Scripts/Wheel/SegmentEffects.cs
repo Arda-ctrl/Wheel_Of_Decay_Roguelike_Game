@@ -1,52 +1,35 @@
 using UnityEngine;
 
 /// <summary>
-/// Saldırı gücünü artıran segment özelliği
+/// Saldırı gücünü yüzdelik olarak artıran segment özelliği
 /// </summary>
-[CreateAssetMenu(fileName = "AttackBoostEffect", menuName = "Segment Effects/Attack Boost")]
-public class AttackBoostEffect : SegmentEffect
+[CreateAssetMenu(fileName = "DamagePercentageBoost", menuName = "Segment Effects/Damage Percentage Boost")]
+public class DamagePercentageBoost : SegmentEffect
 {
-    [Header("Saldırı Artırma Ayarları")]
-    public float damageMultiplier = 1.5f;
-    public float duration = 10f;
+    [Header("Hasar Yüzde Artış Ayarları")]
+    [Range(0, 100)]
+    public float damagePercentage = 50f; // Yüzdelik artış (örn: 50 = %50 artış)
     
-    // TODO: Player stats sistemi eklendiğinde aktif edilecek
-    // private float originalDamage;
-    // private PlayerController playerController;
-    
-    public override void OnSegmentActivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        // TODO: PlayerController eklendiğinde bu kısım aktif edilecek
-        /*
-        playerController = player.GetComponent<PlayerController>();
-        if (playerController != null)
+        if (StatsUI.Instance != null)
         {
-            // Mevcut saldırı gücünü kaydet
-            originalDamage = playerController.damage;
-            
-            // Saldırı gücünü artır
-            playerController.damage *= damageMultiplier;
-            
-            Debug.Log($"Saldırı gücü {damageMultiplier}x artırıldı! Yeni güç: {playerController.damage}");
+            float baseAttackDamage = 10f; // StatsUI'dan alınabilir
+            float bonusDamage = baseAttackDamage * (damagePercentage / 100f) * stackCount;
+            StatsUI.Instance.AddStatBonus(attackDamage: bonusDamage);
         }
-        */
-        
-        Debug.Log($"Saldırı gücü {damageMultiplier}x artırıldı! (Player stats sistemi henüz eklenmedi)");
+        Debug.Log($"Saldırı gücü %{damagePercentage * stackCount} artırıldı!");
     }
     
-    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        // TODO: PlayerController eklendiğinde bu kısım aktif edilecek
-        /*
-        if (playerController != null)
+        if (StatsUI.Instance != null)
         {
-            // Saldırı gücünü eski haline getir
-            playerController.damage = originalDamage;
-            Debug.Log("Saldırı gücü normale döndü.");
+            float baseAttackDamage = 10f; // StatsUI'dan alınabilir
+            float bonusDamage = baseAttackDamage * (damagePercentage / 100f) * stackCount;
+            StatsUI.Instance.RemoveStatBonus(attackDamage: bonusDamage);
         }
-        */
-        
-        Debug.Log("Saldırı gücü normale döndü. (Player stats sistemi henüz eklenmedi)");
+        Debug.Log("Saldırı gücü yüzde bonusu kaldırıldı.");
     }
 }
 
@@ -59,29 +42,28 @@ public class HealthRegenEffect : SegmentEffect
     [Header("Can Yenileme Ayarları")]
     public float healAmount = 10f;
     public float healInterval = 2f;
+    public float defenseBonus = 10f; // Can yenileme sırasında defans bonusu
     
     private float lastHealTime;
     
-    public override void OnSegmentActivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
         lastHealTime = Time.time;
-        Debug.Log($"Can yenileme aktif! Her {healInterval} saniyede {healAmount} can yenilenecek.");
-        
-        // TODO: Can yenileme sistemi eklendiğinde bu kısım aktif edilecek
-        // Bu effect için bir Coroutine veya Update metodu gerekebilir
+        if (StatsUI.Instance != null)
+        {
+            StatsUI.Instance.AddStatBonus(defense: defenseBonus * stackCount);
+        }
+        Debug.Log($"Can yenileme aktif! Her {healInterval} saniyede {healAmount} can yenilenecek. +{defenseBonus * stackCount} defans bonusu.");
     }
     
-    // TODO: Bu metod bir MonoBehaviour'da çağrılmalı veya Coroutine kullanılmalı
-    /*
-    public void Update()
+    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        if (Time.time - lastHealTime >= healInterval)
+        if (StatsUI.Instance != null)
         {
-            // Can yenileme mantığı burada
-            lastHealTime = Time.time;
+            StatsUI.Instance.RemoveStatBonus(defense: defenseBonus * stackCount);
         }
+        Debug.Log("Can yenileme ve defans bonusu kaldırıldı.");
     }
-    */
 }
 
 /// <summary>
@@ -93,38 +75,32 @@ public class SpeedBoostEffect : SegmentEffect
     [Header("Hız Artırma Ayarları")]
     public float speedMultiplier = 1.3f;
     
-    // TODO: Player stats sistemi eklendiğinde aktif edilecek
-    // private float originalSpeed;
-    // private PlayerController playerController;
-    
-    public override void OnSegmentActivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        // TODO: PlayerController eklendiğinde bu kısım aktif edilecek
-        /*
-        playerController = player.GetComponent<PlayerController>();
-        if (playerController != null)
+        if (StatsUI.Instance != null)
         {
-            originalSpeed = playerController.moveSpeed;
-            playerController.moveSpeed *= speedMultiplier;
-            Debug.Log($"Hız {speedMultiplier}x artırıldı!");
+            float moveSpeedBonus = 5f * (speedMultiplier - 1f) * stackCount;
+            float attackSpeedBonus = 1f * (speedMultiplier - 1f) * stackCount;
+            StatsUI.Instance.AddStatBonus(
+                movementSpeed: moveSpeedBonus,
+                attackSpeed: attackSpeedBonus
+            );
         }
-        */
-        
-        Debug.Log($"Hız {speedMultiplier}x artırıldı! (Player stats sistemi henüz eklenmedi)");
+        Debug.Log($"Hız {speedMultiplier}x artırıldı!");
     }
     
-    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        // TODO: PlayerController eklendiğinde bu kısım aktif edilecek
-        /*
-        if (playerController != null)
+        if (StatsUI.Instance != null)
         {
-            playerController.moveSpeed = originalSpeed;
-            Debug.Log("Hız normale döndü.");
+            float moveSpeedBonus = 5f * (speedMultiplier - 1f) * stackCount;
+            float attackSpeedBonus = 1f * (speedMultiplier - 1f) * stackCount;
+            StatsUI.Instance.RemoveStatBonus(
+                movementSpeed: moveSpeedBonus,
+                attackSpeed: attackSpeedBonus
+            );
         }
-        */
-        
-        Debug.Log("Hız normale döndü. (Player stats sistemi henüz eklenmedi)");
+        Debug.Log("Hız bonusu kaldırıldı.");
     }
 }
 
@@ -137,7 +113,7 @@ public class ElementalEffect : SegmentEffect
     [Header("Elemental Ayarları")]
     public ElementType elementType;
     public float elementalDamage = 5f;
-    public float burnDuration = 3f;
+    public float criticalBonus = 10f;
     
     public enum ElementType
     {
@@ -147,9 +123,59 @@ public class ElementalEffect : SegmentEffect
         Lightning // Şimşek
     }
     
-    public override void OnSegmentActivated(GameObject player, SegmentData segmentData)
+    public override void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1)
     {
-        // TODO: Elemental saldırı sistemi eklendiğinde bu kısım aktif edilecek
-        Debug.Log($"{elementType} elemental saldırısı aktif! {elementalDamage} hasar verecek.");
+        if (StatsUI.Instance != null)
+        {
+            StatsUI.Instance.AddStatBonus(
+                attackDamage: elementalDamage * stackCount,
+                criticalChance: criticalBonus * stackCount
+            );
+        }
+        Debug.Log($"{elementType} elemental saldırısı aktif! +{elementalDamage * stackCount} hasar ve +{criticalBonus * stackCount}% kritik şansı.");
+    }
+    
+    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
+    {
+        if (StatsUI.Instance != null)
+        {
+            StatsUI.Instance.RemoveStatBonus(
+                attackDamage: elementalDamage * stackCount,
+                criticalChance: criticalBonus * stackCount
+            );
+        }
+        Debug.Log($"{elementType} elemental bonusları kaldırıldı.");
+    }
+}
+
+/// <summary>
+/// Sabit hasar artışı veren segment özelliği
+/// </summary>
+[CreateAssetMenu(fileName = "DamageBoostEffect", menuName = "Segment Effects/Damage Boost")]
+public class DamageBoostEffect : SegmentEffect
+{
+    [Header("Hasar Artırma Ayarları")]
+    public float damageBonus = 2f; // Sabit hasar artışı
+    
+    public override void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1)
+    {
+        if (StatsUI.Instance != null)
+        {
+            // Sadece yeni eklenen stack için bonus ver
+            float bonus = damageBonus * stackCount;
+            StatsUI.Instance.AddStatBonus(attackDamage: bonus);
+            Debug.Log($"Saldırı gücü {bonus} arttı!");
+        }
+    }
+    
+    public override void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
+    {
+        if (StatsUI.Instance != null)
+        {
+            // Sadece silinen stack için bonusu kaldır
+            float bonus = damageBonus * stackCount;
+            StatsUI.Instance.RemoveStatBonus(attackDamage: bonus);
+            Debug.Log($"Saldırı gücü bonusu ({bonus}) kaldırıldı.");
+        }
     }
 } 

@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: ElementalEffect
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalEffect
-  effectName: elementalboost
-  effectDescription: 
-  elementType: 0
-  elementalDamage: 5
-  burnDuration: 3
+  m_Name: DamageBoostEffect
+  m_EditorClassIdentifier: Assembly-CSharp::DamageBoostEffect
+  effectName: damageboost2
+  effectDescription: +2 Weapon Damage Boost
+  damageBonus: 2

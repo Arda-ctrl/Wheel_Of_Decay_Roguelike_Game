@@ -2,6 +2,7 @@
 // Çark üzerindeki slotları ve segment yerleştirmeyi yöneten ana sınıf.
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class WheelManager : MonoBehaviour
 {
@@ -36,10 +37,13 @@ public class WheelManager : MonoBehaviour
 
     private bool isSpinning = false;
 
+    // Aktif efektleri takip etmek için dictionary
+    public Dictionary<string, int> activeEffectCounts = new Dictionary<string, int>();
+
     private void Start()
     {
         GenerateSlots();
-        // Test amaçlı otomatik segment yerleştirme kaldırıldı.
+        activeEffectCounts = new Dictionary<string, int>();
     }
 
     private void GenerateSlots()
@@ -164,6 +168,23 @@ public class WheelManager : MonoBehaviour
         }
         // Kalıcı olarak yerleştir
         PlaceSegment(selectedSegmentForPlacement, selectedSlotForPlacement);
+        
+        // Segmentin efektini aktifleştir ve sayacı artır
+        if (selectedSegmentForPlacement.effect != null)
+        {
+            string effectId = selectedSegmentForPlacement.segmentID;
+            if (!activeEffectCounts.ContainsKey(effectId))
+            {
+                activeEffectCounts[effectId] = 0;
+            }
+            activeEffectCounts[effectId]++;
+            
+            // Efekti sadece yeni stack için uygula, stackCount = 1 olarak gönder
+            selectedSegmentForPlacement.effect.OnSegmentActivated(gameObject, selectedSegmentForPlacement, 1);
+            
+            Debug.Log($"{effectId} efekti {activeEffectCounts[effectId]} kez aktif.");
+        }
+        
         RemoveTempSegment();
         selectedSegmentForPlacement = null;
         selectedSlotForPlacement = -1;
@@ -294,6 +315,24 @@ public class WheelManager : MonoBehaviour
                         inRange = (slotIndex >= segStart || slotIndex <= segEnd);
                     if (inRange)
                     {
+                        // Segmenti silmeden önce efekti deaktive et
+                        if (inst.data.effect != null)
+                        {
+                            string effectId = inst.data.segmentID;
+                            if (activeEffectCounts.ContainsKey(effectId))
+                            {
+                                // Efekti sadece silinen stack için deaktive et, stackCount = 1 olarak gönder
+                                inst.data.effect.OnSegmentDeactivated(gameObject, inst.data, 1);
+                                
+                                activeEffectCounts[effectId]--;
+                                if (activeEffectCounts[effectId] <= 0)
+                                {
+                                    activeEffectCounts.Remove(effectId);
+                                }
+                                Debug.Log($"{effectId} efekti kaldırıldı. Kalan stack: {(activeEffectCounts.ContainsKey(effectId) ? activeEffectCounts[effectId].ToString() : "0")}");
+                            }
+                        }
+                        
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
                         {
