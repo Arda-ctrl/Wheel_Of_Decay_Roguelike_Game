@@ -23,6 +23,7 @@ public class StatsUI : MonoBehaviour
     private float bonusMovementSpeed = 0f;
     private float bonusDefense = 0f;
     private float bonusCriticalChance = 0f;
+    private float damagePercentageBoost = 0f; // Yüzdelik hasar artışı (1.0 = %0 artış, 1.1 = %10 artış)
 
     private static StatsUI instance;
     public static StatsUI Instance
@@ -48,6 +49,18 @@ public class StatsUI : MonoBehaviour
         UpdateUI();
     }
 
+    public void AddDamagePercentageBoost(float percentage)
+    {
+        damagePercentageBoost += percentage;
+        UpdateUI();
+    }
+
+    public void RemoveDamagePercentageBoost(float percentage)
+    {
+        damagePercentageBoost -= percentage;
+        UpdateUI();
+    }
+
     public void RemoveStatBonus(float attackDamage = 0f, float attackSpeed = 0f, float movementSpeed = 0f, float defense = 0f, float criticalChance = 0f)
     {
         bonusAttackDamage -= attackDamage;
@@ -62,8 +75,10 @@ public class StatsUI : MonoBehaviour
     {
         if (attackDamageText) 
         {
-            float totalDamage = baseAttackDamage + bonusAttackDamage;
-            attackDamageText.text = $"Attack Damage: {totalDamage:F1} ({(bonusAttackDamage >= 0 ? "+" : "")}{bonusAttackDamage:F1})";
+            float flatDamage = baseAttackDamage + bonusAttackDamage;
+            float totalDamage = flatDamage * (1f + damagePercentageBoost);
+            float totalBonus = totalDamage - baseAttackDamage;
+            attackDamageText.text = $"Attack Damage: {totalDamage:F1} ({(totalBonus >= 0 ? "+" : "")}{totalBonus:F1})";
         }
 
         if (attackSpeedText)

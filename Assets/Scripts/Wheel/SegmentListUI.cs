@@ -12,10 +12,6 @@ public class SegmentListUI : MonoBehaviour
     public GameObject segmentSelectionUI; // UI panelini referans olarak ekle
     public int numberOfSegmentsToShow = 3; // Gösterilecek segment sayısı
 
-    [Header("Text Settings")]
-    [SerializeField] private TMP_Text segmentNameText;    // Segment adı için
-    [SerializeField] private TMP_Text descriptionText;    // Açıklama için
-
     private SegmentData[] allSegments;
 
     private void Start()
@@ -71,21 +67,16 @@ public class SegmentListUI : MonoBehaviour
             GameObject btnGO = Instantiate(segmentButtonPrefab, contentParent);
             btnGO.name = $"SegmentBtn_{segment.segmentID}";
 
-            // Segment adı için
+            // Segment adı ve özellikleri için
             TMP_Text nameText = btnGO.transform.Find("NameText")?.GetComponent<TMP_Text>();
             if (nameText != null)
-                nameText.text = segment.segmentID;
+                nameText.text = $"{segment.segmentID}\nType: {segment.type} | Rarity: {segment.rarity}";
 
             // Açıklama için
             TMP_Text descText = btnGO.transform.Find("DescriptionText")?.GetComponent<TMP_Text>();
             if (descText != null)
             {
-                string description = segment.description;
-                if (segment.effect != null)
-                {
-                    description += $"\n{segment.effect.effectDescription}";
-                }
-                descText.text = description;
+                descText.text = segment.description;
             }
 
             // İkon için

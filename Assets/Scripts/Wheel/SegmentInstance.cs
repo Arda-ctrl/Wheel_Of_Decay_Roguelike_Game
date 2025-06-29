@@ -54,10 +54,6 @@ public class SegmentInstance : MonoBehaviour
         {
             string title = data.segmentID;
             string description = data.description;
-            if (data.effect != null)
-            {
-                description += $"\n{data.effect.effectDescription}";
-            }
             string typeAndRarity = $"Type: {data.type} | Rarity: {data.rarity}";
 
             Vector2 mousePosition = Input.mousePosition;

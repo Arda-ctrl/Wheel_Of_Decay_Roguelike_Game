@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: DamageBoostEffect
-  m_EditorClassIdentifier: Assembly-CSharp::DamageBoostEffect
-  effectName: damageboost2
-  effectDescription: +2 Weapon Damage Boost
+  m_Script: {fileID: 11500000, guid: 80ab2529404356f4888d3bc856a01840, type: 3}
+  m_Name: DamageBoost
+  m_EditorClassIdentifier: 
+  effectName: damageboost
+  effectDescription: 
   damageBonus: 2
