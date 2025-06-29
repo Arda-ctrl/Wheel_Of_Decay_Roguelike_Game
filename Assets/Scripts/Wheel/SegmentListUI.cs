@@ -6,24 +6,25 @@ using System.Linq; // LINQ için
 // SegmentListUI: Segmentlerin listesini UI'da oluşturan ve seçim işlemini yöneten sınıf.
 public class SegmentListUI : MonoBehaviour
 {
+    [Header("UI References")]
     public GameObject segmentButtonPrefab;
     public Transform contentParent;
     public WheelManager wheelManager;
     public GameObject segmentSelectionUI; // UI panelini referans olarak ekle
+    
+    [Header("Settings")]
     public int numberOfSegmentsToShow = 3; // Gösterilecek segment sayısı
 
     private SegmentData[] allSegments;
 
     private void Start()
     {
-        if (segmentSelectionUI != null)
-            segmentSelectionUI.SetActive(false); // Başlangıçta kapalı olsun
-        
+        segmentSelectionUI?.SetActive(false);
         LoadAllSegments();
         PopulateList();
     }
 
-    void LoadAllSegments()
+    private void LoadAllSegments()
     {
         // Resources/Wheel/Segment SO klasöründen tüm SegmentData'ları yükle
         allSegments = Resources.LoadAll<SegmentData>("Wheel/Segment SO");
@@ -31,7 +32,6 @@ public class SegmentListUI : MonoBehaviour
         if (allSegments == null || allSegments.Length == 0)
         {
             Debug.LogError("Hiç segment bulunamadı! Resources/Wheel/Segment SO klasörünü kontrol edin.");
-            return;
         }
     }
 
@@ -40,13 +40,12 @@ public class SegmentListUI : MonoBehaviour
         if (segmentSelectionUI != null)
         {
             segmentSelectionUI.SetActive(true);
-            // UI açıldığında yeni rastgele segmentler seç
             ClearList();
             PopulateList();
         }
     }
 
-    void ClearList()
+    private void ClearList()
     {
         // Mevcut tüm butonları temizle
         foreach (Transform child in contentParent)
@@ -55,48 +54,60 @@ public class SegmentListUI : MonoBehaviour
         }
     }
 
-    void PopulateList()
+    private void PopulateList()
     {
         if (allSegments == null || allSegments.Length == 0) return;
 
-        // Tüm segmentlerden rastgele 3 tanesini seç
         var randomSegments = allSegments.OrderBy(x => Random.value).Take(numberOfSegmentsToShow).ToArray();
 
         foreach (var segment in randomSegments)
         {
-            GameObject btnGO = Instantiate(segmentButtonPrefab, contentParent);
-            btnGO.name = $"SegmentBtn_{segment.segmentID}";
-
-            // Segment adı ve özellikleri için
-            TMP_Text nameText = btnGO.transform.Find("NameText")?.GetComponent<TMP_Text>();
-            if (nameText != null)
-                nameText.text = $"{segment.segmentID}\nType: {segment.type} | Rarity: {segment.rarity}";
-
-            // Açıklama için
-            TMP_Text descText = btnGO.transform.Find("DescriptionText")?.GetComponent<TMP_Text>();
-            if (descText != null)
-            {
-                descText.text = segment.description;
-            }
-
-            // İkon için
-            Image iconImage = btnGO.transform.Find("Icon")?.GetComponent<Image>();
-            if (iconImage != null)
-                iconImage.sprite = segment.icon;
-
-            // Rarity ve Type bilgisi için
-            TMP_Text infoText = btnGO.transform.Find("InfoText")?.GetComponent<TMP_Text>();
-            if (infoText != null)
-            {
-                infoText.text = $"Type: {segment.type} | Rarity: {segment.rarity}";
-            }
-
-            btnGO.GetComponent<Button>().onClick.AddListener(() =>
-            {
-                wheelManager.SelectSegmentForPlacement(segment);
-                if (segmentSelectionUI != null)
-                    segmentSelectionUI.SetActive(false); // Seçimden sonra paneli kapat
-            });
+            CreateSegmentButton(segment);
         }
+    }
+
+    private void CreateSegmentButton(SegmentData segment)
+    {
+        GameObject btnGO = Instantiate(segmentButtonPrefab, contentParent);
+        btnGO.name = $"SegmentBtn_{segment.segmentID}";
+
+        // UI elementlerini güncelle
+        UpdateButtonUI(btnGO, segment);
+        
+        // Click event'i ekle
+        btnGO.GetComponent<Button>().onClick.AddListener(() => OnSegmentSelected(segment));
+    }
+
+    private void UpdateButtonUI(GameObject button, SegmentData segment)
+    {
+        // Name Text
+        if (button.transform.Find("NameText")?.GetComponent<TMP_Text>() is TMP_Text nameText)
+        {
+            nameText.text = $"{segment.segmentID}\nType: {segment.type} | Rarity: {segment.rarity}";
+        }
+
+        // Description Text
+        if (button.transform.Find("DescriptionText")?.GetComponent<TMP_Text>() is TMP_Text descText)
+        {
+            descText.text = segment.description;
+        }
+
+        // Icon
+        if (button.transform.Find("Icon")?.GetComponent<Image>() is Image iconImage)
+        {
+            iconImage.sprite = segment.icon;
+        }
+
+        // Info Text
+        if (button.transform.Find("InfoText")?.GetComponent<TMP_Text>() is TMP_Text infoText)
+        {
+            infoText.text = $"Type: {segment.type} | Rarity: {segment.rarity}";
+        }
+    }
+
+    private void OnSegmentSelected(SegmentData segment)
+    {
+        wheelManager.SelectSegmentForPlacement(segment);
+        segmentSelectionUI?.SetActive(false);
     }
 }

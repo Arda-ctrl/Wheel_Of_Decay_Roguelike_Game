@@ -35,12 +35,15 @@ public class TooltipUI : MonoBehaviour
         descriptionText.text = description;
         typeAndRarityText.text = typeAndRarity;
 
-        // Tooltip'i mouse pozisyonuna göre yerleştir
+        PositionTooltip(position);
+    }
+
+    private void PositionTooltip(Vector2 position)
+    {
         Vector2 tooltipPosition = position + offset;
         
         // Ekran dışına taşmayı önle
         RectTransform panelRect = tooltipPanel.GetComponent<RectTransform>();
-        Vector2 screenPoint = Camera.main.WorldToScreenPoint(transform.position);
         
         if (tooltipPosition.x + panelRect.rect.width > Screen.width)
             tooltipPosition.x = Screen.width - panelRect.rect.width - padding;
@@ -53,7 +56,6 @@ public class TooltipUI : MonoBehaviour
 
     public void HideTooltip()
     {
-        if (tooltipPanel != null)
-            tooltipPanel.SetActive(false);
+        tooltipPanel?.SetActive(false);
     }
 } 

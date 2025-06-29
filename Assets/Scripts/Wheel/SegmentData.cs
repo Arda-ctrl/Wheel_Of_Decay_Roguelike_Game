@@ -27,37 +27,6 @@ public enum Type
     Element   // Element
 }
 
-/// <summary>
-/// Segment özelliklerinin temel sınıfı.
-/// Her segment özelliği bu sınıftan türetilecek.
-/// </summary>
-public abstract class SegmentEffect : ScriptableObject
-{
-    [Header("Temel Bilgiler")]
-    public string effectName;
-    [TextArea(2, 4)]
-    public string effectDescription;
-    
-    /// <summary>
-    /// Segment aktif olduğunda çalışacak özellik.
-    /// </summary>
-    /// <param name="player">Oyuncu referansı</param>
-    /// <param name="segmentData">Segment verisi</param>
-    /// <param name="stackCount">Eklenecek/çıkarılacak stack sayısı</param>
-    public abstract void OnSegmentActivated(GameObject player, SegmentData segmentData, int stackCount = 1);
-    
-    /// <summary>
-    /// Segment deaktif olduğunda çalışacak özellik.
-    /// </summary>
-    /// <param name="player">Oyuncu referansı</param>
-    /// <param name="segmentData">Segment verisi</param>
-    /// <param name="stackCount">Eklenecek/çıkarılacak stack sayısı</param>
-    public virtual void OnSegmentDeactivated(GameObject player, SegmentData segmentData, int stackCount = 1)
-    {
-        // Varsayılan olarak hiçbir şey yapma
-    }
-}
-
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
 {
@@ -74,5 +43,6 @@ public class SegmentData : ScriptableObject
 	public Sprite icon; // Artistin çizdiği sprite buraya atanacak
 	
 	[Header("Segment Özelliği")]
-	public SegmentEffect effect; // Bu segmentin özelliği
+	[Tooltip("Hangi effect'i kullanacağını seç: 1=DamageBoost, 2=DamagePercentageBoost")]
+	public int effectID; // Effect ID'si
 }

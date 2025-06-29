@@ -170,7 +170,7 @@ public class WheelManager : MonoBehaviour
         PlaceSegment(selectedSegmentForPlacement, selectedSlotForPlacement);
         
         // Segmentin efektini aktifleştir ve sayacı artır
-        if (selectedSegmentForPlacement.effect != null)
+        if (selectedSegmentForPlacement.effectID > 0)
         {
             string effectId = selectedSegmentForPlacement.segmentID;
             if (!activeEffectCounts.ContainsKey(effectId))
@@ -180,7 +180,7 @@ public class WheelManager : MonoBehaviour
             activeEffectCounts[effectId]++;
             
             // Efekti sadece yeni stack için uygula, stackCount = 1 olarak gönder
-            selectedSegmentForPlacement.effect.OnSegmentActivated(gameObject, selectedSegmentForPlacement, 1);
+            SegmentEffectHandler.Instance.ActivateSegmentEffect(selectedSegmentForPlacement, 1);
             
             Debug.Log($"{effectId} efekti {activeEffectCounts[effectId]} kez aktif.");
         }
@@ -316,13 +316,13 @@ public class WheelManager : MonoBehaviour
                     if (inRange)
                     {
                         // Segmenti silmeden önce efekti deaktive et
-                        if (inst.data.effect != null)
+                        if (inst.data.effectID > 0)
                         {
                             string effectId = inst.data.segmentID;
                             if (activeEffectCounts.ContainsKey(effectId))
                             {
                                 // Efekti sadece silinen stack için deaktive et, stackCount = 1 olarak gönder
-                                inst.data.effect.OnSegmentDeactivated(gameObject, inst.data, 1);
+                                SegmentEffectHandler.Instance.DeactivateSegmentEffect(inst.data, 1);
                                 
                                 activeEffectCounts[effectId]--;
                                 if (activeEffectCounts[effectId] <= 0)

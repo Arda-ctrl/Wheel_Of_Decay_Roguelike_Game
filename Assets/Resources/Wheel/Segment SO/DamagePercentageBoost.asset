@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
   m_Name: DamagePercentageBoost
   m_EditorClassIdentifier: 
-  segmentID: damagepercentageboostsegment
+  segmentID: damagepercentageboost
   size: 1
   type: 3
   rarity: 1
-  description: '%10 Damage Boost'
+  description: '%10 damage boost'
   icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}
-  effect: {fileID: 11400000, guid: 675d1a8687793de409c4f4e6e0226111, type: 2}
+  effectID: 2

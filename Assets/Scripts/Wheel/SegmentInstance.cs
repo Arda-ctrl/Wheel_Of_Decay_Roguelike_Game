@@ -38,27 +38,26 @@ public class SegmentInstance : MonoBehaviour
         this.data = data;
         this.startSlotIndex = slotIndex;
         UpdateVisual();
+        
         if (sr != null)
             sr.sortingOrder = SegmentOrderInLayer;
     }
 
     private void UpdateVisual()
     {
-        if (sr != null && data != null && data.icon != null)
+        if (sr != null && data?.icon != null)
             sr.sprite = data.icon;
     }
 
     private void ShowTooltip()
     {
-        if (data != null && TooltipUI.Instance != null)
-        {
-            string title = data.segmentID;
-            string description = data.description;
-            string typeAndRarity = $"Type: {data.type} | Rarity: {data.rarity}";
+        if (data == null || TooltipUI.Instance == null) return;
 
-            Vector2 mousePosition = Input.mousePosition;
-            TooltipUI.Instance.ShowTooltip(title, description, typeAndRarity, mousePosition);
-        }
+        string title = data.segmentID;
+        string description = data.description;
+        string typeAndRarity = $"Type: {data.type} | Rarity: {data.rarity}";
+
+        TooltipUI.Instance.ShowTooltip(title, description, typeAndRarity, Input.mousePosition);
     }
 
     private void OnMouseEnter()
@@ -71,9 +70,6 @@ public class SegmentInstance : MonoBehaviour
     {
         isHovering = false;
         hoverTimer = 0f;
-        if (TooltipUI.Instance != null)
-        {
-            TooltipUI.Instance.HideTooltip();
-        }
+        TooltipUI.Instance?.HideTooltip();
     }
 }

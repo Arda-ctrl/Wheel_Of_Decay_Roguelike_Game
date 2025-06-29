@@ -23,13 +23,10 @@ public class StatsUI : MonoBehaviour
     private float bonusMovementSpeed = 0f;
     private float bonusDefense = 0f;
     private float bonusCriticalChance = 0f;
-    private float damagePercentageBoost = 0f; // Yüzdelik hasar artışı (1.0 = %0 artış, 1.1 = %10 artış)
+    private float damagePercentageBoost = 0f;
 
     private static StatsUI instance;
-    public static StatsUI Instance
-    {
-        get { return instance; }
-    }
+    public static StatsUI Instance => instance;
 
     private void Awake()
     {
@@ -39,6 +36,11 @@ public class StatsUI : MonoBehaviour
             Destroy(gameObject);
     }
 
+    private void Start()
+    {
+        UpdateUI();
+    }
+
     public void AddStatBonus(float attackDamage = 0f, float attackSpeed = 0f, float movementSpeed = 0f, float defense = 0f, float criticalChance = 0f)
     {
         bonusAttackDamage += attackDamage;
@@ -46,6 +48,16 @@ public class StatsUI : MonoBehaviour
         bonusMovementSpeed += movementSpeed;
         bonusDefense += defense;
         bonusCriticalChance += criticalChance;
+        UpdateUI();
+    }
+
+    public void RemoveStatBonus(float attackDamage = 0f, float attackSpeed = 0f, float movementSpeed = 0f, float defense = 0f, float criticalChance = 0f)
+    {
+        bonusAttackDamage -= attackDamage;
+        bonusAttackSpeed -= attackSpeed;
+        bonusMovementSpeed -= movementSpeed;
+        bonusDefense -= defense;
+        bonusCriticalChance -= criticalChance;
         UpdateUI();
     }
 
@@ -61,53 +73,29 @@ public class StatsUI : MonoBehaviour
         UpdateUI();
     }
 
-    public void RemoveStatBonus(float attackDamage = 0f, float attackSpeed = 0f, float movementSpeed = 0f, float defense = 0f, float criticalChance = 0f)
-    {
-        bonusAttackDamage -= attackDamage;
-        bonusAttackSpeed -= attackSpeed;
-        bonusMovementSpeed -= movementSpeed;
-        bonusDefense -= defense;
-        bonusCriticalChance -= criticalChance;
-        UpdateUI();
-    }
-
     private void UpdateUI()
     {
-        if (attackDamageText) 
+        UpdateStatText(attackDamageText, baseAttackDamage + bonusAttackDamage, bonusAttackDamage, "Attack Damage", true);
+        UpdateStatText(attackSpeedText, baseAttackSpeed + bonusAttackSpeed, bonusAttackSpeed, "Attack Speed");
+        UpdateStatText(movementSpeedText, baseMovementSpeed + bonusMovementSpeed, bonusMovementSpeed, "Movement Speed");
+        UpdateStatText(defenseText, baseDefense + bonusDefense, bonusDefense, "Defense");
+        UpdateStatText(criticalChanceText, baseCriticalChance + bonusCriticalChance, bonusCriticalChance, "Critical Chance", false, "%");
+    }
+
+    private void UpdateStatText(TMP_Text textComponent, float totalValue, float bonusValue, string statName, bool isDamage = false, string suffix = "")
+    {
+        if (textComponent == null) return;
+
+        if (isDamage)
         {
             float flatDamage = baseAttackDamage + bonusAttackDamage;
             float totalDamage = flatDamage * (1f + damagePercentageBoost);
             float totalBonus = totalDamage - baseAttackDamage;
-            attackDamageText.text = $"Attack Damage: {totalDamage:F1} ({(totalBonus >= 0 ? "+" : "")}{totalBonus:F1})";
+            textComponent.text = $"{statName}: {totalDamage:F1} ({(totalBonus >= 0 ? "+" : "")}{totalBonus:F1})";
         }
-
-        if (attackSpeedText)
+        else
         {
-            float totalSpeed = baseAttackSpeed + bonusAttackSpeed;
-            attackSpeedText.text = $"Attack Speed: {totalSpeed:F1} ({(bonusAttackSpeed >= 0 ? "+" : "")}{bonusAttackSpeed:F1})";
+            textComponent.text = $"{statName}: {totalValue:F1} ({(bonusValue >= 0 ? "+" : "")}{bonusValue:F1}){suffix}";
         }
-
-        if (movementSpeedText)
-        {
-            float totalMove = baseMovementSpeed + bonusMovementSpeed;
-            movementSpeedText.text = $"Movement Speed: {totalMove:F1} ({(bonusMovementSpeed >= 0 ? "+" : "")}{bonusMovementSpeed:F1})";
-        }
-
-        if (defenseText)
-        {
-            float totalDef = baseDefense + bonusDefense;
-            defenseText.text = $"Defense: {totalDef:F1} ({(bonusDefense >= 0 ? "+" : "")}{bonusDefense:F1})";
-        }
-
-        if (criticalChanceText)
-        {
-            float totalCrit = baseCriticalChance + bonusCriticalChance;
-            criticalChanceText.text = $"Critical Chance: {totalCrit:F1}% ({(bonusCriticalChance >= 0 ? "+" : "")}{bonusCriticalChance:F1}%)";
-        }
-    }
-
-    private void Start()
-    {
-        UpdateUI(); // Başlangıç değerlerini göster
     }
 } 
