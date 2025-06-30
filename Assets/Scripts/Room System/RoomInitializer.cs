@@ -29,7 +29,6 @@ public class RoomInitializer : MonoBehaviour
         // Düşman yoksa kapıları hemen aç
         if (totalEnemies <= 0)
         {
-            Debug.Log("aa");
             OpenDoors();
             return;
         }
