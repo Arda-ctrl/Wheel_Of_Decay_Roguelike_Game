@@ -13,6 +13,9 @@ public class CameraManager : MonoBehaviour
 
         impulseSource = GetComponent<CinemachineImpulseSource>();
     }
+    /// <summary>
+    /// Ekranı verilen yönde ve şiddette sarsmak için kullanılır. shakeDirection ile x ekseninde yön belirlenir.
+    /// </summary>
     public void ScreenShake(float shakeDirection)
     {
         impulseSource.DefaultVelocity = new Vector2(shakeVelocity.x * shakeDirection, shakeVelocity.y);
