@@ -45,4 +45,11 @@ public class SegmentData : ScriptableObject
 	[Header("Segment Özelliği")]
 	[Tooltip("Hangi effect'i kullanacağını seç: 1=DamageBoost, 2=DamagePercentageBoost")]
 	public int effectID; // Effect ID'si
+
+	// Effect-specific fields
+	[HideInInspector]
+	public float damageBoostAmount; // Damage boost miktarı (effectID = 1)
+	
+	[HideInInspector]
+	public float damagePercentageBoostAmount; // Damage percentage boost miktarı (effectID = 2)
 }

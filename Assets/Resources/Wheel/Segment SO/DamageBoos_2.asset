@@ -10,12 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: DamageBoost
+  m_Name: DamageBoos_2
   m_EditorClassIdentifier: 
-  segmentID: damageboost
+  segmentID: damageboost_2
   size: 1
   type: 3
   rarity: 0
   description: +2 Damage boost
   icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}
   effectID: 1
+  damageBoostAmount: 2
+  damagePercentageBoostAmount: 0

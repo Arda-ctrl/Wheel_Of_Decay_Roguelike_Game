@@ -232,7 +232,6 @@ public class WheelManager : MonoBehaviour
         
         slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
         
-        isSpinning = false;
         OnSpinEnd();
     }
 
@@ -266,6 +265,7 @@ public class WheelManager : MonoBehaviour
             yield return null;
         }
         slotParent.localEulerAngles = new Vector3(0, 0, endAngle);
+        isSpinning = false; // Çark eski haline döndükten sonra isSpinning'i false yapıyoruz
     }
 
     private int GetSlotUnderIndicator()
