@@ -16,7 +16,7 @@ public class LevelCameraManager : MonoBehaviour
 
         Instance = this;
 
-        allCameras = FindObjectsOfType<LevelCamera>(true); // Sahnedeki tüm kameraları al
+        allCameras = Object.FindObjectsByType<LevelCamera>(FindObjectsSortMode.None); // Sahnedeki tüm kameraları al
     }
 
     public void SetActiveCamera(LevelCamera targetCam, Transform player)

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 1
   m_EditorClassIdentifier: 
   roomID: room_1
-  roomPrefab: {fileID: 3222029564153279985, guid: 3e7730e03245aec4db676762e293a0ba, type: 3}
+  roomPrefab: {fileID: 7043786516889126535, guid: 6c96544e5532b84409b6575718d1fd6f, type: 3}
   minEnemyCount: 1
   maxEnemyCount: 4
   hasReward: 0

@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 public class RoomGenerator : MonoBehaviour
 {
     public RoomData[] roomPool; // Random seçeceğimiz odalar
     public int numberOfRooms = 5;
     public float roomSpacing = 20f; // Çok çakışma olursa arttırabilirsin
+    public int maxAttempts = 3; // Bir odayı yerleştirmek için maksimum deneme sayısı
 
     private List<RoomInteractive> spawnedRooms = new List<RoomInteractive>();
 
@@ -23,15 +25,35 @@ public class RoomGenerator : MonoBehaviour
         spawnedRooms.Add(firstInteractive);
 
         // Diğer odaları sırayla bağla
-        for (int i = 1; i < numberOfRooms; i++)
+        int currentRooms = 1;
+        int failedAttempts = 0;
+
+        while (currentRooms < numberOfRooms && failedAttempts < maxAttempts * numberOfRooms)
         {
-            SpawnNextRoom();
+            if (SpawnNextRoom())
+            {
+                currentRooms++;
+                failedAttempts = 0;
+            }
+            else
+            {
+                failedAttempts++;
+            }
+        }
+
+        if (currentRooms < numberOfRooms)
+        {
+            Debug.LogWarning($"Sadece {currentRooms} oda oluşturulabildi. İstenen: {numberOfRooms}");
         }
     }
 
-    void SpawnNextRoom()
+    bool SpawnNextRoom()
     {
         Debug.Log("Yeni oda spawn etmeye çalışılıyor.");
+        
+        // Mevcut odaları kontrol et ve yok edilmiş olanları listeden çıkar
+        spawnedRooms.RemoveAll(room => room == null);
+        
         // Mevcut odalardan bağlantısı boştan birini bul
         foreach (RoomInteractive existingRoom in spawnedRooms)
         {
@@ -47,7 +69,7 @@ public class RoomGenerator : MonoBehaviour
             RoomConnectionPoint toPoint = FindCompatibleConnection(fromPoint.direction, newRoomInteractive);
             if (toPoint == null)
             {
-                 Debug.Log("Bağlantı bulunamadı, yeni oda silindi.");
+                Debug.Log("Bağlantı bulunamadı, yeni oda silindi.");
                 Destroy(newRoomGO);
                 continue; // başka bağlantı deneriz
             }
@@ -74,20 +96,36 @@ public class RoomGenerator : MonoBehaviour
             {
                 doorB.connectionPoint = toPoint;
             }
+            
             spawnedRooms.Add(newRoomInteractive);
 
             RoomInitializer initializer = newRoomGO.GetComponent<RoomInitializer>();
             if (initializer != null)
                 initializer.InitializeRoom(newRoomData); // DÜŞMANLARI ODA İÇİNDE BAŞLAT
-            return;
+
+            // Kısa bir süre bekleyip odanın yok edilip edilmediğini kontrol et
+            StartCoroutine(CheckRoomDestroyed(newRoomInteractive));
+            
+            return true;
         }
 
         Debug.LogWarning("Yeni oda yerleştirilemedi, bağlantı bulunamadı.");
+        return false;
+    }
+
+    System.Collections.IEnumerator CheckRoomDestroyed(RoomInteractive room)
+    {
+        yield return new WaitForSeconds(0.1f);
+        
+        // Eğer oda yok edildiyse, yeni bir oda oluşturmayı dene
+        if (room == null)
+        {
+            SpawnNextRoom();
+        }
     }
 
     RoomConnectionPoint FindCompatibleConnection(ConnectionDirection targetDirection, RoomInteractive room)
     {
-        
         // Hedef yönün zıttı lazım
         ConnectionDirection neededDirection = GetOppositeDirection(targetDirection);
         foreach (var point in room.connectionPoints)
