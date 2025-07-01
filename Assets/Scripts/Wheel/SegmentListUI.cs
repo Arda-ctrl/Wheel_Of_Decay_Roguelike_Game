@@ -95,7 +95,13 @@ public class SegmentListUI : MonoBehaviour
         // Icon
         if (button.transform.Find("Icon")?.GetComponent<Image>() is Image iconImage)
         {
-            iconImage.sprite = segment.icon;
+            // Prefab'dan sprite'ı al
+            var spriteRenderer = segment.segmentPrefab?.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                iconImage.sprite = spriteRenderer.sprite;
+                iconImage.color = segment.segmentColor; // Segment rengini uygula
+            }
         }
 
         // Info Text

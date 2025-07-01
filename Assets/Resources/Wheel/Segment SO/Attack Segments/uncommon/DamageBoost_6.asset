@@ -17,7 +17,8 @@ MonoBehaviour:
   type: 3
   rarity: 1
   description: +6 Damage boost
-  icon: {fileID: -4242730634477352767, guid: 0a5f1b47a05736645bf209560242e9d2, type: 3}
+  segmentPrefab: {fileID: 5493077626770474679, guid: 2375849ed9e17f44d80f514102e28469, type: 3}
+  segmentColor: {r: 0.30860624, g: 0.6441807, b: 0.6886792, a: 1}
   effectID: 1
   damageBoostAmount: 6
   damagePercentageBoostAmount: 0

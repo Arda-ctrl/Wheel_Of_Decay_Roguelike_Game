@@ -9,10 +9,11 @@ public class SegmentDataEditor : Editor
     SerializedProperty type;
     SerializedProperty rarity;
     SerializedProperty description;
-    SerializedProperty icon;
+    SerializedProperty segmentPrefab;
     SerializedProperty effectID;
     SerializedProperty damageBoostAmount;
     SerializedProperty damagePercentageBoostAmount;
+    SerializedProperty segmentColor;
 
     private SegmentData segmentData;
 
@@ -26,10 +27,11 @@ public class SegmentDataEditor : Editor
         type = serializedObject.FindProperty("type");
         rarity = serializedObject.FindProperty("rarity");
         description = serializedObject.FindProperty("description");
-        icon = serializedObject.FindProperty("icon");
+        segmentPrefab = serializedObject.FindProperty("segmentPrefab");
         effectID = serializedObject.FindProperty("effectID");
         damageBoostAmount = serializedObject.FindProperty("damageBoostAmount");
         damagePercentageBoostAmount = serializedObject.FindProperty("damagePercentageBoostAmount");
+        segmentColor = serializedObject.FindProperty("segmentColor");
     }
 
     public override void OnInspectorGUI()
@@ -44,7 +46,8 @@ public class SegmentDataEditor : Editor
         EditorGUILayout.PropertyField(type);
         EditorGUILayout.PropertyField(rarity);
         EditorGUILayout.PropertyField(description);
-        EditorGUILayout.PropertyField(icon);
+        EditorGUILayout.PropertyField(segmentPrefab);
+        EditorGUILayout.PropertyField(segmentColor);
 
         // Effect seçimi
         EditorGUILayout.Space(10);

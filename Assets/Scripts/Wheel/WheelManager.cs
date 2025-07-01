@@ -11,9 +11,6 @@ public class WheelManager : MonoBehaviour
     [SerializeField] private Transform slotParent;       // Tüm slotların child'ı olacak obje
     [SerializeField] private int slotCount = 36;
         
-    [Header("Segment Yerleştirme")]
-    [SerializeField] private GameObject segmentPrefab;   // SegmentInstance prefab'ı
-    [SerializeField] private SegmentData testSegment;    // Test amaçlı inspector'dan atanacak segment
 
     [Header("Çark Döndürme Ayarları")]
     [SerializeField] private float spinDuration = 3f; // Dönüş süresi (saniye)
@@ -74,7 +71,7 @@ public class WheelManager : MonoBehaviour
     /// </summary>
     public void PlaceSegment(SegmentData data, int slotIndex)
     {
-        if (data == null) return;
+        if (data == null || data.segmentPrefab == null) return;
         int size = data.size;
         int half = size / 2;
         int startSlot = (slotIndex - half + slotCount) % slotCount;
@@ -84,13 +81,20 @@ public class WheelManager : MonoBehaviour
             int idx = (startSlot + i) % slotCount;
             slotOccupied[idx] = true;
         }
-        GameObject go = Instantiate(segmentPrefab, slots[startSlot]);
+        GameObject go = Instantiate(data.segmentPrefab, slots[startSlot]);
         go.name = $"Segment_{startSlot}_{data.segmentID}";
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;
+
+        // SegmentInstance ekle
         var inst = go.GetComponent<SegmentInstance>();
         if (inst != null)
             inst.Init(data, startSlot);
+
+        // Rengi ayarla
+        var sr = go.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.color = data.segmentColor;
     }
 
     /// <summary>
@@ -141,15 +145,17 @@ public class WheelManager : MonoBehaviour
     private void ShowTempSegment(SegmentData data, int slotIndex)
     {
         RemoveTempSegment();
-        if (data == null || slotIndex < 0 || slotIndex >= slots.Length) return;
-        tempSegmentInstance = Instantiate(segmentPrefab, slots[slotIndex]);
+        if (data == null || data.segmentPrefab == null || slotIndex < 0 || slotIndex >= slots.Length) return;
+        
+        tempSegmentInstance = Instantiate(data.segmentPrefab, slots[slotIndex]);
         tempSegmentInstance.name = $"TempSegment_{slotIndex}_{data.segmentID}";
         tempSegmentInstance.transform.localPosition = Vector3.zero;
         tempSegmentInstance.transform.localRotation = Quaternion.identity;
-        var inst = tempSegmentInstance.GetComponent<SegmentInstance>();
-        if (inst != null)
-            inst.Init(data, slotIndex);
-        // Şeffaflık kaldırıldı, segment tam opak olacak
+
+        // Rengi ayarla
+        var sr = tempSegmentInstance.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.color = data.segmentColor;
     }
 
     private void RemoveTempSegment()

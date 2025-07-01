@@ -40,7 +40,11 @@ public class SegmentData : ScriptableObject
 	[TextArea(3, 5)]
 	public string description; // Segmentin açıklaması
 
-	public Sprite icon; // Artistin çizdiği sprite buraya atanacak
+	[Header("Görsel")]
+	public GameObject segmentPrefab; // Segment prefabı
+
+	[Header("Görünüm Ayarları")]
+	public Color segmentColor = Color.white; // Segment rengi
 	
 	[Header("Segment Özelliği")]
 	[Tooltip("Hangi effect'i kullanacağını seç: 1=DamageBoost, 2=DamagePercentageBoost")]

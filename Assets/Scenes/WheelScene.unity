@@ -652,8 +652,6 @@ MonoBehaviour:
   wheelSlotPrefab: {fileID: 1385291410846267625, guid: 77324e4dfef918642b936991067b2b87, type: 3}
   slotParent: {fileID: 691991447}
   slotCount: 36
-  segmentPrefab: {fileID: 1385291410846267625, guid: c49dacb5e0b814e4a974168361453fc9, type: 3}
-  testSegment: {fileID: 11400000, guid: 98365cf87c2831e4fa61ea83a8c8a5f1, type: 2}
   spinDuration: 3
   minSpinRounds: 3
   maxSpinRounds: 6
@@ -2733,7 +2731,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0.23584908, g: 0.21026169, b: 0.21026169, a: 0.87058824}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

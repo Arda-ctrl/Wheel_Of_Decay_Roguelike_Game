@@ -37,7 +37,6 @@ public class SegmentInstance : MonoBehaviour
     {
         this.data = data;
         this.startSlotIndex = slotIndex;
-        UpdateVisual();
         
         if (sr != null)
             sr.sortingOrder = SegmentOrderInLayer;
@@ -45,8 +44,7 @@ public class SegmentInstance : MonoBehaviour
 
     private void UpdateVisual()
     {
-        if (sr != null && data?.icon != null)
-            sr.sprite = data.icon;
+        // Artık prefab kullandığımız için sprite güncellemeye gerek yok
     }
 
     private void ShowTooltip()
