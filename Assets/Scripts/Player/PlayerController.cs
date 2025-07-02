@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using System.Collections;
+using UnityEngine.Events;
 
 public class PlayerController : MonoBehaviour
 {
@@ -6,47 +9,75 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed;
     public Rigidbody2D theRB;
     public Transform gunArm;
-    public GameObject bulletToFire;
-    public Transform firePoint;
-    public float timeBetweenShots;
-
+    
+    [Header("References")]
+    [SerializeField] private WeaponController weaponController;
 
     private Vector2 moveInput;
+    private Vector2 mousePosition;
     private Camera theCam;
-    private float shotCounter;
-    public SpriteRenderer bodySR; 
+    public SpriteRenderer bodySR;
     private float activeMoveSpeed;
-    public float dashSpeed = 8f,dashLenght = .5f,dashCooldown = 1f,dashInvisiblity;
+    public float dashSpeed = 8f, dashLenght = .5f, dashCooldown = 1f, dashInvisiblity;
     [HideInInspector]
     public float dashCounter;
     private float dashCoolCounter;
 
+    private PlayerInputActions playerInputActions;
+    private bool canControl = true;
+
     void Awake()
     {
         instance = this;
-    }
-    void Start()
-    {       
-        theCam = Camera.main;
+        playerInputActions = new PlayerInputActions();
 
+        // Subscribe to input events
+        playerInputActions.Player.Movement.performed += OnMovement;
+        playerInputActions.Player.Movement.canceled += OnMovement;
+        playerInputActions.Player.Look.performed += OnLook;
+        playerInputActions.Player.Fire.started += OnFireStart;
+        playerInputActions.Player.Fire.canceled += OnFireEnd;
+        playerInputActions.Player.Dash.performed += OnDash;
+
+        // Get WeaponController reference if not set
+        if (weaponController == null)
+        {
+            weaponController = GetComponent<WeaponController>();
+        }
+    }
+
+    private void OnEnable()
+    {
+        playerInputActions.Enable();
+    }
+
+    private void OnDisable()
+    {
+        playerInputActions.Disable();
+    }
+
+    void Start()
+    {
+        theCam = Camera.main;
         activeMoveSpeed = moveSpeed;
     }
 
     void Update()
     {
-        moveInput.x = Input.GetAxisRaw("Horizontal");
-        moveInput.y = Input.GetAxisRaw("Vertical");
+        if (!canControl)
+        {
+            // Stop all movement and actions when control is disabled
+            theRB.linearVelocity = Vector2.zero;
+            return;
+        }
 
-        moveInput.Normalize();
-
-        //transform.position += new Vector3(moveInput.x * Time.deltaTime * moveSpeed,moveInput.y * Time.deltaTime * moveSpeed,0f);
-
+        // Handle movement
         theRB.linearVelocity = moveInput * activeMoveSpeed;
 
-        Vector3 mousePos = Input.mousePosition;
+        // Handle gun arm rotation
         Vector3 screenPoint = theCam.WorldToScreenPoint(transform.localPosition);
-
-        if (mousePos.x < screenPoint.x)
+        
+        if (mousePosition.x < screenPoint.x)
         {
             transform.localScale = new Vector3(-1f, 1f, 1f);
             gunArm.localScale = new Vector3(-1f, -1f, 1f);
@@ -57,40 +88,12 @@ public class PlayerController : MonoBehaviour
             gunArm.localScale = Vector3.one;
         }
 
-        Vector2 offset = new Vector2(mousePos.x - screenPoint.x, mousePos.y - screenPoint.y);
+        // Calculate gun rotation
+        Vector2 offset = new Vector2(mousePosition.x - screenPoint.x, mousePosition.y - screenPoint.y);
         float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
         gunArm.rotation = Quaternion.Euler(0, 0, angle);
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            Instantiate(bulletToFire, firePoint.position, firePoint.rotation);
-            shotCounter = timeBetweenShots;
-            AudioManager.instance.PlaySFX(12);
-        }
-        if (Input.GetMouseButton(0))
-        {
-            shotCounter -= Time.deltaTime;
-
-            if (shotCounter <= 0)
-            {
-                Instantiate(bulletToFire, firePoint.position, firePoint.rotation);
-                AudioManager.instance.PlaySFX(12);
-
-                shotCounter = timeBetweenShots;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (dashCoolCounter <= 0 && dashCounter <= 0)
-            {
-                activeMoveSpeed = dashSpeed;
-                dashCounter = dashLenght;
-
-                PlayerHealthController.instance.MakeInvincible(dashInvisiblity);
-
-                AudioManager.instance.PlaySFX(8);
-            }
-        }
+        // Handle dash cooldown
         if (dashCounter > 0)
         {
             dashCounter -= Time.deltaTime;
@@ -106,4 +109,66 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnMovement(InputAction.CallbackContext context)
+    {
+        if (!canControl) return;
+        moveInput = context.ReadValue<Vector2>();
+        moveInput.Normalize();
+    }
+
+    private void OnLook(InputAction.CallbackContext context)
+    {
+        if (!canControl) return;
+        mousePosition = context.ReadValue<Vector2>();
+    }
+
+    private void OnFireStart(InputAction.CallbackContext context)
+    {
+        if (!canControl || weaponController == null) return;
+        weaponController.StartFiring();
+    }
+
+    private void OnFireEnd(InputAction.CallbackContext context)
+    {
+        if (weaponController != null)
+        {
+            weaponController.StopFiring();
+        }
+    }
+
+    private void OnDash(InputAction.CallbackContext context)
+    {
+        if (!canControl) return;
+        if (dashCoolCounter <= 0 && dashCounter <= 0)
+        {
+            activeMoveSpeed = dashSpeed;
+            dashCounter = dashLenght;
+            PlayerHealthController.instance.MakeInvincible(dashInvisiblity);
+            AudioManager.instance.PlaySFX(8);
+        }
+    }
+
+    public void DisableControl()
+    {
+        canControl = false;
+        if (weaponController != null)
+        {
+            weaponController.StopFiring();
+        }
+        moveInput = Vector2.zero;
+        
+        if (theRB != null)
+        {
+            theRB.constraints = RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezePositionY;
+        }
+    }
+
+    public void EnableControl()
+    {
+        if (theRB != null)
+        {
+            theRB.constraints = RigidbodyConstraints2D.None;
+        }
+        canControl = true;
+    }
 }

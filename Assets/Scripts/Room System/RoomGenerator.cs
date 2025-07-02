@@ -1,36 +1,52 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Collections;
+using System.Linq;
 
 public class RoomGenerator : MonoBehaviour
 {
-    public RoomData[] roomPool; // Random seçeceğimiz odalar
+    [Header("Room Settings")]
+    public RoomData[] roomPool;
     public int numberOfRooms = 5;
-    public float roomSpacing = 20f; // Çok çakışma olursa arttırabilirsin
-    public int maxAttempts = 3; // Bir odayı yerleştirmek için maksimum deneme sayısı
+    public float xOffset = 18f;
+    public float yOffset = 10f;
+    public LayerMask whatIsRoom;
+    
+    [Header("Generation Settings")]
+    public int maxAttempts = 3;
+    public float roomCheckRadius = 0.2f;
+    
+    private List<GameObject> spawnedRooms = new List<GameObject>();
+    private Transform generatorPoint;
+    private GameObject startRoom;
+    private GameObject endRoom;
 
-    private List<RoomInteractive> spawnedRooms = new List<RoomInteractive>();
-
-    void Start()
+    private void Start()
     {
-        GenerateRooms();
+        generatorPoint = new GameObject("Generator Point").transform;
+        generatorPoint.position = Vector3.zero;
+        GenerateLevel();
     }
 
-    void GenerateRooms()
+    void GenerateLevel()
     {
-        // İlk odayı yerleştir
-        RoomData firstRoom = roomPool[Random.Range(0, roomPool.Length)];
-        GameObject firstGO = Instantiate(firstRoom.roomPrefab, Vector3.zero, Quaternion.identity);
-        RoomInteractive firstInteractive = firstGO.GetComponent<RoomInteractive>();
-        spawnedRooms.Add(firstInteractive);
+        // Start Room'u yerleştir
+        RoomData startRoomData = roomPool.FirstOrDefault(r => r.isStartRoom);
+        if (startRoomData == null)
+        {
+            Debug.LogError("Start Room bulunamadı! Lütfen bir odayı Start Room olarak işaretleyin.");
+            return;
+        }
 
-        // Diğer odaları sırayla bağla
+        startRoom = SpawnRoom(startRoomData, Vector3.zero);
+        spawnedRooms.Add(startRoom);
+
+        // Diğer odaları oluştur
         int currentRooms = 1;
         int failedAttempts = 0;
 
         while (currentRooms < numberOfRooms && failedAttempts < maxAttempts * numberOfRooms)
         {
-            if (SpawnNextRoom())
+            if (TrySpawnNextRoom())
             {
                 currentRooms++;
                 failedAttempts = 0;
@@ -38,113 +54,149 @@ public class RoomGenerator : MonoBehaviour
             else
             {
                 failedAttempts++;
+                ChangeGeneratorDirection();
             }
         }
 
-        if (currentRooms < numberOfRooms)
+        // End Room'u yerleştir
+        RoomData endRoomData = roomPool.FirstOrDefault(r => r.isEndRoom);
+        if (endRoomData != null)
         {
-            Debug.LogWarning($"Sadece {currentRooms} oda oluşturulabildi. İstenen: {numberOfRooms}");
+            endRoom = SpawnRoom(endRoomData, generatorPoint.position);
+            if (endRoom != null)
+            {
+                spawnedRooms.Add(endRoom);
+            }
         }
     }
 
-    bool SpawnNextRoom()
+    bool TrySpawnNextRoom()
     {
-        Debug.Log("Yeni oda spawn etmeye çalışılıyor.");
+        Vector3 checkPos = generatorPoint.position;
         
-        // Mevcut odaları kontrol et ve yok edilmiş olanları listeden çıkar
-        spawnedRooms.RemoveAll(room => room == null);
-        
-        // Mevcut odalardan bağlantısı boştan birini bul
-        foreach (RoomInteractive existingRoom in spawnedRooms)
+        if (Physics2D.OverlapCircle(checkPos, roomCheckRadius, whatIsRoom))
         {
-            RoomConnectionPoint fromPoint = existingRoom.GetAvailableConnection();
-            if (fromPoint == null) continue;
+            return false;
+        }
 
-            // Yeni bir oda seç
-            RoomData newRoomData = roomPool[Random.Range(0, roomPool.Length)];
-            GameObject newRoomGO = Instantiate(newRoomData.roomPrefab);
-            RoomInteractive newRoomInteractive = newRoomGO.GetComponent<RoomInteractive>();
+        // Komşu odaları kontrol et
+        bool roomAbove = Physics2D.OverlapCircle(checkPos + new Vector3(0, yOffset, 0), roomCheckRadius, whatIsRoom);
+        bool roomBelow = Physics2D.OverlapCircle(checkPos + new Vector3(0, -yOffset, 0), roomCheckRadius, whatIsRoom);
+        bool roomLeft = Physics2D.OverlapCircle(checkPos + new Vector3(-xOffset, 0, 0), roomCheckRadius, whatIsRoom);
+        bool roomRight = Physics2D.OverlapCircle(checkPos + new Vector3(xOffset, 0, 0), roomCheckRadius, whatIsRoom);
 
-            // Yeni odadan bağlantı noktası bul (eşleşen yönü)
-            RoomConnectionPoint toPoint = FindCompatibleConnection(fromPoint.direction, newRoomInteractive);
-            if (toPoint == null)
-            {
-                Debug.Log("Bağlantı bulunamadı, yeni oda silindi.");
-                Destroy(newRoomGO);
-                continue; // başka bağlantı deneriz
-            }
+        // Uygun oda tipini belirle
+        RoomData.RoomConnectionType requiredType = DetermineRoomType(roomAbove, roomBelow, roomLeft, roomRight);
+        
+        // Uygun odaları filtrele
+        var suitableRooms = roomPool.Where(r => 
+            r.connectionType == requiredType && 
+            !r.isStartRoom && 
+            !r.isEndRoom).ToArray();
 
-            // Pozisyonu ayarla (kapılar hizalanacak şekilde)
-            Vector3 offset = fromPoint.transform.position - toPoint.transform.localPosition;
-            newRoomGO.transform.position = offset;
+        if (suitableRooms.Length == 0)
+        {
+            return false;
+        }
 
-            // Bağlantıyı işaretle
-            fromPoint.isOccupied = true;
-            toPoint.isOccupied = true;
-
-            fromPoint.connectedTo = toPoint;
-            toPoint.connectedTo = fromPoint;
-
-            DoorTrigger doorA = fromPoint.GetComponent<DoorTrigger>();
-            if (doorA != null)
-            {
-                doorA.connectionPoint = fromPoint;
-            }
-
-            DoorTrigger doorB = toPoint.GetComponent<DoorTrigger>();
-            if (doorB != null)
-            {
-                doorB.connectionPoint = toPoint;
-            }
-            
-            spawnedRooms.Add(newRoomInteractive);
-
-            RoomInitializer initializer = newRoomGO.GetComponent<RoomInitializer>();
-            if (initializer != null)
-                initializer.InitializeRoom(newRoomData); // DÜŞMANLARI ODA İÇİNDE BAŞLAT
-
-            // Kısa bir süre bekleyip odanın yok edilip edilmediğini kontrol et
-            StartCoroutine(CheckRoomDestroyed(newRoomInteractive));
-            
+        // Rastgele bir oda seç ve yerleştir
+        RoomData selectedRoom = suitableRooms[Random.Range(0, suitableRooms.Length)];
+        GameObject newRoom = SpawnRoom(selectedRoom, checkPos);
+        
+        if (newRoom != null)
+        {
+            spawnedRooms.Add(newRoom);
+            MoveGeneratorPoint();
             return true;
         }
 
-        Debug.LogWarning("Yeni oda yerleştirilemedi, bağlantı bulunamadı.");
         return false;
     }
 
-    System.Collections.IEnumerator CheckRoomDestroyed(RoomInteractive room)
+    RoomData.RoomConnectionType DetermineRoomType(bool up, bool down, bool left, bool right)
     {
-        yield return new WaitForSeconds(0.1f);
+        int connections = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+
+        switch (connections)
+        {
+            case 1:
+                if (up) return RoomData.RoomConnectionType.SingleUp;
+                if (down) return RoomData.RoomConnectionType.SingleDown;
+                if (left) return RoomData.RoomConnectionType.SingleLeft;
+                return RoomData.RoomConnectionType.SingleRight;
+
+            case 2:
+                if (up && down) return RoomData.RoomConnectionType.DoubleUpDown;
+                if (left && right) return RoomData.RoomConnectionType.DoubleLeftRight;
+                if (up && left) return RoomData.RoomConnectionType.DoubleUpLeft;
+                if (up && right) return RoomData.RoomConnectionType.DoubleUpRight;
+                if (down && left) return RoomData.RoomConnectionType.DoubleDownLeft;
+                return RoomData.RoomConnectionType.DoubleDownRight;
+
+            case 3:
+                if (up && right && down) return RoomData.RoomConnectionType.TripleUpRightDown;
+                if (up && left && down) return RoomData.RoomConnectionType.TripleUpLeftDown;
+                if (down && left && right) return RoomData.RoomConnectionType.TripleDownRightLeft;
+                return RoomData.RoomConnectionType.TripleUpLeftRight;
+
+            case 4:
+                return RoomData.RoomConnectionType.Fourway;
+
+            default:
+                Debug.LogError("Geçersiz bağlantı sayısı!");
+                return RoomData.RoomConnectionType.SingleUp;
+        }
+    }
+
+    void MoveGeneratorPoint()
+    {
+        int direction = Random.Range(0, 4);
+        switch (direction)
+        {
+            case 0: // Up
+                generatorPoint.position += new Vector3(0, yOffset, 0);
+                break;
+            case 1: // Right
+                generatorPoint.position += new Vector3(xOffset, 0, 0);
+                break;
+            case 2: // Down
+                generatorPoint.position += new Vector3(0, -yOffset, 0);
+                break;
+            case 3: // Left
+                generatorPoint.position += new Vector3(-xOffset, 0, 0);
+                break;
+        }
+    }
+
+    void ChangeGeneratorDirection()
+    {
+        MoveGeneratorPoint();
+        while (Physics2D.OverlapCircle(generatorPoint.position, roomCheckRadius, whatIsRoom))
+        {
+            MoveGeneratorPoint();
+        }
+    }
+
+    GameObject SpawnRoom(RoomData roomData, Vector3 position)
+    {
+        if (roomData == null || roomData.roomPrefab == null) return null;
+
+        GameObject room = Instantiate(roomData.roomPrefab, position, Quaternion.identity);
         
-        // Eğer oda yok edildiyse, yeni bir oda oluşturmayı dene
-        if (room == null)
+        // Oda rengini ayarla
+        var spriteRenderer = room.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
         {
-            SpawnNextRoom();
+            spriteRenderer.color = roomData.roomColor;
         }
-    }
 
-    RoomConnectionPoint FindCompatibleConnection(ConnectionDirection targetDirection, RoomInteractive room)
-    {
-        // Hedef yönün zıttı lazım
-        ConnectionDirection neededDirection = GetOppositeDirection(targetDirection);
-        foreach (var point in room.connectionPoints)
+        // Odayı başlat
+        var initializer = room.GetComponent<RoomInitializer>();
+        if (initializer != null)
         {
-            if (!point.isOccupied && point.direction == neededDirection)
-                return point;
+            initializer.InitializeRoom(roomData);
         }
-        return null;
-    }
 
-    ConnectionDirection GetOppositeDirection(ConnectionDirection dir)
-    {
-        switch (dir)
-        {
-            case ConnectionDirection.North: return ConnectionDirection.South;
-            case ConnectionDirection.South: return ConnectionDirection.North;
-            case ConnectionDirection.East: return ConnectionDirection.West;
-            case ConnectionDirection.West: return ConnectionDirection.East;
-            default: return dir;
-        }
+        return room;
     }
 }
