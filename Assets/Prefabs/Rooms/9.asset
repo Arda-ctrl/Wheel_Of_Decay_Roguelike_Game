@@ -14,7 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomID: room_9
   roomPrefab: {fileID: 8885986584681403893, guid: e7afdbcb2769ce64380c42146d89c32f, type: 3}
+  roomColor: {r: 1, g: 1, b: 1, a: 1}
+  isStartRoom: 0
+  isEndRoom: 0
+  connectionType: 5
+  possibleEnemies: []
   minEnemyCount: 0
   maxEnemyCount: 0
   hasReward: 0
   rewardPrefab: {fileID: 0}
+  possiblePickups: []
+  pickupSpawnChance: 0.3

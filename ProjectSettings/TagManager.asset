@@ -60,6 +60,9 @@ TagManager:
   - name: Bullets
     uniqueID: 2645418781
     locked: 0
+  - name: NPC
+    uniqueID: 1822571237
+    locked: 0
   - name: Player
     uniqueID: 2441681637
     locked: 0

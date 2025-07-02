@@ -7,31 +7,41 @@ public class PlayerHealthController : MonoBehaviour
     public int maxHealth;
     public float damageInvisibleLenght = 1f;
     private float invisCount;
+
+    [SerializeField] private SpriteRenderer playerSprite;
+
     private void Awake()
     {
         instance = this;
     }
+
     void Start()
     {
+        if (playerSprite == null)
+        {
+            playerSprite = GetComponentInChildren<SpriteRenderer>();
+        }
+
         currentHealth = maxHealth;
 
         UI_Controller.instance.healthSlider.maxValue = maxHealth;
         UI_Controller.instance.healthSlider.value = currentHealth;
         UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
-
     }
+
     void Update()
     {
         if (invisCount > 0)
         {
             invisCount -= Time.deltaTime;
 
-            if (invisCount <= 0)
+            if (invisCount <= 0 && playerSprite != null)
             {
-                PlayerController.instance.bodySR.color = new Color(PlayerController.instance.bodySR.color.r, PlayerController.instance.bodySR.color.g, PlayerController.instance.bodySR.color.b, 1f);
+                SetPlayerAlpha(1f);
             }
         }
     }
+
     public void DamagePlayer()
     {
         if (invisCount <= 0)
@@ -41,14 +51,12 @@ public class PlayerHealthController : MonoBehaviour
 
             invisCount = damageInvisibleLenght;
 
-            PlayerController.instance.bodySR.color = new Color(PlayerController.instance.bodySR.color.r, PlayerController.instance.bodySR.color.g, PlayerController.instance.bodySR.color.b, .5f);
+            SetPlayerAlpha(0.5f);
 
             if (currentHealth <= 0)
             {
                 PlayerController.instance.gameObject.SetActive(false);
-
                 UI_Controller.instance.deathScreen.SetActive(true);
-
                 AudioManager.instance.PlayGameOver();
                 AudioManager.instance.PlaySFX(8);
             }
@@ -57,13 +65,13 @@ public class PlayerHealthController : MonoBehaviour
             UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
         }
     }
+
     public void MakeInvincible(float lenght)
     {
         invisCount = lenght;
-
-        PlayerController.instance.bodySR.color = new Color(PlayerController.instance.bodySR.color.r, PlayerController.instance.bodySR.color.g, PlayerController.instance.bodySR.color.b, .5f);
-
+        SetPlayerAlpha(0.5f);
     }
+
     public void HealPlayer(int healAmount)
     {
         currentHealth += healAmount;
@@ -75,6 +83,14 @@ public class PlayerHealthController : MonoBehaviour
         UI_Controller.instance.healthSlider.value = currentHealth;
         UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
     }
-    
-    
+
+    private void SetPlayerAlpha(float alpha)
+    {
+        if (playerSprite != null)
+        {
+            Color color = playerSprite.color;
+            color.a = alpha;
+            playerSprite.color = color;
+        }
+    }
 }

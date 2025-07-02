@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f62ea3eed4163f04092a352efe14963e, type: 3}
+  m_Name: Test
+  m_EditorClassIdentifier: 
+  npcName: Jhon
+  dialogueLines:
+  - text: "Selamlar y\xFCce olan.kafbkbhasfhksgdkfshjfshfkshfksfhskdhkvhskhksdkhgdsjhgksdgj"
+    voiceClip: {fileID: 8300000, guid: 2df32487e3056aa4888eb785169b6d9b, type: 3}
+  - text: "senin anneni \xF6piyim"
+    voiceClip: {fileID: 8300000, guid: 2df32487e3056aa4888eb785169b6d9b, type: 3}
+  - text: "babanla birdirbir oynayay\u0131m"
+    voiceClip: {fileID: 8300000, guid: 2df32487e3056aa4888eb785169b6d9b, type: 3}
+  - text: hoppa
+    voiceClip: {fileID: 8300000, guid: 2df32487e3056aa4888eb785169b6d9b, type: 3}
