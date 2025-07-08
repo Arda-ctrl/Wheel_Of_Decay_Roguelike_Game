@@ -10,15 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: DamageBoost_2
+  m_Name: MovementSpeedBoost
   m_EditorClassIdentifier: 
-  segmentID: damageboost_2
+  segmentID: damageboost
   size: 1
-  type: 3
+  type: 1
   rarity: 0
-  description: +2 Damage boost
+  description: +2 Movement Speed boost
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.8773585, g: 0.47592562, b: 0.47592562, a: 1}
-  effectID: 1
-  damageBoostAmount: 2
-  damagePercentageBoostAmount: 0
+  segmentColor: {r: 0.36418653, g: 0.8301887, b: 0.8111629, a: 1}
+  statType: 3
+  statAmount: 2

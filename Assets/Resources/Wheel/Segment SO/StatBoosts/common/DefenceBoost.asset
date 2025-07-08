@@ -10,15 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: DamageBoost_6
+  m_Name: DefenceBoost
   m_EditorClassIdentifier: 
-  segmentID: damageboost_6
-  size: 2
-  type: 3
-  rarity: 1
-  description: +6 Damage boost
-  segmentPrefab: {fileID: 5493077626770474679, guid: 2375849ed9e17f44d80f514102e28469, type: 3}
-  segmentColor: {r: 0.30860624, g: 0.6441807, b: 0.6886792, a: 1}
-  effectID: 1
-  damageBoostAmount: 6
-  damagePercentageBoostAmount: 0
+  segmentID: damageboost
+  size: 1
+  type: 2
+  rarity: 0
+  description: +2 Defence boost
+  segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
+  segmentColor: {r: 0.36862743, g: 0.4150892, b: 0.94509804, a: 1}
+  statType: 1
+  statAmount: 2
