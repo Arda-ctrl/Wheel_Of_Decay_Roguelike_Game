@@ -1,105 +1,63 @@
 using UnityEngine;
 
-/// <summary>
-/// Tüm segment effectlerini yöneten sınıf
-/// </summary>
 public class SegmentEffectHandler : MonoBehaviour
 {
     public static SegmentEffectHandler Instance { get; private set; }
-    
     private void Awake()
     {
         if (Instance == null)
-        {
             Instance = this;
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
-    
-    /// <summary>
-    /// Segment effect'ini aktifleştir
-    /// </summary>
     public void ActivateSegmentEffect(SegmentData segmentData, int stackCount)
     {
-        switch (segmentData.effectID)
+        float totalAmount = segmentData.statAmount * stackCount;
+        if (StatsUI.Instance != null)
         {
-            case 1: // DamageBoost
-                ActivateDamageBoost(segmentData, stackCount);
-                break;
-                
-            case 2: // DamagePercentageBoost
-                ActivateDamagePercentageBoost(segmentData, stackCount);
-                break;
-                
-            default:
-                Debug.LogWarning($"Bilinmeyen effect ID: {segmentData.effectID}");
-                break;
+            switch (segmentData.statType)
+            {
+                case StatType.Attack:
+                    StatsUI.Instance.AddStatBonus(attackDamage: totalAmount);
+                    break;
+                case StatType.Defence:
+                    StatsUI.Instance.AddStatBonus(defense: totalAmount);
+                    break;
+                case StatType.AttackSpeed:
+                    StatsUI.Instance.AddStatBonus(attackSpeed: totalAmount);
+                    break;
+                case StatType.MovementSpeed:
+                    StatsUI.Instance.AddStatBonus(movementSpeed: totalAmount);
+                    break;
+                case StatType.CriticalChance:
+                    StatsUI.Instance.AddStatBonus(criticalChance: totalAmount);
+                    break;
+            }
         }
     }
-    
-    /// <summary>
-    /// Segment effect'ini deaktifleştir
-    /// </summary>
     public void DeactivateSegmentEffect(SegmentData segmentData, int stackCount)
     {
-        switch (segmentData.effectID)
-        {
-            case 1: // DamageBoost
-                DeactivateDamageBoost(segmentData, stackCount);
-                break;
-                
-            case 2: // DamagePercentageBoost
-                DeactivateDamagePercentageBoost(segmentData, stackCount);
-                break;
-                
-            default:
-                Debug.LogWarning($"Bilinmeyen effect ID: {segmentData.effectID}");
-                break;
-        }
-    }
-    
-    #region Effect Methods
-    private void ActivateDamageBoost(SegmentData segmentData, int stackCount)
-    {
+        float totalAmount = segmentData.statAmount * stackCount;
         if (StatsUI.Instance != null)
         {
-            float bonus = segmentData.damageBoostAmount * stackCount;
-            StatsUI.Instance.AddStatBonus(attackDamage: bonus);
-            Debug.Log($"Effect ID 1 (DamageBoost): Saldırı gücü {bonus} arttı! (SegmentData'dan) ");
+            switch (segmentData.statType)
+            {
+                case StatType.Attack:
+                    StatsUI.Instance.RemoveStatBonus(attackDamage: totalAmount);
+                    break;
+                case StatType.Defence:
+                    StatsUI.Instance.RemoveStatBonus(defense: totalAmount);
+                    break;
+                case StatType.AttackSpeed:
+                    StatsUI.Instance.RemoveStatBonus(attackSpeed: totalAmount);
+                    break;
+                case StatType.MovementSpeed:
+                    StatsUI.Instance.RemoveStatBonus(movementSpeed: totalAmount);
+                    break;
+                case StatType.CriticalChance:
+                    StatsUI.Instance.RemoveStatBonus(criticalChance: totalAmount);
+                    break;
+            }
         }
     }
-    
-    private void DeactivateDamageBoost(SegmentData segmentData, int stackCount)
-    {
-        if (StatsUI.Instance != null)
-        {
-            float bonus = segmentData.damageBoostAmount * stackCount;
-            StatsUI.Instance.RemoveStatBonus(attackDamage: bonus);
-            Debug.Log($"Effect ID 1 (DamageBoost): Saldırı gücü bonusu ({bonus}) kaldırıldı. (SegmentData'dan)");
-        }
-    }
-    
-    private void ActivateDamagePercentageBoost(SegmentData segmentData, int stackCount)
-    {
-        if (StatsUI.Instance != null)
-        {
-            float percentageBoost = segmentData.damagePercentageBoostAmount * stackCount;
-            StatsUI.Instance.AddDamagePercentageBoost(percentageBoost);
-            Debug.Log($"Effect ID 2 (DamagePercentageBoost): Saldırı gücü %{percentageBoost * 100f} arttı! (SegmentData'dan)");
-        }
-    }
-    
-    private void DeactivateDamagePercentageBoost(SegmentData segmentData, int stackCount)
-    {
-        if (StatsUI.Instance != null)
-        {
-            float percentageBoost = segmentData.damagePercentageBoostAmount * stackCount;
-            StatsUI.Instance.RemoveDamagePercentageBoost(percentageBoost);
-            Debug.Log($"Effect ID 2 (DamagePercentageBoost): Saldırı gücü yüzde bonusu (%{percentageBoost * 100f}) kaldırıldı. (SegmentData'dan)");
-        }
-    }
-    #endregion
 } 
