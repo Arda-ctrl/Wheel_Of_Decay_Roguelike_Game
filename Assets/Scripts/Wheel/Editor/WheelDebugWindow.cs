@@ -1,0 +1,91 @@
+using UnityEngine;
+using UnityEditor;
+using System.Linq;
+
+public class WheelDebugWindow : EditorWindow
+{
+    private string segmentSearch = "";
+    private SegmentData[] allSegments;
+    private SegmentData selectedSegment;
+    private WheelManager wheelManager;
+    private int removeSlotIndex = 0;
+    private int addSlotIndex = 0;
+
+    [MenuItem("Tools/Wheel Debug Window")]
+    public static void ShowWindow()
+    {
+        GetWindow<WheelDebugWindow>("Wheel Debug");
+    }
+
+    private void OnEnable()
+    {
+        allSegments = AssetDatabase.FindAssets("t:SegmentData")
+            .Select(guid => AssetDatabase.LoadAssetAtPath<SegmentData>(AssetDatabase.GUIDToAssetPath(guid)))
+            .ToArray();
+        wheelManager = FindAnyObjectByType<WheelManager>();
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Segment Arama ve Seçme", EditorStyles.boldLabel);
+        segmentSearch = EditorGUILayout.TextField("Segment Ara:", segmentSearch);
+        var filtered = allSegments.Where(s => string.IsNullOrEmpty(segmentSearch) || s.segmentID.ToLower().Contains(segmentSearch.ToLower())).ToArray();
+        foreach (var seg in filtered)
+        {
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button(seg.segmentID, GUILayout.Width(120)))
+                selectedSegment = seg;
+            EditorGUILayout.LabelField($"Type: {seg.type} | Rarity: {seg.rarity}", GUILayout.Width(180));
+            EditorGUILayout.EndHorizontal();
+        }
+        EditorGUILayout.Space();
+        if (selectedSegment != null)
+        {
+            EditorGUILayout.LabelField($"Seçili Segment: {selectedSegment.segmentID}");
+            if (GUILayout.Button("Çarkı Bu Segmentle Doldur"))
+            {
+                if (wheelManager != null)
+                {
+                    Undo.RecordObject(wheelManager, "Fill Wheel With Segment");
+                    wheelManager.FillWheelWithSegment(selectedSegment);
+                }
+            }
+            EditorGUILayout.Space();
+            GUILayout.Label("Seçili Segmenti Belirli Slota Ekle", EditorStyles.boldLabel);
+            addSlotIndex = EditorGUILayout.IntField("Slot Index:", addSlotIndex);
+            if (GUILayout.Button("Bu Slota Ekle"))
+            {
+                if (wheelManager != null)
+                {
+                    Undo.RecordObject(wheelManager, "Add Segment To Slot");
+                    wheelManager.AddSegmentToSlot(selectedSegment, addSlotIndex);
+                }
+            }
+        }
+        EditorGUILayout.Space();
+        GUILayout.Label("Slot Silme Testi", EditorStyles.boldLabel);
+        removeSlotIndex = EditorGUILayout.IntField("Silinecek Slot Index:", removeSlotIndex);
+        if (GUILayout.Button("Bu Slotu Sil (Segmenti Kaldır)"))
+        {
+            if (wheelManager != null)
+            {
+                Undo.RecordObject(wheelManager, "Remove Segment At Slot");
+                wheelManager.RemoveSegmentAtSlot(removeSlotIndex);
+            }
+        }
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Tüm Çarkı Temizle"))
+        {
+            if (wheelManager != null)
+            {
+                Undo.RecordObject(wheelManager, "Clear Wheel");
+                wheelManager.ClearWheel();
+            }
+        }
+        EditorGUILayout.Space();
+        if (GUILayout.Button("WheelManager'ı Yeniden Tara"))
+        {
+            wheelManager = FindAnyObjectByType<WheelManager>();
+        }
+    }
+} 

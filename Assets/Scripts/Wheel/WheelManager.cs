@@ -209,7 +209,7 @@ public class WheelManager : MonoBehaviour
         }
         return closestSlot;
     }
-    private void RemoveSegmentAtSlot(int slotIndex)
+    public void RemoveSegmentAtSlot(int slotIndex)
     {
         int maxSize = 3;
         for (int offset = maxSize - 1; offset >= 0; offset--)
@@ -253,5 +253,45 @@ public class WheelManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void FillWheelWithSegment(SegmentData data)
+    {
+        if (data == null || data.segmentPrefab == null) return;
+        for (int i = 0; i < slotCount; i++)
+        {
+            PlaceSegment(data, i);
+            if (data.statAmount != 0)
+            {
+                string effectId = data.segmentID;
+                if (!activeEffectCounts.ContainsKey(effectId))
+                    activeEffectCounts[effectId] = 0;
+                activeEffectCounts[effectId]++;
+                SegmentEffectHandler.Instance.ActivateSegmentEffect(data, 1);
+            }
+        }
+    }
+
+    public void AddSegmentToSlot(SegmentData data, int slotIndex)
+    {
+        if (data == null || data.segmentPrefab == null) return;
+        PlaceSegment(data, slotIndex);
+        if (data.statAmount != 0)
+        {
+            string effectId = data.segmentID;
+            if (!activeEffectCounts.ContainsKey(effectId))
+                activeEffectCounts[effectId] = 0;
+            activeEffectCounts[effectId]++;
+            SegmentEffectHandler.Instance.ActivateSegmentEffect(data, 1);
+        }
+    }
+
+    public void ClearWheel()
+    {
+        for (int i = 0; i < slotCount; i++)
+        {
+            RemoveSegmentAtSlot(i);
+        }
+        activeEffectCounts.Clear();
     }
 }

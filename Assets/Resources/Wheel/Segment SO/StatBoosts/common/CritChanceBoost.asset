@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
   m_Name: CritChanceBoost
   m_EditorClassIdentifier: 
-  segmentID: damageboost
+  segmentID: critchanceboost
   size: 1
   type: 3
   rarity: 0
