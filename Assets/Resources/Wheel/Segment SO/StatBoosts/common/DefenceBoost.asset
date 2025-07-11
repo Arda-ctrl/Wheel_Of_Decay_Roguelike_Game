@@ -16,8 +16,10 @@ MonoBehaviour:
   size: 1
   type: 2
   rarity: 0
-  description: +2 Defence boost
+  description: +2 Defence
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.36862743, g: 0.4150892, b: 0.94509804, a: 1}
+  segmentColor: {r: 0.07075471, g: 0.36255246, b: 1, a: 1}
+  effectType: 0
   statType: 1
   statAmount: 2
+  wheelManipulationType: 0

@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class SegmentEffectHandler : MonoBehaviour
+public class SegmentStatBoostHandler : MonoBehaviour
 {
-    public static SegmentEffectHandler Instance { get; private set; }
+    public static SegmentStatBoostHandler Instance { get; private set; }
     private void Awake()
     {
         if (Instance == null)

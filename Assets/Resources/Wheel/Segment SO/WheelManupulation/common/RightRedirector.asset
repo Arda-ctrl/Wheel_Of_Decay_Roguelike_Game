@@ -10,14 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: CritChanceBoost
+  m_Name: RightRedirector
   m_EditorClassIdentifier: 
-  segmentID: critchanceboost
+  segmentID: rightredirector
   size: 1
-  type: 3
-  rarity: 0
-  description: +2 Crit Chance boost
+  type: 1
+  rarity: 1
+  description: "i\u011Fne solundaki yere gelirse sa\u011F\u0131ndaki yere y\xF6nlendirir.\n"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.7075472, g: 0.26568407, b: 0.15686187, a: 1}
-  statType: 4
-  statAmount: 2
+  segmentColor: {r: 0.37166253, g: 0.88981223, b: 0.79607844, a: 1}
+  effectType: 1
+  statType: 0
+  statAmount: 0
+  wheelManipulationType: 1
+  redirectDirection: 0

@@ -10,6 +10,9 @@ public class WheelDebugWindow : EditorWindow
     private WheelManager wheelManager;
     private int removeSlotIndex = 0;
     private int addSlotIndex = 0;
+    private int testTargetSlot = -1; // 0'dan büyükse, spin bu slota denk gelecek
+    private bool forceTargetSlot = false;
+    private int targetSlot = 0;
 
     [MenuItem("Tools/Wheel Debug Window")]
     public static void ShowWindow()
@@ -74,6 +77,24 @@ public class WheelDebugWindow : EditorWindow
             }
         }
         EditorGUILayout.Space();
+        GUILayout.Label("Test Target Slot (Spin her zaman bu slota gelsin, -1 ise random)", EditorStyles.boldLabel);
+        testTargetSlot = EditorGUILayout.IntField("Test Target Slot:", testTargetSlot);
+        forceTargetSlot = EditorGUILayout.Toggle("Hedef Slotu Zorla (Debug)", forceTargetSlot);
+        if (forceTargetSlot)
+        {
+            targetSlot = EditorGUILayout.IntField("Hedef Slot:", targetSlot);
+        }
+        if (GUILayout.Button("Çarkı Döndür (SpinWheel)"))
+        {
+            if (wheelManager != null)
+            {
+                Undo.RecordObject(wheelManager, "Spin Wheel");
+                if (forceTargetSlot)
+                    wheelManager.SpinWheelForDebug(targetSlot);
+                else
+                    wheelManager.SpinWheel();
+            }
+        }
         if (GUILayout.Button("Tüm Çarkı Temizle"))
         {
             if (wheelManager != null)

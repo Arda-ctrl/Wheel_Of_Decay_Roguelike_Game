@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: MovementSpeedBoost
+  m_Name: CriticalChanceBoost
   m_EditorClassIdentifier: 
-  segmentID: movementspeedboost
+  segmentID: criticalchanceboost
   size: 1
   type: 1
   rarity: 0
-  description: +2 Movement Speed
+  description: +2 critical chance
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.25098038, g: 1, b: 0.97730047, a: 1}
+  segmentColor: {r: 0.6792453, g: 0.45932308, b: 0.06087574, a: 1}
   effectType: 0
-  statType: 3
+  statType: 4
   statAmount: 2
   wheelManipulationType: 0
+  redirectDirection: 0

@@ -16,8 +16,10 @@ MonoBehaviour:
   size: 1
   type: 1
   rarity: 0
-  description: +2 Attack Speed boost
+  description: +2 Attack Speed
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.9433962, g: 0.9363776, b: 0.24474904, a: 1}
+  segmentColor: {r: 0.89493537, g: 1, b: 0, a: 1}
+  effectType: 0
   statType: 2
   statAmount: 2
+  wheelManipulationType: 0

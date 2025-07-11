@@ -45,9 +45,26 @@ public class SegmentDataEditor : Editor
         EditorGUILayout.PropertyField(rarity);
         EditorGUILayout.PropertyField(description);
         EditorGUILayout.PropertyField(segmentPrefab);
-        EditorGUILayout.PropertyField(statType);
-        EditorGUILayout.PropertyField(statAmount);
         EditorGUILayout.PropertyField(segmentColor);
+
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("effectType"));
+
+        var effectType = (SegmentEffectType)serializedObject.FindProperty("effectType").enumValueIndex;
+        if (effectType == SegmentEffectType.StatBoost)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("statType"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("statAmount"));
+        }
+        else if (effectType == SegmentEffectType.WheelManipulation)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("wheelManipulationType"));
+            var wheelType = (WheelManipulationType)serializedObject.FindProperty("wheelManipulationType").enumValueIndex;
+            if (wheelType == WheelManipulationType.Redirector)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
+            }
+            // Gerekirse ek parametreler
+        }
 
         if (EditorGUI.EndChangeCheck())
         {
