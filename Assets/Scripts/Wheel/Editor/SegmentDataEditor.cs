@@ -63,6 +63,10 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
             }
+            else if (wheelType == WheelManipulationType.BlackHole)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
+            }
             // Gerekirse ek parametreler
         }
 

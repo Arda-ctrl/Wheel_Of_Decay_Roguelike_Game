@@ -286,18 +286,21 @@ public class WheelManager : MonoBehaviour
             }
         }
 
-        // 2. Her WheelManipulation segmentine OnNeedleLanded çağrısı yap
-        bool handled = false;
+        // 2. Tetiklenebilecek tüm efektleri topla
+        List<(int targetSlot, SegmentData data)> triggeredEffects = new List<(int targetSlot, SegmentData data)>();
+
         foreach (var (inst, mySlot) in wheelSegments)
         {
             var data = inst.data;
             SegmentWheelManipulationHandler.IWheelEffect effect = null;
             if (data.wheelManipulationType == WheelManipulationType.BlackHole)
             {
-                effect = new SegmentWheelManipulationHandler.BlackHoleEffect();
+                effect = new SegmentWheelManipulationHandler.BlackHoleEffect(data.blackHoleRange);
             }
             else if (data.wheelManipulationType == WheelManipulationType.Redirector)
+            {
                 effect = new SegmentWheelManipulationHandler.RedirectorEffect(data.redirectDirection);
+            }
             if (effect != null)
             {
                 bool effectTriggered = false;
@@ -312,29 +315,26 @@ public class WheelManager : MonoBehaviour
                 );
                 if (effectTriggered && effectTargetSlot >= 0)
                 {
-                    Debug.Log($"[SpinEnd] WheelEffect tetiklendi. Hedef slot: {effectTargetSlot}, Segment: {data.segmentID}");
-                    StartCoroutine(HandleWheelEffectSequence(effectTargetSlot));
-                    handled = true;
-                    // Efekt animasyonu bittikten sonra segment silinsin
-                    // StartCoroutine(RemoveSegmentAfterEffect()); // Removed
-                    yield break;
+                    triggeredEffects.Add((effectTargetSlot, data));
                 }
             }
         }
 
-        // 3. StatBoost ve diğer işlevler eskisi gibi çalışacak
-        if (!handled)
+        // 3. Tetiklenen efekt varsa, rastgele birini seç ve uygula
+        if (triggeredEffects.Count > 0)
         {
-            yield return new WaitForSeconds(delayBeforeRemove);
-            RemoveSegmentAtSlot(selectedSlot);
-            yield return new WaitForSeconds(delayBeforeReset);
-            StartCoroutine(SmoothResetWheel());
-            isSpinning = false;
+            int randomIndex = Random.Range(0, triggeredEffects.Count);
+            int targetSlot = triggeredEffects[randomIndex].targetSlot;
+            StartCoroutine(HandleWheelEffectSequence(targetSlot));
+            yield break;
         }
-        else
-        {
-            // WheelEffect coroutine zaten needle'ı hareket ettirdi, segment silme RemoveSegmentAfterEffect ile yapılacak
-        }
+
+        // 4. Hiçbir efekt tetiklenmediyse normal işlem yap
+        yield return new WaitForSeconds(delayBeforeRemove);
+        RemoveSegmentAtSlot(selectedSlot);
+        yield return new WaitForSeconds(delayBeforeReset);
+        StartCoroutine(SmoothResetWheel());
+        isSpinning = false;
     }
 
     // RemoveSegmentAfterEffect fonksiyonunu tamamen kaldır

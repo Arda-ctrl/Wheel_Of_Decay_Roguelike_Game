@@ -13,24 +13,24 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
 
     public interface IWheelEffect
     {
-        // landedSlot: iğnenin geldiği slot
-        // mySlot: bu segmentin başladığı slot
-        // slotCount: toplam slot sayısı
-        // moveNeedleToSlot: iğneyi başka slota götürmek için
-        // destroySelf: segmenti yok etmek için
         void OnNeedleLanded(int landedSlot, int mySlot, int slotCount, System.Action<int> moveNeedleToSlot, System.Action destroySelf);
     }
 
-    // BlackHole örnek implementasyonu
+    // BlackHole: Komşu mesafesi parametreli
     public class BlackHoleEffect : IWheelEffect
     {
+        private int range;
+        public BlackHoleEffect(int range)
+        {
+            this.range = Mathf.Max(1, range);
+        }
         public void OnNeedleLanded(int landedSlot, int mySlot, int slotCount, System.Action<int> moveNeedleToSlot, System.Action destroySelf)
         {
-            // Komşu slotlara gelindiyse iğneyi bu slota çek ve segmenti yok et
-            for (int i = -1; i <= 1; i += 2)
+            for (int i = 1; i <= range; i++)
             {
-                int neighborSlot = (mySlot + i + slotCount) % slotCount;
-                if (landedSlot == neighborSlot)
+                int left = (mySlot - i + slotCount) % slotCount;
+                int right = (mySlot + i) % slotCount;
+                if (landedSlot == left || landedSlot == right)
                 {
                     moveNeedleToSlot?.Invoke(mySlot);
                     destroySelf?.Invoke();
@@ -39,7 +39,7 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
         }
     }
 
-    // Redirector örnek implementasyonu
+    // Redirector: Çift yön desteği
     public class RedirectorEffect : IWheelEffect
     {
         public RedirectDirection direction;
@@ -48,11 +48,22 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
         {
             if (direction == RedirectDirection.LeftToRight && landedSlot == (mySlot - 1 + slotCount) % slotCount)
             {
-                moveNeedleToSlot?.Invoke(mySlot + 1);
+                moveNeedleToSlot?.Invoke((mySlot + 1) % slotCount);
             }
             else if (direction == RedirectDirection.RightToLeft && landedSlot == (mySlot + 1) % slotCount)
             {
-                moveNeedleToSlot?.Invoke(mySlot - 1);
+                moveNeedleToSlot?.Invoke((mySlot - 1 + slotCount) % slotCount);
+            }
+            else if (direction == RedirectDirection.BothSides)
+            {
+                if (landedSlot == (mySlot - 1 + slotCount) % slotCount)
+                {
+                    moveNeedleToSlot?.Invoke((mySlot + 1) % slotCount);
+                }
+                else if (landedSlot == (mySlot + 1) % slotCount)
+                {
+                    moveNeedleToSlot?.Invoke((mySlot - 1 + slotCount) % slotCount);
+                }
             }
         }
     }

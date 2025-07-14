@@ -10,19 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: BlackHole
+  m_Name: MultiRedirector
   m_EditorClassIdentifier: 
-  segmentID: blackhole
+  segmentID: multiredirector
   size: 1
   type: 1
   rarity: 1
-  description: "Yan\u0131ndaki segmentler yok olaca\u011F\u0131 zaman onlar yerine
-    bu segment yok olur."
+  description: "i\u011Fne sa\u011Fa gelirse sola sola gelirse sa\u011Fa y\xF6nlendirir.\n"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.16037738, g: 0.13389999, b: 0.13389999, a: 1}
+  segmentColor: {r: 0.24203454, g: 0.46226418, b: 0.42200714, a: 1}
   effectType: 1
   statType: 0
   statAmount: 0
-  wheelManipulationType: 0
-  redirectDirection: 0
+  wheelManipulationType: 1
+  redirectDirection: 2
   blackHoleRange: 1

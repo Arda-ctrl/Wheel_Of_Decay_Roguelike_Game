@@ -5,7 +5,7 @@ public enum Type { Blood, Support, Defence, Attack, Combo, Element }
 public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance }
 public enum SegmentEffectType { StatBoost, WheelManipulation }
 public enum WheelManipulationType { BlackHole, Redirector }
-public enum RedirectDirection { LeftToRight, RightToLeft }
+public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
@@ -30,5 +30,7 @@ public class SegmentData : ScriptableObject
     public WheelManipulationType wheelManipulationType;
     // Redirector için yön seçimi
     public RedirectDirection redirectDirection;
+    // Black Hole için menzil
+    [Range(1, 5)] public int blackHoleRange = 1;
     // Gerekirse ek parametreler eklenebilir
 }
