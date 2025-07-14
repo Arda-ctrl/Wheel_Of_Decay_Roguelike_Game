@@ -15,7 +15,7 @@ MonoBehaviour:
   segmentID: rightredirector
   size: 1
   type: 1
-  rarity: 1
+  rarity: 0
   description: "i\u011Fne solundaki yere gelirse sa\u011F\u0131ndaki yere y\xF6nlendirir.\n"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
   segmentColor: {r: 0.37166253, g: 0.88981223, b: 0.79607844, a: 1}
@@ -24,3 +24,7 @@ MonoBehaviour:
   statAmount: 0
   wheelManipulationType: 1
   redirectDirection: 0
+  blackHoleRange: 1
+  rewardRarity: 0
+  rewardType: 0
+  rewardFillMode: 0

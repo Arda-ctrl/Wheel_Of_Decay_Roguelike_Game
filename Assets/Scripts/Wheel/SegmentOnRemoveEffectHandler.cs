@@ -24,7 +24,7 @@ public class SegmentOnRemoveEffectHandler : MonoBehaviour
             List<SegmentData> candidates = new List<SegmentData>();
             foreach (var seg in allSegments)
             {
-                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.effectType == SegmentEffectType.StatBoost && seg.size == 1)
+                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.size == 1)
                 {
                     candidates.Add(seg);
                 }
@@ -41,7 +41,7 @@ public class SegmentOnRemoveEffectHandler : MonoBehaviour
             List<SegmentData> candidates = new List<SegmentData>();
             foreach (var seg in allSegments)
             {
-                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.effectType == SegmentEffectType.StatBoost && seg.size == removedSegment.size)
+                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.size == removedSegment.size)
                 {
                     candidates.Add(seg);
                 }

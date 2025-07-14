@@ -15,7 +15,7 @@ MonoBehaviour:
   segmentID: multiredirector
   size: 1
   type: 1
-  rarity: 1
+  rarity: 0
   description: "i\u011Fne sa\u011Fa gelirse sola sola gelirse sa\u011Fa y\xF6nlendirir.\n"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
   segmentColor: {r: 0.24203454, g: 0.46226418, b: 0.42200714, a: 1}
@@ -25,3 +25,6 @@ MonoBehaviour:
   wheelManipulationType: 1
   redirectDirection: 2
   blackHoleRange: 1
+  rewardRarity: 0
+  rewardType: 0
+  rewardFillMode: 0
