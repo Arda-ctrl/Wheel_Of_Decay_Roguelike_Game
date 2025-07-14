@@ -401,6 +401,11 @@ public class WheelManager : MonoBehaviour
                         inRange = (slotIndex >= segStart || slotIndex <= segEnd);
                     if (inRange)
                     {
+                        // OnRemoveEffect bilgilerini sakla
+                        bool isOnRemoveEffect = inst.data.effectType == SegmentEffectType.OnRemoveEffect;
+                        SegmentData onRemoveData = isOnRemoveEffect ? inst.data : null;
+                        int onRemoveStartSlot = isOnRemoveEffect ? segStart : -1;
+
                         Debug.Log($"[RemoveSegmentAtSlot] Segment siliniyor: {inst.data.segmentID}, StartSlot: {segStart}, Size: {size}");
                         if (inst.data.effectType == SegmentEffectType.StatBoost && inst.data.statAmount != 0)
                         {
@@ -418,6 +423,11 @@ public class WheelManager : MonoBehaviour
                         {
                             int idx = (segStart + j) % slotCount;
                             slotOccupied[idx] = false;
+                        }
+                        // Segment silindikten ve slotOccupied güncellendikten sonra ödül segmentlerini ekle
+                        if (isOnRemoveEffect && onRemoveData != null)
+                        {
+                            SegmentOnRemoveEffectHandler.Instance.HandleOnRemoveEffect(onRemoveData, onRemoveStartSlot);
                         }
                         return;
                     }

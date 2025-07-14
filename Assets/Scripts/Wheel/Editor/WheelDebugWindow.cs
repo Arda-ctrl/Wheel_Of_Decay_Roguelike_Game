@@ -13,6 +13,7 @@ public class WheelDebugWindow : EditorWindow
     private int testTargetSlot = -1; // 0'dan büyükse, spin bu slota denk gelecek
     private bool forceTargetSlot = false;
     private int targetSlot = 0;
+    private Vector2 segmentListScroll;
 
     [MenuItem("Tools/Wheel Debug Window")]
     public static void ShowWindow()
@@ -33,6 +34,7 @@ public class WheelDebugWindow : EditorWindow
         GUILayout.Label("Segment Arama ve Seçme", EditorStyles.boldLabel);
         segmentSearch = EditorGUILayout.TextField("Segment Ara:", segmentSearch);
         var filtered = allSegments.Where(s => string.IsNullOrEmpty(segmentSearch) || s.segmentID.ToLower().Contains(segmentSearch.ToLower())).ToArray();
+        segmentListScroll = EditorGUILayout.BeginScrollView(segmentListScroll, GUILayout.Height(200));
         foreach (var seg in filtered)
         {
             EditorGUILayout.BeginHorizontal();
@@ -41,6 +43,7 @@ public class WheelDebugWindow : EditorWindow
             EditorGUILayout.LabelField($"Type: {seg.type} | Rarity: {seg.rarity}", GUILayout.Width(180));
             EditorGUILayout.EndHorizontal();
         }
+        EditorGUILayout.EndScrollView();
         EditorGUILayout.Space();
         if (selectedSegment != null)
         {

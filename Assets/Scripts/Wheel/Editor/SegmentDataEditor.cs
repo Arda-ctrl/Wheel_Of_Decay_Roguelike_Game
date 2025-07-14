@@ -13,14 +13,15 @@ public class SegmentDataEditor : Editor
     SerializedProperty statType;
     SerializedProperty statAmount;
     SerializedProperty segmentColor;
+    SerializedProperty rewardRarity;
+    SerializedProperty rewardType;
+    SerializedProperty rewardCount;
 
     private SegmentData segmentData;
 
     void OnEnable()
     {
         segmentData = (SegmentData)target;
-        
-        // Tüm property'leri al
         segmentID = serializedObject.FindProperty("segmentID");
         size = serializedObject.FindProperty("size");
         type = serializedObject.FindProperty("type");
@@ -30,15 +31,22 @@ public class SegmentDataEditor : Editor
         statType = serializedObject.FindProperty("statType");
         statAmount = serializedObject.FindProperty("statAmount");
         segmentColor = serializedObject.FindProperty("segmentColor");
+        rewardRarity = serializedObject.FindProperty("rewardRarity");
+        rewardType = serializedObject.FindProperty("rewardType");
+        rewardCount = serializedObject.FindProperty("rewardCount");
     }
 
     public override void OnInspectorGUI()
     {
+        if (segmentData == null || serializedObject == null)
+        {
+            EditorGUILayout.HelpBox("SegmentData veya serializedObject null!", MessageType.Error);
+            return;
+        }
+
         EditorGUI.BeginChangeCheck();
-        
         serializedObject.Update();
 
-        // Ana özellikler
         EditorGUILayout.PropertyField(segmentID);
         EditorGUILayout.PropertyField(size);
         EditorGUILayout.PropertyField(type);
@@ -48,7 +56,6 @@ public class SegmentDataEditor : Editor
         EditorGUILayout.PropertyField(segmentColor);
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("effectType"));
-
         var effectType = (SegmentEffectType)serializedObject.FindProperty("effectType").enumValueIndex;
         if (effectType == SegmentEffectType.StatBoost)
         {
@@ -67,7 +74,12 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
             }
-            // Gerekirse ek parametreler
+        }
+        else if (effectType == SegmentEffectType.OnRemoveEffect)
+        {
+            if (rewardRarity != null) EditorGUILayout.PropertyField(rewardRarity);
+            if (rewardType != null) EditorGUILayout.PropertyField(rewardType);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardFillMode"));
         }
 
         if (EditorGUI.EndChangeCheck())

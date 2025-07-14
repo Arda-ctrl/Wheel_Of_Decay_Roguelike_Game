@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   segmentID: defenceboost
   size: 1
-  type: 2
+  type: 0
   rarity: 0
   description: +2 Defence
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
@@ -23,3 +23,8 @@ MonoBehaviour:
   statType: 1
   statAmount: 2
   wheelManipulationType: 0
+  redirectDirection: 0
+  blackHoleRange: 1
+  rewardRarity: 0
+  rewardType: 0
+  rewardCount: 1
