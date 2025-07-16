@@ -50,14 +50,20 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         }
 
         // Player referansını al
-        if (PlayerController.instance != null)
+        if (PlayerController.Instance != null)
         {
-            playerTransform = PlayerController.instance.transform;
+            playerTransform = PlayerController.Instance.transform;
         }
 
         // Başlangıç yönünü ayarla
         isFacingRight = facingRightByDefault;
         UpdateSpriteDirection(isFacingRight);
+        
+        // StrikeStack component'ini ekle (eğer yoksa)
+        if (GetComponent<StrikeStack>() == null)
+        {
+            gameObject.AddComponent<StrikeStack>();
+        }
     }
 
     private void Update()

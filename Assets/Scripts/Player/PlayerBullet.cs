@@ -11,6 +11,10 @@ public class PlayerBullet : MonoBehaviour
     private AbilityEffectType effectType = AbilityEffectType.None;
     private float damageMultiplier = 1f;
     private float speedMultiplier = 1f;
+    
+    [Header("Strike Settings")]
+    private AbilityData currentAbilityData;
+    private bool isStrikeBuffActive = false;
 
     private Rigidbody2D rb;
 
@@ -32,8 +36,14 @@ public class PlayerBullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            // Apply damage with any modifiers
-            float finalDamage = baseDamage * damageMultiplier;
+            // Apply strike stack if current ability has strike ability
+            if (currentAbilityData != null && currentAbilityData.hasStrikeAbility)
+            {
+                ApplyStrikeStack(other.gameObject);
+            }
+
+            // Calculate final damage with strike system
+            float finalDamage = CalculateFinalDamage(other.gameObject);
 
             // Apply ability effect if any
             if (effectType != AbilityEffectType.None)
@@ -104,6 +114,68 @@ public class PlayerBullet : MonoBehaviour
         Destroy(tempAbilityData);
     }
 
+    /// <summary>
+    /// Strike stack'i düşmana uygular
+    /// </summary>
+    /// <param name="target">Hedef düşman</param>
+    private void ApplyStrikeStack(GameObject target)
+    {
+        var strikeStack = target.GetComponent<StrikeStack>();
+        if (strikeStack == null)
+        {
+            // StrikeStack component'i yoksa ekle
+            strikeStack = target.AddComponent<StrikeStack>();
+        }
+        
+        // Ability data'yı StrikeStack'e geç
+        if (currentAbilityData != null)
+        {
+            strikeStack.SetAbilityData(currentAbilityData);
+        }
+        
+        // Strike stack ekle
+        strikeStack.AddStrikeStack(1);
+    }
+    
+    /// <summary>
+    /// Strike sistemi ile final hasarı hesaplar
+    /// </summary>
+    /// <param name="target">Hedef düşman</param>
+    /// <returns>Hesaplanmış final hasar</returns>
+    private float CalculateFinalDamage(GameObject target)
+    {
+        float baseFinalDamage = baseDamage * damageMultiplier;
+        
+        // Strike sistemi kontrolü
+        var strikeStack = target.GetComponent<StrikeStack>();
+        if (strikeStack != null && strikeStack.HasStrikeStacks() && currentAbilityData != null)
+        {
+            // Strike buff aktifse daha fazla hasar
+            if (isStrikeBuffActive && currentAbilityData.hasStrikeBuff)
+            {
+                baseFinalDamage = strikeStack.CalculateStrikeDamage(baseFinalDamage);
+                Debug.Log($"⚡ Strike buff active! Damage: {baseFinalDamage}");
+            }
+            else if (currentAbilityData.hasStrikeAbility)
+            {
+                // Normal strike hasarı (SO'dan alınan değerler)
+                int stacks = strikeStack.GetStrikeStacks();
+                if (stacks == 1)
+                {
+                    baseFinalDamage = currentAbilityData.normalStrikeDamage1Stack;
+                }
+                else
+                {
+                    baseFinalDamage = currentAbilityData.normalStrikeDamage2PlusStacks + 
+                                    (stacks - 1) * currentAbilityData.normalStrikeDamagePerAdditionalStack;
+                }
+                Debug.Log($"⚡ Normal strike damage: {baseFinalDamage} (stacks: {stacks})");
+            }
+        }
+        
+        return baseFinalDamage;
+    }
+
     // Setters for bullet modifications
     public void SetEffectType(AbilityEffectType type)
     {
@@ -122,5 +194,25 @@ public class PlayerBullet : MonoBehaviour
         {
             rb.linearVelocity = transform.right * speed * speedMultiplier;
         }
+    }
+    
+    /// <summary>
+    /// Ability data'sını ayarlar
+    /// </summary>
+    /// <param name="abilityData">Ability data</param>
+    public void SetAbilityData(AbilityData abilityData)
+    {
+        currentAbilityData = abilityData;
+        Debug.Log($"⚡ Ability data set: {(abilityData != null ? abilityData.abilityName : "None")}");
+    }
+    
+    /// <summary>
+    /// Strike buff'unu aktifleştir/deaktifleştir
+    /// </summary>
+    /// <param name="active">Aktif mi?</param>
+    public void SetStrikeBuff(bool active)
+    {
+        isStrikeBuffActive = active;
+        Debug.Log($"⚡ Strike buff {(active ? "activated" : "deactivated")}");
     }
 }

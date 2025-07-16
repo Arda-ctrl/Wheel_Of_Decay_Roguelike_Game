@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PlayerHealthController : MonoBehaviour
 {
-    public static PlayerHealthController instance;
+    public static PlayerHealthController Instance;
     public int currentHealth;
     public int maxHealth;
     public float damageInvisibleLenght = 1f;
@@ -12,7 +12,7 @@ public class PlayerHealthController : MonoBehaviour
 
     private void Awake()
     {
-        instance = this;
+        Instance = this;
     }
 
     void Start()
@@ -24,9 +24,9 @@ public class PlayerHealthController : MonoBehaviour
 
         currentHealth = maxHealth;
 
-        UI_Controller.instance.healthSlider.maxValue = maxHealth;
-        UI_Controller.instance.healthSlider.value = currentHealth;
-        UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
+        UI_Controller.Instance.healthSlider.maxValue = maxHealth;
+        UI_Controller.Instance.healthSlider.value = currentHealth;
+        UI_Controller.Instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
     }
 
     void Update()
@@ -46,7 +46,7 @@ public class PlayerHealthController : MonoBehaviour
     {
         if (invisCount <= 0)
         {
-            AudioManager.instance.PlaySFX(11);
+            AudioManager.Instance.PlaySFX(11);
             currentHealth--;
 
             invisCount = damageInvisibleLenght;
@@ -55,14 +55,14 @@ public class PlayerHealthController : MonoBehaviour
 
             if (currentHealth <= 0)
             {
-                PlayerController.instance.gameObject.SetActive(false);
-                UI_Controller.instance.deathScreen.SetActive(true);
-                AudioManager.instance.PlayGameOver();
-                AudioManager.instance.PlaySFX(8);
+                PlayerController.Instance.gameObject.SetActive(false);
+                UI_Controller.Instance.deathScreen.SetActive(true);
+                AudioManager.Instance.PlayGameOver();
+                AudioManager.Instance.PlaySFX(8);
             }
 
-            UI_Controller.instance.healthSlider.value = currentHealth;
-            UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
+            UI_Controller.Instance.healthSlider.value = currentHealth;
+            UI_Controller.Instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
         }
     }
 
@@ -80,8 +80,8 @@ public class PlayerHealthController : MonoBehaviour
             currentHealth = maxHealth;
         }
 
-        UI_Controller.instance.healthSlider.value = currentHealth;
-        UI_Controller.instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
+        UI_Controller.Instance.healthSlider.value = currentHealth;
+        UI_Controller.Instance.healthText.text = currentHealth.ToString() + " / " + maxHealth.ToString();
     }
 
     private void SetPlayerAlpha(float alpha)

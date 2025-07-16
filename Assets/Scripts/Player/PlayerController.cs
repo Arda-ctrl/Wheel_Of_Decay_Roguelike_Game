@@ -5,13 +5,14 @@ using UnityEngine.Events;
 
 public class PlayerController : MonoBehaviour
 {
-    public static PlayerController instance;
+    public static PlayerController Instance;
     public float moveSpeed;
     public Rigidbody2D theRB;
     public Transform gunArm;
     
     [Header("References")]
     [SerializeField] private WeaponController weaponController;
+    [SerializeField] private ElementalAbilityManager elementalAbilityManager;
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
@@ -28,7 +29,7 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
-        instance = this;
+        Instance = this;
         playerInputActions = new PlayerInputActions();
 
         // Subscribe to input events
@@ -60,6 +61,14 @@ public class PlayerController : MonoBehaviour
     {
         theCam = Camera.main;
         activeMoveSpeed = moveSpeed;
+        
+        // ElementalAbilityManager'ı bul
+        if (elementalAbilityManager == null)
+        {
+            elementalAbilityManager = GetComponent<ElementalAbilityManager>();
+        }
+        
+        Debug.Log("🎮 PlayerController initialized with Elemental Ability System");
     }
 
     void Update()
@@ -143,8 +152,8 @@ public class PlayerController : MonoBehaviour
         {
             activeMoveSpeed = dashSpeed;
             dashCounter = dashLenght;
-            PlayerHealthController.instance.MakeInvincible(dashInvisiblity);
-            AudioManager.instance.PlaySFX(8);
+            PlayerHealthController.Instance.MakeInvincible(dashInvisiblity);
+            AudioManager.Instance.PlaySFX(8);
         }
     }
 

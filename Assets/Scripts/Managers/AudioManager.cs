@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager instance;
+    public static AudioManager Instance;
 
     public AudioSource levelMusic, gameOverMusic, winMusic;
     public AudioSource[] sfx;
     void Awake()
     {
-        instance = this;
+        Instance = this;
     }
     public void PlayGameOver()
     {

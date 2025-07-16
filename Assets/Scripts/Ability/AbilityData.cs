@@ -39,4 +39,14 @@ public class AbilityData : ScriptableObject
     public float freezeDuration = 2f;
     public float chillSlowAmount = 0.5f;
     public float chillDuration = 4f;
+    
+    [Header("Strike Settings")]
+    public bool hasStrikeAbility = false;
+    public bool hasStrikeBuff = false;
+    public int maxStrikeStacks = 5;
+    public float strikeStackDecayTime = 15f;
+    public float strikeDamageMultiplierPerStack = 0.5f;
+    public float normalStrikeDamage1Stack = 10f;
+    public float normalStrikeDamage2PlusStacks = 15f;
+    public float normalStrikeDamagePerAdditionalStack = 5f;
 } 
