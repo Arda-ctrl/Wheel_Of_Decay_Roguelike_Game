@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 622e6fb80a4a2fe428073d1f2769c8fd, type: 3}
+  m_Name: boss
+  m_EditorClassIdentifier: 
+  nodeID: boss
+  nodeIcon: {fileID: 4954345118388884524, guid: 104929e961b3f2f4a8f46f2e11ef18ee, type: 3}
+  nodeColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  nodeType: 2
+  roomData: {fileID: 11400000, guid: c3061e8d03a4d8644b668960e6c8eaa3, type: 2}
+  completedIcon: {fileID: 874343242196921964, guid: 1cc570f5e1a1d4349b08d31577ed759f, type: 3}
+  completedColor: {r: 0, g: 1, b: 0.0000121593475, a: 1}
+  hasSpecialReward: 0
+  rewardDescription: 

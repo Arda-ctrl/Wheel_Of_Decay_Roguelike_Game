@@ -207,11 +207,6 @@ PrefabInstance:
       addedObject: {fileID: 1352144181}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e530c283eee94c044a9d8492a184921e, type: 3}
---- !u!4 &44981899 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2226368522863213159, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
-  m_PrefabInstance: {fileID: 2073458240}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &165908510
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -511,11 +506,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &757944841 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5079870464898513822, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
-  m_PrefabInstance: {fileID: 2073458240}
-  m_PrefabAsset: {fileID: 0}
 --- !u!212 &997041417 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 940537762631409084, guid: 35f385fd81ffe5b4db337a6622a3955c, type: 3}
@@ -8478,27 +8468,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2714097695629139595, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
   m_PrefabInstance: {fileID: 2073458240}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1121025109
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 757944841}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 991e9c3a2a16f1e42ab382e9afc4bfab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
-  firePoint: {fileID: 44981899}
-  fireRate: 0.5
-  abilities:
-  - {fileID: 11400000, guid: ec83aa4ec71f2e045865d844b94ed9cf, type: 2}
-  - {fileID: 11400000, guid: 5262c37b0b5264a4ab39df408c563f12, type: 2}
-  - {fileID: 11400000, guid: a6109e132a9c8a243a0e0f63ce37e3b3, type: 2}
-  switchAbilityKey: 113
-  abilityIcon: {fileID: 0}
 --- !u!212 &1252191140 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 839789073510490439, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
@@ -8739,10 +8708,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5079870464898513822, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1121025109}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c9f71c6668c12964a93afd6f29ba3bc6, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

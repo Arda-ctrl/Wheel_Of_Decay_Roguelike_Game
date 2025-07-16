@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01bb0f04462a03e40ae4f88b32d1999d, type: 3}
+  m_Name: test
+  m_EditorClassIdentifier: 
+  branchID: level_01
+  branchName: Forest Map
+  branchDescription: "Tehlikeli orman yolculu\u011Fu."
+  biom: {fileID: 11400000, guid: 1581458b9d1c422499af3b0421d40e66, type: 2}
+  nodes:
+  - nodeID: start
+    nodeData: {fileID: 11400000, guid: 09e1d17e292fcdc45866a7ae3467c9d8, type: 2}
+    gridPosition: {x: -5, y: 0}
+  - nodeID: battle_1
+    nodeData: {fileID: 11400000, guid: 0a118a4623422c9478f2796a40029f3c, type: 2}
+    gridPosition: {x: -2, y: -2}
+  - nodeID: battle_2
+    nodeData: {fileID: 11400000, guid: dcc838db2773a73429baa074f2a7ee0a, type: 2}
+    gridPosition: {x: -2, y: 2}
+  - nodeID: shop
+    nodeData: {fileID: 11400000, guid: acc555bde3946924db79ca1a62f0aba5, type: 2}
+    gridPosition: {x: 1, y: 0}
+  - nodeID: boss
+    nodeData: {fileID: 11400000, guid: d5fa2848168d7d04abd9935c028ed874, type: 2}
+    gridPosition: {x: 3, y: 0}
+  - nodeID: end
+    nodeData: {fileID: 11400000, guid: 91aa4fe937aa7694e97dabc46f054c21, type: 2}
+    gridPosition: {x: 5, y: 0}
+  connections:
+  - sourceNodeID: start
+    targetNodeID: battle_1
+  - sourceNodeID: start
+    targetNodeID: battle_2
+  - sourceNodeID: battle_1
+    targetNodeID: shop
+  - sourceNodeID: battle_2
+    targetNodeID: shop
+  - sourceNodeID: shop
+    targetNodeID: boss
+  - sourceNodeID: boss
+    targetNodeID: end
+  startNodeID: start
+  endNodeID: end
