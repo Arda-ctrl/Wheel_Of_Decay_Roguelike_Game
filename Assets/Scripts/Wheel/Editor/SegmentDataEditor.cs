@@ -74,6 +74,25 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
             }
+            else if (wheelType == WheelManipulationType.Repulsor)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
+            }
+            // MirrorRedirect için özel parametre yok
+            else if (wheelType == WheelManipulationType.CommonRedirector)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMaxRarity"));
+            }
+            else if (wheelType == WheelManipulationType.SafeEscape)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("safeEscapeRange"));
+            }
+            else if (wheelType == WheelManipulationType.ExplosiveEscape)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
+            }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
         {

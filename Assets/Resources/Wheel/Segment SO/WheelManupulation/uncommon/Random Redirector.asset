@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
+  m_Name: Random Redirector
+  m_EditorClassIdentifier: 
+  segmentID: randomredirector
+  size: 1
+  type: 1
+  rarity: 1
+  description: "Yan\u0131ndaki segmentler yok olaca\u011F\u0131 zaman i\u011Fneyi
+    rasgele bir segmente y\xF6nlendirir."
+  segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
+  segmentColor: {r: 0.28813633, g: 0.32994437, b: 0.3490566, a: 1}
+  effectType: 1
+  statType: 0
+  statAmount: 0
+  wheelManipulationType: 4
+  redirectDirection: 0
+  blackHoleRange: 1
+  repulsorRange: 1
+  commonRedirectorRange: 1
+  commonRedirectorMinRarity: 0
+  commonRedirectorMaxRarity: 4
+  rewardRarity: 0
+  rewardType: 0
+  rewardFillMode: 0

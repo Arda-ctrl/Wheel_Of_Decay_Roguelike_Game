@@ -40,7 +40,7 @@ public class WheelDebugWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button(seg.segmentID, GUILayout.Width(120)))
                 selectedSegment = seg;
-            EditorGUILayout.LabelField($"Type: {seg.type} | Rarity: {seg.rarity}", GUILayout.Width(180));
+            EditorGUILayout.LabelField($"Type: {seg.type} | Rarity: {seg.rarity}", GUILayout.Width(260));
             EditorGUILayout.EndHorizontal();
         }
         EditorGUILayout.EndScrollView();

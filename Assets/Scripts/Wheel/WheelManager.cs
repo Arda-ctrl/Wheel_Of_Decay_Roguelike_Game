@@ -301,6 +301,30 @@ public class WheelManager : MonoBehaviour
             {
                 effect = new SegmentWheelManipulationHandler.RedirectorEffect(data.redirectDirection);
             }
+            else if (data.wheelManipulationType == WheelManipulationType.Repulsor)
+            {
+                effect = new SegmentWheelManipulationHandler.RepulsorEffect(data.repulsorRange);
+            }
+            else if (data.wheelManipulationType == WheelManipulationType.MirrorRedirect)
+            {
+                effect = new SegmentWheelManipulationHandler.MirrorRedirectEffect();
+            }
+            else if (data.wheelManipulationType == WheelManipulationType.CommonRedirector)
+            {
+                effect = new SegmentWheelManipulationHandler.CommonRedirectorEffect(
+                    data.commonRedirectorRange,
+                    data.commonRedirectorMinRarity,
+                    data.commonRedirectorMaxRarity
+                );
+            }
+            else if (data.wheelManipulationType == WheelManipulationType.SafeEscape)
+            {
+                effect = new SegmentWheelManipulationHandler.SafeEscapeEffect(data.safeEscapeRange);
+            }
+            else if (data.wheelManipulationType == WheelManipulationType.ExplosiveEscape)
+            {
+                effect = new SegmentWheelManipulationHandler.ExplosiveEscapeEffect(data.explosiveEscapeRange);
+            }
             if (effect != null)
             {
                 bool effectTriggered = false;
