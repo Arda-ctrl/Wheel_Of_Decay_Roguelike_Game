@@ -325,6 +325,10 @@ public class WheelManager : MonoBehaviour
             {
                 effect = new SegmentWheelManipulationHandler.ExplosiveEscapeEffect(data.explosiveEscapeRange);
             }
+            else if (data.wheelManipulationType == WheelManipulationType.SegmentSwapper)
+            {
+                effect = new SegmentWheelManipulationHandler.SegmentSwapperEffect(data.swapperRange);
+            }
             if (effect != null)
             {
                 bool effectTriggered = false;

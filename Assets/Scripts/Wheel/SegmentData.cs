@@ -4,7 +4,7 @@ public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 public enum Type { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance }
 public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
-public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape }
+public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
 
@@ -38,6 +38,7 @@ public class SegmentData : ScriptableObject
     public Rarity commonRedirectorMaxRarity = Rarity.Common;
     [Range(1, 5)] public int safeEscapeRange = 1;
     [Range(1, 5)] public int explosiveEscapeRange = 1;
+    [Range(1, 5)] public int swapperRange = 1;
 
     // Sadece OnRemoveEffect için
     [Header("Yok Olunca Ödül Bırakma (Sadece OnRemoveEffect)")]

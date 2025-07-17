@@ -93,6 +93,10 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
             }
+            else if (wheelType == WheelManipulationType.SegmentSwapper)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
+            }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
         {
