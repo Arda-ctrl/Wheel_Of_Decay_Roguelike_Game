@@ -17,28 +17,28 @@ public class DamageTrigger : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            PlayerHealthController.instance.DamagePlayer();
+            PlayerHealthController.Instance.DamagePlayer();
         }
     }
     void OnTriggerStay2D(Collider2D other)
     {
         if (other.tag == "Player")
         {
-            PlayerHealthController.instance.DamagePlayer();
+            PlayerHealthController.Instance.DamagePlayer();
         }
     }
     void OnCollisionEnter2D(Collision2D other)
     {
         if (other.gameObject.tag == "Player")
         {
-            PlayerHealthController.instance.DamagePlayer();
+            PlayerHealthController.Instance.DamagePlayer();
         }
     }
     private void OnCollisionStay2D(Collision2D other)
     {
         if (other.gameObject.tag == "Player")
         {
-            PlayerHealthController.instance.DamagePlayer();
+            PlayerHealthController.Instance.DamagePlayer();
         }
     }
     

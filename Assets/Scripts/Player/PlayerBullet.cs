@@ -8,9 +8,13 @@ public class PlayerBullet : MonoBehaviour
     public float baseDamage = 10f;
 
     [Header("Effect Settings")]
-    private AbilityEffectType effectType = AbilityEffectType.None;
+    private AbilityEffectType effectType = AbilityEffectType.Normal;
     private float damageMultiplier = 1f;
     private float speedMultiplier = 1f;
+    
+    [Header("Elemental Settings")]
+    private AbilityData currentAbilityData;
+    private bool isElementalBuffActive = false;
 
     private Rigidbody2D rb;
 
@@ -32,11 +36,15 @@ public class PlayerBullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            // Apply damage with any modifiers
-            float finalDamage = baseDamage * damageMultiplier;
+            // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+            // Bu method artık kullanılmıyor
+            Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
+
+            // Calculate final damage
+            float finalDamage = CalculateFinalDamage(other.gameObject);
 
             // Apply ability effect if any
-            if (effectType != AbilityEffectType.None)
+            if (effectType != AbilityEffectType.Normal)
             {
                 ApplyAbilityEffect(other.gameObject);
             }
@@ -85,7 +93,7 @@ public class PlayerBullet : MonoBehaviour
             case AbilityEffectType.Poison:
                 effect = effectObj.AddComponent<PoisonEffect>();
                 break;
-            case AbilityEffectType.Freeze:
+            case AbilityEffectType.Ice:
                 effect = effectObj.AddComponent<FreezeEffect>();
                 break;
         }
@@ -102,6 +110,33 @@ public class PlayerBullet : MonoBehaviour
 
         // Destroy the temporary ability data
         Destroy(tempAbilityData);
+    }
+
+    /// <summary>
+    /// Elemental stack'i düşmana uygular
+    /// </summary>
+    /// <param name="target">Hedef düşman</param>
+    private void ApplyElementalStack(GameObject target)
+    {
+        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+        // Bu method artık kullanılmıyor
+        Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
+    }
+    
+    /// <summary>
+    /// Final hasarı hesaplar
+    /// </summary>
+    /// <param name="target">Hedef düşman</param>
+    /// <returns>Hesaplanmış final hasar</returns>
+    private float CalculateFinalDamage(GameObject target)
+    {
+        float baseFinalDamage = baseDamage * damageMultiplier;
+        
+        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+        // Bu method sadece temel hasar hesaplaması yapıyor
+        Debug.Log($"⚔️ Base damage: {baseFinalDamage}");
+        
+        return baseFinalDamage;
     }
 
     // Setters for bullet modifications
@@ -122,5 +157,25 @@ public class PlayerBullet : MonoBehaviour
         {
             rb.linearVelocity = transform.right * speed * speedMultiplier;
         }
+    }
+    
+    /// <summary>
+    /// Ability data'sını ayarlar
+    /// </summary>
+    /// <param name="abilityData">Ability data</param>
+    public void SetAbilityData(AbilityData abilityData)
+    {
+        currentAbilityData = abilityData;
+        Debug.Log($"⚡ Ability data set: {(abilityData != null ? abilityData.abilityName : "None")}");
+    }
+    
+    /// <summary>
+    /// Elemental buff'unu aktifleştir/deaktifleştir
+    /// </summary>
+    /// <param name="active">Aktif mi?</param>
+    public void SetElementalBuff(bool active)
+    {
+        isElementalBuffActive = active;
+        Debug.Log($"⚡ Elemental buff {(active ? "activated" : "deactivated")}");
     }
 }

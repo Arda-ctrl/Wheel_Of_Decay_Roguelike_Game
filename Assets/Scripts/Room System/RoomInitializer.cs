@@ -14,8 +14,21 @@ public class RoomInitializer : MonoBehaviour
 
     private RoomData currentRoomData;
 
+    // Public property to access the current room data
+    public RoomData RoomData
+    {
+        get { return currentRoomData; }
+    }
+
     private void Start()
     {
+        // Eğer doors dizisi null ise, log mesajı göster ve devam et
+        if (doors == null || doors.Length == 0)
+        {
+            Debug.LogWarning("No doors found in room " + gameObject.name + ". Skipping door operations.");
+        }
+        
+        // Düşman yoksa kapıları aç
         if (totalEnemies == 0 && enemiesRemaining == 0)
         {
             Debug.Log("Failsafe: Kapılar baştan açılıyor (Start()).");
@@ -54,10 +67,24 @@ public class RoomInitializer : MonoBehaviour
             return;
         }
 
-        // Kapıları kilitle
-        foreach (var door in doors)
+        // Kapıları kilitle - null kontrolü ekle
+        if (doors != null && doors.Length > 0)
         {
-            door.LockDoor();
+            foreach (var door in doors)
+            {
+                if (door != null)
+                {
+                    door.LockDoor();
+                }
+                else
+                {
+                    Debug.LogWarning("Null door found in room " + gameObject.name);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No doors found in room " + gameObject.name + ". Make sure doors array is assigned.");
         }
     }
 
@@ -91,11 +118,75 @@ public class RoomInitializer : MonoBehaviour
 
     private void OpenDoors()
     {
+        // Kapılar null ise veya boşsa, hata verme
+        if (doors == null || doors.Length == 0)
+        {
+            Debug.LogWarning("No doors found in room " + gameObject.name);
+            return;
+        }
+        
+        Debug.Log($"Opening {doors.Length} doors in room {gameObject.name}");
+        int openedDoors = 0;
+        
         foreach (var door in doors)
         {
-            door.UnlockDoor();
+            // Her kapı için null kontrolü yap
+            if (door != null)
+            {
+                door.UnlockDoor();
+                openedDoors++;
+            }
+            else
+            {
+                Debug.LogWarning($"Null door reference in room {gameObject.name}");
+            }
         }
 
-        Debug.Log("Tüm düşmanlar öldü. Kapılar açıldı!");
+        Debug.Log($"Opened {openedDoors} doors out of {doors.Length} in room {gameObject.name}");
+        
+        // If this is an end room, notify MapRoomIntegrator
+        if (currentRoomData != null && currentRoomData.isEndRoom)
+        {
+            Debug.Log("End room completed!");
+            
+            // Find MapRoomIntegrator and notify it
+            MapRoomIntegrator integrator = FindObjectOfType<MapRoomIntegrator>();
+            if (integrator != null)
+            {
+                integrator.ReturnToMap(true);
+            }
+        }
+        
+        // Notify any listening components that the room is completed
+        OnRoomCompleted();
+    }
+    
+    // Event for room completion
+    public delegate void RoomCompletedHandler(RoomData roomData);
+    public static event RoomCompletedHandler OnRoomCompletedEvent;
+    
+    private void OnRoomCompleted()
+    {
+        if (OnRoomCompletedEvent != null)
+        {
+            OnRoomCompletedEvent(currentRoomData);
+        }
+    }
+    
+    // Notify minimap when player enters this room
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // Get room position from transform
+            Vector2Int roomPos = Vector2Int.RoundToInt(transform.position / new Vector2(18f, 10f));
+            
+            // Notify DungeonMinimap
+            var roomEnteredEvent = DungeonMinimap.OnRoomEntered;
+            if (roomEnteredEvent != null)
+            {
+                roomEnteredEvent(roomPos);
+            }
+        }
     }
 }

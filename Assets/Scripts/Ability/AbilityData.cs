@@ -39,4 +39,14 @@ public class AbilityData : ScriptableObject
     public float freezeDuration = 2f;
     public float chillSlowAmount = 0.5f;
     public float chillDuration = 4f;
+    
+    [Header("Elemental Stack Settings")]
+    public bool hasElementalAbility = false;
+    public bool hasElementalBuff = false;
+    public int maxElementalStacks = 5;
+    public float elementalStackDecayTime = 15f;
+    public float elementalDamageMultiplierPerStack = 0.5f;
+    public float normalElementalDamage1Stack = 10f;
+    public float normalElementalDamage2PlusStacks = 15f;
+    public float normalElementalDamagePerAdditionalStack = 5f;
 } 

@@ -13,6 +13,9 @@ public class WeaponController : MonoBehaviour
     [SerializeField] private AbilityData[] abilities; // Unity'de atanacak yetenekler
     [SerializeField] private KeyCode switchAbilityKey = KeyCode.Q;
     private int currentAbilityIndex = 0;
+    
+    [Header("Elemental Ability Integration")]
+    [SerializeField] private ElementalAbilityManager elementalAbilityManager;
 
     [Header("UI References")]
     [SerializeField] private UnityEngine.UI.Image abilityIcon; // Opsiyonel: Aktif yeteneği göstermek için
@@ -59,10 +62,27 @@ public class WeaponController : MonoBehaviour
         {
             bulletScript.SetEffectType(abilities[currentAbilityIndex].effectType);
             bulletScript.SetDamageMultiplier(1.0f); // Varsayılan hasar çarpanı
+            bulletScript.SetAbilityData(abilities[currentAbilityIndex]); // Ability data'yı ayarla
+        }
+
+        // Elemental ability sistemini tetikle
+        if (elementalAbilityManager != null)
+        {
+            // En yakın düşmanı bul
+            GameObject nearestEnemy = FindNearestEnemy();
+            if (nearestEnemy != null)
+            {
+                // Elemental strike uygula
+                elementalAbilityManager.UseStrike(nearestEnemy);
+                // Projectile sayacını artır
+                elementalAbilityManager.OnAttack();
+                
+                Debug.Log($"🎯 Shot fired! Elemental abilities triggered on {nearestEnemy.name}");
+            }
         }
 
         // Ses efekti
-        AudioManager.instance.PlaySFX(12);
+        AudioManager.Instance.PlaySFX(12);
     }
 
     private void SwitchAbility()
@@ -80,5 +100,31 @@ public class WeaponController : MonoBehaviour
 
         // Debug log
         Debug.Log($"Switched to ability: {abilities[currentAbilityIndex].abilityName}");
+    }
+    
+    /// <summary>
+    /// En yakın düşmanı bulur
+    /// </summary>
+    /// <returns>En yakın düşman GameObject</returns>
+    private GameObject FindNearestEnemy()
+    {
+        GameObject nearestEnemy = null;
+        float nearestDistance = float.MaxValue;
+        
+        // Tüm düşmanları bul
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        
+        foreach (GameObject enemy in enemies)
+        {
+            float distance = Vector3.Distance(transform.position, enemy.transform.position);
+            
+            if (distance < nearestDistance)
+            {
+                nearestEnemy = enemy;
+                nearestDistance = distance;
+            }
+        }
+        
+        return nearestEnemy;
     }
 } 

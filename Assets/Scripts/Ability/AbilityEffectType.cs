@@ -1,7 +1,7 @@
 public enum AbilityEffectType
 {
-    None,
+    Normal,
     Fire,
     Poison,
-    Freeze
+    Ice
 } 

@@ -7,9 +7,9 @@ public class HealthPickup : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            if (PlayerHealthController.instance.currentHealth == PlayerHealthController.instance.maxHealth) return;
-            PlayerHealthController.instance.HealPlayer(healAmount);
-            AudioManager.instance.PlaySFX(7);
+            if (PlayerHealthController.Instance.currentHealth == PlayerHealthController.Instance.maxHealth) return;
+            PlayerHealthController.Instance.HealPlayer(healAmount);
+            AudioManager.Instance.PlaySFX(7);
             Destroy(gameObject);
         }
     }

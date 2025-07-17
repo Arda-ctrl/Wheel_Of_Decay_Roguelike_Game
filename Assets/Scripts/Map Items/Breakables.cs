@@ -20,7 +20,7 @@ public class Breakables : MonoBehaviour
     {
         Destroy(gameObject);
 
-        AudioManager.instance.PlaySFX(0);
+        AudioManager.Instance.PlaySFX(0);
 
         if (shouldDropItem)
         {

@@ -6,7 +6,7 @@ public class EnemyBullet : MonoBehaviour
     private Vector3 direction;
     void Start()
     {
-        direction = PlayerController.instance.transform.position - transform.position;
+        direction = PlayerController.Instance.transform.position - transform.position;
         direction.Normalize();
     }
     void Update()
@@ -17,10 +17,10 @@ public class EnemyBullet : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            PlayerHealthController.instance.DamagePlayer();
+            PlayerHealthController.Instance.DamagePlayer();
         }
         Destroy(gameObject);
-        AudioManager.instance.PlaySFX(5);
+        AudioManager.Instance.PlaySFX(5);
     }
     private void OnBecameInvisible()
     {
