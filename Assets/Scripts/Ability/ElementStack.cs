@@ -123,6 +123,16 @@ public class ElementStack : MonoBehaviour
     }
     
     /// <summary>
+    /// Belirtilen elementin stack sayısını döndürür (GetElementStack ile aynı)
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <returns>Stack sayısı</returns>
+    public int GetElementStackCount(ElementType elementType)
+    {
+        return GetElementStack(elementType);
+    }
+    
+    /// <summary>
     /// Belirtilen elementin stack'i var mı kontrol eder
     /// </summary>
     /// <param name="elementType">Element türü</param>

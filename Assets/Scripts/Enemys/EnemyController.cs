@@ -59,11 +59,9 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         isFacingRight = facingRightByDefault;
         UpdateSpriteDirection(isFacingRight);
         
-        // StrikeStack component'ini ekle (eğer yoksa)
-        if (GetComponent<StrikeStack>() == null)
-        {
-            gameObject.AddComponent<StrikeStack>();
-        }
+        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+        // StrikeStack component'i artık gerekli değil
+        Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
     }
 
     private void Update()
@@ -209,6 +207,13 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     private void Die()
     {
         Debug.Log("Enemy died!");
+        
+        // ElementalArea için ölüm event'ini tetikle
+        if (EventManager.Instance != null)
+        {
+            EventManager.Instance.TriggerEnemyDeath(gameObject);
+        }
+        
         // Implement death logic here (e.g., play animation, spawn particles, etc.)
         Destroy(gameObject);
     }

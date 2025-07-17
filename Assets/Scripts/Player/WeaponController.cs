@@ -17,9 +17,6 @@ public class WeaponController : MonoBehaviour
     [Header("Elemental Ability Integration")]
     [SerializeField] private ElementalAbilityManager elementalAbilityManager;
 
-    [Header("Strike System")]
-    [SerializeField] private bool isStrikeBuffActive = false;
-
     [Header("UI References")]
     [SerializeField] private UnityEngine.UI.Image abilityIcon; // Opsiyonel: Aktif yeteneği göstermek için
 
@@ -37,9 +34,6 @@ public class WeaponController : MonoBehaviour
             Shoot();
             nextFireTime = Time.time + fireRate;
         }
-        
-        // Elemental ability input'larını handle et
-        HandleElementalInputs();
     }
 
     public void StartFiring()
@@ -69,12 +63,6 @@ public class WeaponController : MonoBehaviour
             bulletScript.SetEffectType(abilities[currentAbilityIndex].effectType);
             bulletScript.SetDamageMultiplier(1.0f); // Varsayılan hasar çarpanı
             bulletScript.SetAbilityData(abilities[currentAbilityIndex]); // Ability data'yı ayarla
-        }
-        
-        // Strike sistemi ayarlarını uygula
-        if (bulletScript != null)
-        {
-            bulletScript.SetStrikeBuff(isStrikeBuffActive);
         }
 
         // Elemental ability sistemini tetikle
@@ -115,73 +103,6 @@ public class WeaponController : MonoBehaviour
     }
     
     /// <summary>
-    /// Elemental ability input'larını handle eder
-    /// </summary>
-    private void HandleElementalInputs()
-    {
-        // Element değiştirme input'ları
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            ChangeElement(ElementType.Fire);
-            Debug.Log("🔥 Element changed to: FIRE");
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            ChangeElement(ElementType.Ice);
-            Debug.Log("❄️ Element changed to: ICE");
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            ChangeElement(ElementType.Poison);
-            Debug.Log("☠️ Element changed to: POISON");
-        }
-        
-        // Ability toggle input'ları
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            ToggleAbility(AbilityType.Buff);
-            Debug.Log("🛡️ Buff ability toggled!");
-        }
-        else if (Input.GetKeyDown(KeyCode.E))
-        {
-            ToggleAbility(AbilityType.Projectile);
-            Debug.Log("🎯 Projectile ability toggled!");
-        }
-        
-        // Strike sistemi input'ları
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            ToggleStrikeBuff();
-            Debug.Log("⚡ Strike buff toggled!");
-        }
-    }
-    
-    /// <summary>
-    /// Elementi değiştirir
-    /// </summary>
-    /// <param name="elementType">Yeni element türü</param>
-    private void ChangeElement(ElementType elementType)
-    {
-        if (elementalAbilityManager != null)
-        {
-            elementalAbilityManager.SetElement(elementType);
-        }
-    }
-    
-    /// <summary>
-    /// Ability'yi toggle eder
-    /// </summary>
-    /// <param name="abilityType">Ability türü</param>
-    private void ToggleAbility(AbilityType abilityType)
-    {
-        if (elementalAbilityManager != null)
-        {
-            bool currentState = elementalAbilityManager.IsAbilityActive(abilityType);
-            elementalAbilityManager.SetAbilityActive(abilityType, !currentState);
-        }
-    }
-    
-    /// <summary>
     /// En yakın düşmanı bulur
     /// </summary>
     /// <returns>En yakın düşman GameObject</returns>
@@ -205,24 +126,5 @@ public class WeaponController : MonoBehaviour
         }
         
         return nearestEnemy;
-    }
-    
-    /// <summary>
-    /// Strike buff'unu toggle eder
-    /// </summary>
-    private void ToggleStrikeBuff()
-    {
-        isStrikeBuffActive = !isStrikeBuffActive;
-        Debug.Log($"⚡ Strike buff {(isStrikeBuffActive ? "activated" : "deactivated")}");
-    }
-    
-    /// <summary>
-    /// Strike buff'unu manuel olarak ayarlar
-    /// </summary>
-    /// <param name="active">Aktif mi?</param>
-    public void SetStrikeBuff(bool active)
-    {
-        isStrikeBuffActive = active;
-        Debug.Log($"⚡ Strike buff {(active ? "activated" : "deactivated")}");
     }
 } 

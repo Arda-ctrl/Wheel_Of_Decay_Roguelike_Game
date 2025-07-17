@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
@@ -9,6 +10,7 @@ using TMPro;
 public class PoisonElement : IElement
 {
     public string ElementName => "Poison";
+    public ElementType ElementType => ElementType.Poison;
     public Color ElementColor => Color.green;
     
     [Header("Poison Element Settings")]

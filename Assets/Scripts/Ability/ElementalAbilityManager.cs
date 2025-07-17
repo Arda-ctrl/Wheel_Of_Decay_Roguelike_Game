@@ -66,6 +66,12 @@ public class ElementalAbilityManager : MonoBehaviour
                     {
                         projectile.SetElement(currentElement);
                     }
+                    else if (ability is ElementalArea area)
+                    {
+                        area.SetElement(currentElement);
+                        // ElementalArea'yı otomatik olarak aktif et
+                        area.SetActive(true);
+                    }
                     
                     OnAbilityActivated?.Invoke(abilityData.abilityType, ability);
                 }
@@ -148,7 +154,7 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <param name="target">Hedef GameObject</param>
     public void UseStrike(GameObject target)
     {
-        UseAbility(AbilityType.Strike, target);
+        UseAbility(AbilityType.ElementalStrike, target);
     }
     
     /// <summary>
@@ -160,9 +166,9 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <returns>Buff'lanmış hasar</returns>
     public float CalculateBuffDamage(float baseDamage, GameObject target, ElementType elementType)
     {
-        if (activeAbilities.ContainsKey(AbilityType.Buff))
+        if (activeAbilities.ContainsKey(AbilityType.ElementalBuff))
         {
-            var buffAbility = activeAbilities[AbilityType.Buff] as ElementalBuff;
+            var buffAbility = activeAbilities[AbilityType.ElementalBuff] as ElementalBuff;
             if (buffAbility != null)
             {
                 return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
@@ -177,9 +183,9 @@ public class ElementalAbilityManager : MonoBehaviour
     /// </summary>
     public void OnAttack()
     {
-        if (activeAbilities.ContainsKey(AbilityType.Projectile))
+        if (activeAbilities.ContainsKey(AbilityType.ElementalProjectile))
         {
-            var projectileAbility = activeAbilities[AbilityType.Projectile] as ElementalProjectile;
+            var projectileAbility = activeAbilities[AbilityType.ElementalProjectile] as ElementalProjectile;
             projectileAbility?.OnAttack();
             Debug.Log($"🎯 Attack counter increased for projectile ability");
         }
@@ -265,6 +271,10 @@ public class ElementalAbilityManager : MonoBehaviour
             {
                 return projectile.IsActive();
             }
+            else if (ability is ElementalArea area)
+            {
+                return area.IsActive();
+            }
         }
         
         return false;
@@ -315,14 +325,13 @@ public class ElementalAbilityManager : MonoBehaviour
         {
             bool isActive = IsAbilityActive(kvp.Key);
             string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
-            string colorTag = isActive ? "green" : "red";
             info += $"- {kvp.Key}: {status}\n";
         }
         
-        info += $"\n🎮 Input Controls:\n";
-        info += $"1, 2, 3: Change Element\n";
-        info += $"Q: Toggle Buff\n";
-        info += $"E: Toggle Projectile\n";
+        info += $"\n🎮 System Info:\n";
+        info += $"ElementalArea: Auto-activated when available\n";
+        info += $"Strike: Always active\n";
+        info += $"Buff/Projectile: Manual toggle\n";
         
         // Daha büyük ve görünür box
         GUI.color = Color.white;
@@ -350,6 +359,48 @@ public class ElementalAbilityManager : MonoBehaviour
             string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
             GUI.Label(new Rect(15, yPos, 340, 20), $"- {kvp.Key}: {status}");
             yPos += 20;
+        }
+    }
+
+    private void Update()
+    {
+        // ElementalArea'yı otomatik olarak aktif et (sadece gerektiğinde)
+        if (Time.frameCount % 60 == 0) // Her 60 frame'de bir kontrol et
+        {
+            EnsureElementalAreaActive();
+        }
+    }
+    
+    /// <summary>
+    /// ElementalArea'nın aktif olduğundan emin olur
+    /// </summary>
+    private void EnsureElementalAreaActive()
+    {
+        if (activeAbilities.ContainsKey(AbilityType.ElementalArea))
+        {
+            var areaAbility = activeAbilities[AbilityType.ElementalArea] as ElementalArea;
+            if (areaAbility != null && !areaAbility.IsActive())
+            {
+                areaAbility.SetActive(true);
+                Debug.Log("🔥 ElementalArea automatically activated!");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// ElementalArea'yı manuel olarak aktif/pasif yapar
+    /// </summary>
+    /// <param name="active">Aktif mi?</param>
+    public void SetElementalAreaActive(bool active)
+    {
+        if (activeAbilities.ContainsKey(AbilityType.ElementalArea))
+        {
+            var areaAbility = activeAbilities[AbilityType.ElementalArea] as ElementalArea;
+            if (areaAbility != null)
+            {
+                areaAbility.SetActive(active);
+                Debug.Log($"🔥 ElementalArea {(active ? "ACTIVATED" : "DEACTIVATED")}");
+            }
         }
     }
 } 

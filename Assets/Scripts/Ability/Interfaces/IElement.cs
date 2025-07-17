@@ -12,6 +12,11 @@ public interface IElement
     string ElementName { get; }
     
     /// <summary>
+    /// Element türü (enum değeri)
+    /// </summary>
+    ElementType ElementType { get; }
+    
+    /// <summary>
     /// Element rengi (UI ve efektler için)
     /// </summary>
     Color ElementColor { get; }

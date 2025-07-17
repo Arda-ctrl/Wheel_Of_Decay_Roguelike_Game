@@ -52,7 +52,7 @@ public class Ability : MonoBehaviour
             case AbilityEffectType.Poison:
                 effect = effectObj.AddComponent<PoisonEffect>();
                 break;
-            case AbilityEffectType.Freeze:
+            case AbilityEffectType.Ice:
                 effect = effectObj.AddComponent<FreezeEffect>();
                 break;
         }

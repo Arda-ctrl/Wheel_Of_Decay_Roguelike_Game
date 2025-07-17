@@ -14,10 +14,12 @@ public class ElementalStrike : MonoBehaviour, IAbility
     [SerializeField] private float cooldownDuration = 0f; // Normal saldırı için cooldown yok
     [SerializeField] private float manaCost = 0f; // Normal saldırı için mana maliyeti yok
     [SerializeField] private int stackAmount = 1; // Her vuruşta eklenecek stack miktarı
+    [SerializeField] private float strikeDamage = 10f; // Strike hasarı
     
     private bool isOnCooldown;
     private float cooldownTimeRemaining;
     private IElement currentElement;
+    private ElementalAbilityData abilityData;
     
     // IAbility Interface Implementation
     public string AbilityName => abilityName;
@@ -25,6 +27,22 @@ public class ElementalStrike : MonoBehaviour, IAbility
     public Sprite Icon => icon;
     public float CooldownDuration => cooldownDuration;
     public float ManaCost => manaCost;
+    
+    /// <summary>
+    /// Ability'yi ElementalAbilityData ile başlatır
+    /// </summary>
+    /// <param name="data">Ability verileri</param>
+    public void Initialize(ElementalAbilityData data)
+    {
+        abilityData = data;
+        abilityName = data.abilityName;
+        description = data.description;
+        icon = data.icon;
+        cooldownDuration = data.cooldownDuration;
+        manaCost = data.manaCost;
+        stackAmount = data.stackAmount;
+        strikeDamage = data.strikeDamage;
+    }
     
     private void Update()
     {
@@ -55,6 +73,9 @@ public class ElementalStrike : MonoBehaviour, IAbility
         {
             currentElement.ApplyElementStack(target, stackAmount);
             
+            // Strike hasarını uygula
+            ApplyStrikeDamage(target);
+            
             // VFX ve SFX oynat
             PlayStrikeEffects(caster, target);
             
@@ -63,6 +84,19 @@ public class ElementalStrike : MonoBehaviour, IAbility
         
         // Cooldown başlat
         StartCooldown();
+    }
+    
+    /// <summary>
+    /// Strike hasarını hedefe uygular
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void ApplyStrikeDamage(GameObject target)
+    {
+        var health = target.GetComponent<IHealth>();
+        if (health != null)
+        {
+            health.TakeDamage(strikeDamage);
+        }
     }
     
     /// <summary>
@@ -105,10 +139,9 @@ public class ElementalStrike : MonoBehaviour, IAbility
     private void PlayStrikeEffects(GameObject caster, GameObject target)
     {
         // Strike VFX'i oynat
-        var strikeVFX = Resources.Load<GameObject>("Prefabs/Effects/ElementalStrikeVFX");
-        if (strikeVFX != null)
+        if (abilityData?.vfxPrefab != null)
         {
-            GameObject vfxInstance = Object.Instantiate(strikeVFX, target.transform.position, Quaternion.identity);
+            GameObject vfxInstance = Object.Instantiate(abilityData.vfxPrefab, target.transform.position, Quaternion.identity);
             
             // Element rengine göre VFX'i ayarla
             var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
@@ -120,7 +153,10 @@ public class ElementalStrike : MonoBehaviour, IAbility
         }
         
         // Strike SFX'i oynat
-        AudioManager.Instance?.PlaySFX(18);
+        if (abilityData?.sfxClip != null)
+        {
+            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+        }
     }
     
     /// <summary>

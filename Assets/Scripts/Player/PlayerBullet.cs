@@ -8,13 +8,13 @@ public class PlayerBullet : MonoBehaviour
     public float baseDamage = 10f;
 
     [Header("Effect Settings")]
-    private AbilityEffectType effectType = AbilityEffectType.None;
+    private AbilityEffectType effectType = AbilityEffectType.Normal;
     private float damageMultiplier = 1f;
     private float speedMultiplier = 1f;
     
-    [Header("Strike Settings")]
+    [Header("Elemental Settings")]
     private AbilityData currentAbilityData;
-    private bool isStrikeBuffActive = false;
+    private bool isElementalBuffActive = false;
 
     private Rigidbody2D rb;
 
@@ -36,17 +36,15 @@ public class PlayerBullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            // Apply strike stack if current ability has strike ability
-            if (currentAbilityData != null && currentAbilityData.hasStrikeAbility)
-            {
-                ApplyStrikeStack(other.gameObject);
-            }
+            // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+            // Bu method artık kullanılmıyor
+            Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
 
-            // Calculate final damage with strike system
+            // Calculate final damage
             float finalDamage = CalculateFinalDamage(other.gameObject);
 
             // Apply ability effect if any
-            if (effectType != AbilityEffectType.None)
+            if (effectType != AbilityEffectType.Normal)
             {
                 ApplyAbilityEffect(other.gameObject);
             }
@@ -95,7 +93,7 @@ public class PlayerBullet : MonoBehaviour
             case AbilityEffectType.Poison:
                 effect = effectObj.AddComponent<PoisonEffect>();
                 break;
-            case AbilityEffectType.Freeze:
+            case AbilityEffectType.Ice:
                 effect = effectObj.AddComponent<FreezeEffect>();
                 break;
         }
@@ -115,30 +113,18 @@ public class PlayerBullet : MonoBehaviour
     }
 
     /// <summary>
-    /// Strike stack'i düşmana uygular
+    /// Elemental stack'i düşmana uygular
     /// </summary>
     /// <param name="target">Hedef düşman</param>
-    private void ApplyStrikeStack(GameObject target)
+    private void ApplyElementalStack(GameObject target)
     {
-        var strikeStack = target.GetComponent<StrikeStack>();
-        if (strikeStack == null)
-        {
-            // StrikeStack component'i yoksa ekle
-            strikeStack = target.AddComponent<StrikeStack>();
-        }
-        
-        // Ability data'yı StrikeStack'e geç
-        if (currentAbilityData != null)
-        {
-            strikeStack.SetAbilityData(currentAbilityData);
-        }
-        
-        // Strike stack ekle
-        strikeStack.AddStrikeStack(1);
+        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+        // Bu method artık kullanılmıyor
+        Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
     }
     
     /// <summary>
-    /// Strike sistemi ile final hasarı hesaplar
+    /// Final hasarı hesaplar
     /// </summary>
     /// <param name="target">Hedef düşman</param>
     /// <returns>Hesaplanmış final hasar</returns>
@@ -146,32 +132,9 @@ public class PlayerBullet : MonoBehaviour
     {
         float baseFinalDamage = baseDamage * damageMultiplier;
         
-        // Strike sistemi kontrolü
-        var strikeStack = target.GetComponent<StrikeStack>();
-        if (strikeStack != null && strikeStack.HasStrikeStacks() && currentAbilityData != null)
-        {
-            // Strike buff aktifse daha fazla hasar
-            if (isStrikeBuffActive && currentAbilityData.hasStrikeBuff)
-            {
-                baseFinalDamage = strikeStack.CalculateStrikeDamage(baseFinalDamage);
-                Debug.Log($"⚡ Strike buff active! Damage: {baseFinalDamage}");
-            }
-            else if (currentAbilityData.hasStrikeAbility)
-            {
-                // Normal strike hasarı (SO'dan alınan değerler)
-                int stacks = strikeStack.GetStrikeStacks();
-                if (stacks == 1)
-                {
-                    baseFinalDamage = currentAbilityData.normalStrikeDamage1Stack;
-                }
-                else
-                {
-                    baseFinalDamage = currentAbilityData.normalStrikeDamage2PlusStacks + 
-                                    (stacks - 1) * currentAbilityData.normalStrikeDamagePerAdditionalStack;
-                }
-                Debug.Log($"⚡ Normal strike damage: {baseFinalDamage} (stacks: {stacks})");
-            }
-        }
+        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
+        // Bu method sadece temel hasar hesaplaması yapıyor
+        Debug.Log($"⚔️ Base damage: {baseFinalDamage}");
         
         return baseFinalDamage;
     }
@@ -207,12 +170,12 @@ public class PlayerBullet : MonoBehaviour
     }
     
     /// <summary>
-    /// Strike buff'unu aktifleştir/deaktifleştir
+    /// Elemental buff'unu aktifleştir/deaktifleştir
     /// </summary>
     /// <param name="active">Aktif mi?</param>
-    public void SetStrikeBuff(bool active)
+    public void SetElementalBuff(bool active)
     {
-        isStrikeBuffActive = active;
-        Debug.Log($"⚡ Strike buff {(active ? "activated" : "deactivated")}");
+        isElementalBuffActive = active;
+        Debug.Log($"⚡ Elemental buff {(active ? "activated" : "deactivated")}");
     }
 }

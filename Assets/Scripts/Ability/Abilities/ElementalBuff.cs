@@ -17,6 +17,7 @@ public class ElementalBuff : MonoBehaviour, IAbility
     
     private IElement currentElement;
     private bool isActive = true;
+    private ElementalAbilityData abilityData;
     
     // IAbility Interface Implementation
     public string AbilityName => abilityName;
@@ -24,6 +25,21 @@ public class ElementalBuff : MonoBehaviour, IAbility
     public Sprite Icon => icon;
     public float CooldownDuration => cooldownDuration;
     public float ManaCost => manaCost;
+    
+    /// <summary>
+    /// Ability'yi ElementalAbilityData ile başlatır
+    /// </summary>
+    /// <param name="data">Ability verileri</param>
+    public void Initialize(ElementalAbilityData data)
+    {
+        abilityData = data;
+        abilityName = data.abilityName;
+        description = data.description;
+        icon = data.icon;
+        cooldownDuration = data.cooldownDuration;
+        manaCost = data.manaCost;
+        damageMultiplier = data.damageMultiplier;
+    }
     
     /// <summary>
     /// Ability'yi kullanır (pasif ability olduğu için sadece element ayarlar)
@@ -94,10 +110,9 @@ public class ElementalBuff : MonoBehaviour, IAbility
     private void PlayBuffEffects(GameObject target)
     {
         // Buff VFX'i oynat
-        var buffVFX = Resources.Load<GameObject>("Prefabs/Effects/ElementalBuffVFX");
-        if (buffVFX != null)
+        if (abilityData?.vfxPrefab != null)
         {
-            GameObject vfxInstance = Object.Instantiate(buffVFX, target.transform.position, Quaternion.identity);
+            GameObject vfxInstance = Object.Instantiate(abilityData.vfxPrefab, target.transform.position, Quaternion.identity);
             
             // Element rengine göre VFX'i ayarla
             var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
@@ -109,7 +124,10 @@ public class ElementalBuff : MonoBehaviour, IAbility
         }
         
         // Buff SFX'i oynat
-        AudioManager.Instance?.PlaySFX(19);
+        if (abilityData?.sfxClip != null)
+        {
+            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+        }
     }
     
     /// <summary>

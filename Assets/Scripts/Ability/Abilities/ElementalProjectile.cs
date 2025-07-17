@@ -25,6 +25,7 @@ public class ElementalProjectile : MonoBehaviour, IAbility
     private bool isActive = true;
     private int attackCounter = 0;
     private Transform playerTransform;
+    private ElementalAbilityData abilityData;
     
     // IAbility Interface Implementation
     public string AbilityName => abilityName;
@@ -32,6 +33,25 @@ public class ElementalProjectile : MonoBehaviour, IAbility
     public Sprite Icon => icon;
     public float CooldownDuration => cooldownDuration;
     public float ManaCost => manaCost;
+    
+    /// <summary>
+    /// Ability'yi ElementalAbilityData ile başlatır
+    /// </summary>
+    /// <param name="data">Ability verileri</param>
+    public void Initialize(ElementalAbilityData data)
+    {
+        abilityData = data;
+        abilityName = data.abilityName;
+        description = data.description;
+        icon = data.icon;
+        cooldownDuration = data.cooldownDuration;
+        manaCost = data.manaCost;
+        attackCountForProjectile = data.attackCountForProjectile;
+        projectileSpeed = data.projectileSpeed;
+        projectileDamage = data.projectileDamage;
+        projectileRange = data.projectileRange;
+        projectilePrefab = data.projectilePrefab;
+    }
     
     private void Start()
     {
@@ -114,7 +134,8 @@ public class ElementalProjectile : MonoBehaviour, IAbility
                         projectileSpeed,
                         projectileDamage,
                         currentElement,
-                        projectileRange
+                        projectileRange,
+                        abilityData
                     );
                 }
                 
@@ -172,7 +193,7 @@ public class ElementalProjectile : MonoBehaviour, IAbility
             
             // Sprite renderer ekle
             var spriteRenderer = projectile.AddComponent<SpriteRenderer>();
-            spriteRenderer.sprite = Resources.Load<Sprite>("Sprites/Projectile");
+            spriteRenderer.sprite = icon;
             
             return projectile;
         }
@@ -184,10 +205,9 @@ public class ElementalProjectile : MonoBehaviour, IAbility
     private void PlayProjectileEffects()
     {
         // Projectile VFX'i oynat
-        var projectileVFX = Resources.Load<GameObject>("Prefabs/Effects/ElementalProjectileVFX");
-        if (projectileVFX != null)
+        if (abilityData?.vfxPrefab != null)
         {
-            GameObject vfxInstance = Object.Instantiate(projectileVFX, playerTransform.position, Quaternion.identity);
+            GameObject vfxInstance = Object.Instantiate(abilityData.vfxPrefab, playerTransform.position, Quaternion.identity);
             
             // Element rengine göre VFX'i ayarla
             var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
@@ -199,7 +219,10 @@ public class ElementalProjectile : MonoBehaviour, IAbility
         }
         
         // Projectile SFX'i oynat
-        AudioManager.Instance?.PlaySFX(20);
+        if (abilityData?.sfxClip != null)
+        {
+            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+        }
     }
     
     /// <summary>
@@ -241,9 +264,9 @@ public class ElementalProjectile : MonoBehaviour, IAbility
     /// Projectile ayarlarını günceller
     /// </summary>
     /// <param name="attackCount">Saldırı sayısı</param>
-    /// <param name="speed">Projectile hızı</param>
-    /// <param name="damage">Projectile hasarı</param>
-    /// <param name="range">Projectile menzili</param>
+    /// <param name="speed">Hız</param>
+    /// <param name="damage">Hasar</param>
+    /// <param name="range">Menzil</param>
     public void UpdateProjectileSettings(int attackCount, float speed, float damage, float range)
     {
         attackCountForProjectile = attackCount;
@@ -251,7 +274,11 @@ public class ElementalProjectile : MonoBehaviour, IAbility
         projectileDamage = damage;
         projectileRange = range;
     }
-
+    
+    /// <summary>
+    /// Ability'nin aktif olup olmadığını kontrol eder
+    /// </summary>
+    /// <returns>Ability aktif mi?</returns>
     public bool IsActive()
     {
         return isActive;
@@ -259,7 +286,7 @@ public class ElementalProjectile : MonoBehaviour, IAbility
 }
 
 /// <summary>
-/// ElementalProjectileObject - Projectile'ın hareket ve çarpışma davranışlarını yönetir (Elemental sistem için)
+/// ElementalProjectileObject - Projectile'ın davranışını kontrol eder
 /// </summary>
 public class ElementalProjectileObject : MonoBehaviour
 {
@@ -270,18 +297,29 @@ public class ElementalProjectileObject : MonoBehaviour
     private float range;
     private float distanceTraveled;
     private Vector3 startPosition;
+    private ElementalAbilityData abilityData;
     
-    public void Initialize(Vector3 dir, float spd, float dmg, IElement elem, float rng)
+    /// <summary>
+    /// Projectile'ı başlatır
+    /// </summary>
+    /// <param name="dir">Yön</param>
+    /// <param name="spd">Hız</param>
+    /// <param name="dmg">Hasar</param>
+    /// <param name="elem">Element</param>
+    /// <param name="rng">Menzil</param>
+    /// <param name="data">Ability verileri</param>
+    public void Initialize(Vector3 dir, float spd, float dmg, IElement elem, float rng, ElementalAbilityData data)
     {
         direction = dir;
         speed = spd;
         damage = dmg;
         element = elem;
         range = rng;
+        abilityData = data;
         distanceTraveled = 0f;
         startPosition = transform.position;
         
-        // Projectile'ı element rengine göre ayarla
+        // Element rengine göre sprite'ı ayarla
         var spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null && element != null)
         {
@@ -294,8 +332,10 @@ public class ElementalProjectileObject : MonoBehaviour
         // Projectile'ı hareket ettir
         transform.position += direction * speed * Time.deltaTime;
         
-        // Menzil kontrolü
+        // Mesafeyi takip et
         distanceTraveled = Vector3.Distance(startPosition, transform.position);
+        
+        // Menzil aşıldıysa yok et
         if (distanceTraveled >= range)
         {
             DestroyProjectile();
@@ -304,24 +344,23 @@ public class ElementalProjectileObject : MonoBehaviour
     
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Düşmana çarptı mı kontrol et
         if (other.CompareTag("Enemy"))
         {
-            // Hasar ver
+            // Hasar uygula
             var health = other.GetComponent<IHealth>();
             if (health != null)
             {
                 health.TakeDamage(damage);
             }
             
-            // Element stack'i uygula
+            // Element stack ekle
             if (element != null)
             {
                 element.ApplyElementStack(other.gameObject, 1);
             }
             
-            // Çarpışma VFX'i oynat
-            PlayHitEffects(other.transform.position);
+            // Vuruş efektlerini oynat
+            PlayHitEffects(transform.position);
             
             // Projectile'ı yok et
             DestroyProjectile();
@@ -329,28 +368,33 @@ public class ElementalProjectileObject : MonoBehaviour
     }
     
     /// <summary>
-    /// Çarpışma efektlerini oynatır
+    /// Vuruş efektlerini oynatır
     /// </summary>
-    /// <param name="hitPosition">Çarpışma pozisyonu</param>
+    /// <param name="hitPosition">Vuruş pozisyonu</param>
     private void PlayHitEffects(Vector3 hitPosition)
     {
-        // Hit VFX'i oynat
-        var hitVFX = Resources.Load<GameObject>("Prefabs/Effects/ElementalProjectileHitVFX");
-        if (hitVFX != null)
+        // Vuruş VFX'i oynat
+        if (abilityData?.vfxPrefab != null)
         {
-            GameObject vfxInstance = Object.Instantiate(hitVFX, hitPosition, Quaternion.identity);
+            GameObject hitVFX = Object.Instantiate(abilityData.vfxPrefab, hitPosition, Quaternion.identity);
             
             // Element rengine göre VFX'i ayarla
-            var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
+            var particleSystem = hitVFX.GetComponent<ParticleSystem>();
             if (particleSystem != null && element != null)
             {
                 var main = particleSystem.main;
                 main.startColor = element.ElementColor;
             }
+            
+            // VFX'i kısa süre sonra yok et
+            Destroy(hitVFX, 1f);
         }
         
-        // Hit SFX'i oynat
-        AudioManager.Instance?.PlaySFX(15);
+        // Vuruş SFX'i oynat
+        if (abilityData?.sfxClip != null)
+        {
+            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+        }
     }
     
     /// <summary>

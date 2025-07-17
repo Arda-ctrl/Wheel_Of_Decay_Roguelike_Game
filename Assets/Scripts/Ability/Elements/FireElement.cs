@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
@@ -9,6 +10,7 @@ using TMPro;
 public class FireElement : IElement
 {
     public string ElementName => "Fire";
+    public ElementType ElementType => ElementType.Fire;
     public Color ElementColor => Color.red;
     
     [Header("Fire Element Settings")]

@@ -33,6 +33,9 @@ public class EventManager : MonoBehaviour
     public event Action<AbilityEventData> OnAbilityUsed;
     public event Action<AbilityEventData> OnAbilityStarted;
     public event Action<AbilityEventData> OnAbilityEnded;
+    
+    // Enemy Events
+    public event Action<GameObject> OnEnemyDeath;
 
     public void TriggerAbilityUsed(AbilityEventData data)
     {
@@ -47,5 +50,10 @@ public class EventManager : MonoBehaviour
     public void TriggerAbilityEnded(AbilityEventData data)
     {
         OnAbilityEnded?.Invoke(data);
+    }
+    
+    public void TriggerEnemyDeath(GameObject deadEnemy)
+    {
+        OnEnemyDeath?.Invoke(deadEnemy);
     }
 } 

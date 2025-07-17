@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// ElementalAbilityData - Elemental ability'lerin verilerini tutan ScriptableObject
-/// Hem IAbility hem de IElement referansı içerir ve Inspector'dan ayarlanabilir
+/// ElementalAbilityData - 10 temel elemental yetenek tipinin verilerini tutan ScriptableObject
+/// Her yetenek için özel ayarlar içerir ve Inspector'dan ayarlanabilir
 /// </summary>
 [CreateAssetMenu(fileName = "New Elemental Ability", menuName = "Game/Abilities/Elemental Ability")]
 public class ElementalAbilityData : ScriptableObject
@@ -21,18 +21,57 @@ public class ElementalAbilityData : ScriptableObject
     public ElementType elementType;
     
     [Header("Ability Specific Settings")]
-    [Header("Strike Settings")]
-    public int stackAmount = 1;
     
-    [Header("Buff Settings")]
+    [Header("Elemental Strike Settings")]
+    public int stackAmount = 1;
+    public float strikeDamage = 10f;
+    
+    [Header("Elemental Buff Settings")]
     public float damageMultiplier = 1.5f;
     
-    [Header("Projectile Settings")]
+    [Header("Elemental Projectile Settings")]
     public int attackCountForProjectile = 3;
     public float projectileSpeed = 10f;
     public float projectileDamage = 15f;
     public float projectileRange = 10f;
     public GameObject projectilePrefab;
+    
+    [Header("Elemental Armor Settings")]
+    public float damageReductionPercent = 30f;
+    public float armorDuration = 10f;
+    public float areaDamageRadius = 3f;
+    
+    [Header("Elemental Area Settings")]
+    public int requiredStacksForArea = 5;
+    public float areaDamage = 20f;
+    public float areaRadius = 5f;
+    public float areaDuration = 5f;
+    
+    [Header("Elemental Lance Barrage Settings")]
+    public int lanceCount = 5;
+    public float lanceDamage = 25f;
+    public float lanceRange = 8f;
+    
+    [Header("Elemental Overflow Settings")]
+    public int overflowStackAmount = 5;
+    public float overflowDamage = 30f;
+    public int requiredEnemyKills = 20;
+    
+    [Header("Elemental Burst Settings")]
+    public int burstTriggerStacks = 3;
+    public float burstDamage = 40f;
+    public float burstRadius = 4f;
+    
+    [Header("Elemental Aura Settings")]
+    public float auraDamage = 5f;
+    public float auraRadius = 6f;
+    public float auraStackTime = 3f;
+    
+    [Header("Elemental Orb Settings")]
+    public float orbDamage = 15f;
+    public float orbDuration = 10f;
+    public float orbSpeed = 5f;
+    public GameObject orbPrefab;
     
     [Header("Visual and Audio")]
     public GameObject vfxPrefab;
@@ -49,14 +88,35 @@ public class ElementalAbilityData : ScriptableObject
         
         switch (abilityType)
         {
-            case AbilityType.Strike:
+            case AbilityType.ElementalStrike:
                 ability = CreateElementalStrike(caster);
                 break;
-            case AbilityType.Buff:
+            case AbilityType.ElementalBuff:
                 ability = CreateElementalBuff(caster);
                 break;
-            case AbilityType.Projectile:
+            case AbilityType.ElementalProjectile:
                 ability = CreateElementalProjectile(caster);
+                break;
+            case AbilityType.ElementalArmor:
+                ability = CreateElementalArmor(caster);
+                break;
+            case AbilityType.ElementalArea:
+                ability = CreateElementalArea(caster);
+                break;
+            case AbilityType.ElementalLanceBarrage:
+                ability = CreateElementalLanceBarrage(caster);
+                break;
+            case AbilityType.ElementalOverflow:
+                ability = CreateElementalOverflow(caster);
+                break;
+            case AbilityType.ElementalBurst:
+                ability = CreateElementalBurst(caster);
+                break;
+            case AbilityType.ElementalAura:
+                ability = CreateElementalAura(caster);
+                break;
+            case AbilityType.ElementalOrb:
+                ability = CreateElementalOrb(caster);
                 break;
         }
         
@@ -82,91 +142,89 @@ public class ElementalAbilityData : ScriptableObject
             case ElementType.Poison:
                 element = new PoisonElement();
                 break;
+            case ElementType.Lightning:
+                element = new LightningElement();
+                break;
+            case ElementType.Earth:
+                element = new EarthElement();
+                break;
+            case ElementType.Wind:
+                element = new WindElement();
+                break;
         }
         
         return element;
     }
     
-    /// <summary>
-    /// ElementalStrike ability'sini oluşturur
-    /// </summary>
-    /// <param name="caster">Caster GameObject</param>
-    /// <returns>ElementalStrike component</returns>
+    // Ability creation methods - her biri ilgili component'i oluşturur ve ayarlar
     private ElementalStrike CreateElementalStrike(GameObject caster)
     {
         var strike = caster.AddComponent<ElementalStrike>();
-        
-        // Settings'i ayarla
-        var serializedStrike = strike as MonoBehaviour;
-        if (serializedStrike != null)
-        {
-            // Reflection ile private field'ları ayarla
-            var stackAmountField = typeof(ElementalStrike).GetField("stackAmount", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            stackAmountField?.SetValue(strike, stackAmount);
-        }
-        
+        strike.Initialize(this);
         return strike;
     }
     
-    /// <summary>
-    /// ElementalBuff ability'sini oluşturur
-    /// </summary>
-    /// <param name="caster">Caster GameObject</param>
-    /// <returns>ElementalBuff component</returns>
     private ElementalBuff CreateElementalBuff(GameObject caster)
     {
         var buff = caster.AddComponent<ElementalBuff>();
-        
-        // Settings'i ayarla
-        var serializedBuff = buff as MonoBehaviour;
-        if (serializedBuff != null)
-        {
-            // Reflection ile private field'ları ayarla
-            var damageMultiplierField = typeof(ElementalBuff).GetField("damageMultiplier", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            damageMultiplierField?.SetValue(buff, damageMultiplier);
-        }
-        
+        buff.Initialize(this);
         return buff;
     }
     
-    /// <summary>
-    /// ElementalProjectile ability'sini oluşturur
-    /// </summary>
-    /// <param name="caster">Caster GameObject</param>
-    /// <returns>ElementalProjectile component</returns>
     private ElementalProjectile CreateElementalProjectile(GameObject caster)
     {
         var projectile = caster.AddComponent<ElementalProjectile>();
-        
-        // Settings'i ayarla
-        var serializedProjectile = projectile as MonoBehaviour;
-        if (serializedProjectile != null)
-        {
-            // Reflection ile private field'ları ayarla
-            var attackCountField = typeof(ElementalProjectile).GetField("attackCountForProjectile", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            attackCountField?.SetValue(projectile, attackCountForProjectile);
-            
-            var speedField = typeof(ElementalProjectile).GetField("projectileSpeed", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            speedField?.SetValue(projectile, projectileSpeed);
-            
-            var damageField = typeof(ElementalProjectile).GetField("projectileDamage", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            damageField?.SetValue(projectile, projectileDamage);
-            
-            var rangeField = typeof(ElementalProjectile).GetField("projectileRange", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            rangeField?.SetValue(projectile, projectileRange);
-            
-            var prefabField = typeof(ElementalProjectile).GetField("projectilePrefab", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            prefabField?.SetValue(projectile, projectilePrefab);
-        }
-        
+        projectile.Initialize(this);
         return projectile;
+    }
+    
+    private ElementalArmor CreateElementalArmor(GameObject caster)
+    {
+        var armor = caster.AddComponent<ElementalArmor>();
+        armor.Initialize(this);
+        return armor;
+    }
+    
+    private ElementalArea CreateElementalArea(GameObject caster)
+    {
+        var area = caster.AddComponent<ElementalArea>();
+        area.Initialize(this);
+        return area;
+    }
+    
+    private ElementalLanceBarrage CreateElementalLanceBarrage(GameObject caster)
+    {
+        var lance = caster.AddComponent<ElementalLanceBarrage>();
+        lance.Initialize(this);
+        return lance;
+    }
+    
+    private ElementalOverflow CreateElementalOverflow(GameObject caster)
+    {
+        var overflow = caster.AddComponent<ElementalOverflow>();
+        overflow.Initialize(this);
+        return overflow;
+    }
+    
+    private ElementalBurst CreateElementalBurst(GameObject caster)
+    {
+        var burst = caster.AddComponent<ElementalBurst>();
+        burst.Initialize(this);
+        return burst;
+    }
+    
+    private ElementalAura CreateElementalAura(GameObject caster)
+    {
+        var aura = caster.AddComponent<ElementalAura>();
+        aura.Initialize(this);
+        return aura;
+    }
+    
+    private ElementalOrb CreateElementalOrb(GameObject caster)
+    {
+        var orb = caster.AddComponent<ElementalOrb>();
+        orb.Initialize(this);
+        return orb;
     }
     
     /// <summary>

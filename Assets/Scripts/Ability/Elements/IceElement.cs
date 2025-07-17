@@ -7,6 +7,7 @@ using UnityEngine;
 public class IceElement : IElement
 {
     public string ElementName => "Ice";
+    public ElementType ElementType => ElementType.Ice;
     public Color ElementColor => Color.cyan;
     
     [Header("Ice Element Settings")]

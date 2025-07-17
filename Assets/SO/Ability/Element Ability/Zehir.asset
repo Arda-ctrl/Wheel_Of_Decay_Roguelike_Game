@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50473562a83709e458340b42dfcb19af, type: 3}
+  m_Name: Zehir
+  m_EditorClassIdentifier: 
+  abilityName: Poison
+  description: zehirler
+  icon: {fileID: 8832167503239892954, guid: 6d1e3879c5838b145a66455483602966, type: 3}
+  damage: 5
+  cooldownDuration: 0.5
+  effectType: 2
+  vfxPrefab: {fileID: 0}
+  sfxClip: {fileID: 0}
+  effectDuration: 3
+  effectRadius: 1
+  poisonSlowAmount: 0.2
+  poisonTickRate: 1
+  maxPoisonStacks: 3
+  stackDamageMultiplier: 0.5
+  initialBurstDamage: 20
+  igniteDuration: 3
+  igniteTickRate: 0.25
+  hasAreaEffect: 0
+  areaEffectRadius: 3
+  freezeChance: 0.2
+  freezeDuration: 2
+  chillSlowAmount: 0.5
+  chillDuration: 4
+  hasElementalAbility: 0
+  hasElementalBuff: 0
+  maxElementalStacks: 5
+  elementalStackDecayTime: 15
+  elementalDamageMultiplierPerStack: 0.5
+  normalElementalDamage1Stack: 10
+  normalElementalDamage2PlusStacks: 15
+  normalElementalDamagePerAdditionalStack: 5

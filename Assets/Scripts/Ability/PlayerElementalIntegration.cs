@@ -65,9 +65,9 @@ public class PlayerElementalIntegration : MonoBehaviour
         // Ability'leri aktif/pasif yap
         if (elementalAbilityManager != null)
         {
-            elementalAbilityManager.SetAbilityActive(AbilityType.Strike, enableElementalStrike);
-            elementalAbilityManager.SetAbilityActive(AbilityType.Buff, enableElementalBuff);
-            elementalAbilityManager.SetAbilityActive(AbilityType.Projectile, enableElementalProjectile);
+            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalStrike, enableElementalStrike);
+            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalBuff, enableElementalBuff);
+            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalProjectile, enableElementalProjectile);
         }
         
         Debug.Log("Player Elemental Integration initialized");
@@ -83,7 +83,7 @@ public class PlayerElementalIntegration : MonoBehaviour
         if (elementalAbilityManager != null)
         {
             // Elemental strike uygula
-            elementalAbilityManager.UseStrike(target);
+            elementalAbilityManager.UseAbility(AbilityType.ElementalStrike, target);
             
             // Projectile sayacını artır
             elementalAbilityManager.OnAttack();
@@ -220,12 +220,12 @@ public class PlayerElementalIntegration : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             Debug.Log("🛡️ Key Q pressed - Toggling BUFF ability");
-            ToggleAbility(AbilityType.Buff);
+            ToggleAbility(AbilityType.ElementalBuff);
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
             Debug.Log("🎯 Key E pressed - Toggling PROJECTILE ability");
-            ToggleAbility(AbilityType.Projectile);
+            ToggleAbility(AbilityType.ElementalProjectile);
         }
     }
     
