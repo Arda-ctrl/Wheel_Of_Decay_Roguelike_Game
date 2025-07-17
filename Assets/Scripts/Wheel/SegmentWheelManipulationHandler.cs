@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SegmentWheelManipulationHandler : MonoBehaviour
 {
@@ -14,6 +15,89 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
     public interface IWheelEffect
     {
         void OnNeedleLanded(int landedSlot, int mySlot, int slotCount, System.Action<int> moveNeedleToSlot, System.Action destroySelf);
+    }
+
+    // Utility ve factory fonksiyonları
+    public static IWheelEffect CreateWheelEffect(SegmentData data)
+    {
+        switch (data.wheelManipulationType)
+        {
+            case WheelManipulationType.BlackHole:
+                return new BlackHoleEffect(data.blackHoleRange);
+            case WheelManipulationType.Redirector:
+                return new RedirectorEffect(data.redirectDirection);
+            case WheelManipulationType.Repulsor:
+                return new RepulsorEffect(data.repulsorRange);
+            case WheelManipulationType.MirrorRedirect:
+                return new MirrorRedirectEffect();
+            case WheelManipulationType.CommonRedirector:
+                return new CommonRedirectorEffect(data.commonRedirectorRange, data.commonRedirectorMinRarity, data.commonRedirectorMaxRarity);
+            case WheelManipulationType.SafeEscape:
+                return new SafeEscapeEffect(data.safeEscapeRange);
+            case WheelManipulationType.ExplosiveEscape:
+                return new ExplosiveEscapeEffect(data.explosiveEscapeRange);
+            case WheelManipulationType.SegmentSwapper:
+                return new SegmentSwapperEffect(data.swapperRange);
+            default:
+                return null;
+        }
+    }
+
+    public static SegmentInstance FindSegmentCoveringSlot(WheelManager wheelManager, int slot)
+    {
+        for (int i = 0; i < wheelManager.slots.Length; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var inst = child.GetComponent<SegmentInstance>();
+                if (inst != null && inst.data != null)
+                {
+                    int start = inst.startSlotIndex;
+                    int size = inst.data.size;
+                    for (int s = 0; s < size; s++)
+                    {
+                        int coveredSlot = (start + s) % wheelManager.slots.Length;
+                        if (coveredSlot == slot)
+                            return inst;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static List<SegmentInstance> GetAllSegments(WheelManager wheelManager)
+    {
+        var list = new List<SegmentInstance>();
+        for (int i = 0; i < wheelManager.slots.Length; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var inst = child.GetComponent<SegmentInstance>();
+                if (inst != null && inst.data != null && !list.Contains(inst))
+                    list.Add(inst);
+            }
+        }
+        return list;
+    }
+
+    public static void MoveSegmentToSlot(WheelManager wheelManager, SegmentInstance segment, int newStartSlot)
+    {
+        int oldStart = segment.startSlotIndex;
+        int size = segment.data.size;
+        segment.transform.SetParent(wheelManager.slots[newStartSlot], false);
+        segment.transform.localPosition = Vector3.zero;
+        segment.startSlotIndex = newStartSlot;
+        for (int s = 0; s < size; s++)
+        {
+            int idx = (newStartSlot + s) % wheelManager.slots.Length;
+            wheelManager.slotOccupied[idx] = true;
+        }
+        for (int s = 0; s < size; s++)
+        {
+            int idx = (oldStart + s) % wheelManager.slots.Length;
+            wheelManager.slotOccupied[idx] = false;
+        }
     }
 
     // BlackHole: Komşu mesafesi parametreli
@@ -184,36 +268,11 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             var wheelManager = Object.FindAnyObjectByType<WheelManager>();
             if (wheelManager == null) return;
 
-            // 2. landedSlot'u kaplayan segmenti bul
-            SegmentInstance targetInstance = null;
-            int segStart = -1;
-            int segSize = 1;
-            for (int i = 0; i < wheelManager.slots.Length; i++)
-            {
-                foreach (Transform child in wheelManager.slots[i])
-                {
-                    var inst = child.GetComponent<SegmentInstance>();
-                    if (inst != null && inst.data != null)
-                    {
-                        int start = inst.startSlotIndex;
-                        int size = inst.data.size;
-                        for (int s = 0; s < size; s++)
-                        {
-                            int coveredSlot = (start + s) % slotCount;
-                            if (coveredSlot == landedSlot)
-                            {
-                                targetInstance = inst;
-                                segStart = start;
-                                segSize = size;
-                                break;
-                            }
-                        }
-                        if (targetInstance != null) break;
-                    }
-                }
-                if (targetInstance != null) break;
-            }
+            // 2. landedSlot'u kaplayan segmenti bul (utility ile)
+            SegmentInstance targetInstance = SegmentWheelManipulationHandler.FindSegmentCoveringSlot(wheelManager, landedSlot);
             if (targetInstance == null) return;
+            int segStart = targetInstance.startSlotIndex;
+            int segSize = targetInstance.data.size;
 
             // 3. Segmenti rastgele boş bir slota ışınla
             var validSlots = new System.Collections.Generic.List<int>();
@@ -235,19 +294,7 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             {
                 int randomIndex = UnityEngine.Random.Range(0, validSlots.Count);
                 int targetSlot = validSlots[randomIndex];
-                targetInstance.transform.SetParent(wheelManager.slots[targetSlot], false);
-                targetInstance.transform.localPosition = Vector3.zero;
-                targetInstance.startSlotIndex = targetSlot;
-                for (int s = 0; s < segSize; s++)
-                {
-                    int idx = (targetSlot + s) % slotCount;
-                    wheelManager.slotOccupied[idx] = true;
-                }
-                for (int s = 0; s < segSize; s++)
-                {
-                    int idx = (segStart + s) % slotCount;
-                    wheelManager.slotOccupied[idx] = false;
-                }
+                SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, targetInstance, targetSlot);
             }
             else
             {
@@ -384,36 +431,11 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             var wheelManager = Object.FindAnyObjectByType<WheelManager>();
             if (wheelManager == null) return;
 
-            // 2. landedSlot'u kaplayan segmenti bul (targetInstance)
-            SegmentInstance targetInstance = null;
-            int targetStart = -1;
-            int targetSize = 1;
-            for (int i = 0; i < wheelManager.slots.Length; i++)
-            {
-                foreach (Transform child in wheelManager.slots[i])
-                {
-                    var inst = child.GetComponent<SegmentInstance>();
-                    if (inst != null && inst.data != null)
-                    {
-                        int start = inst.startSlotIndex;
-                        int size = inst.data.size;
-                        for (int s = 0; s < size; s++)
-                        {
-                            int coveredSlot = (start + s) % slotCount;
-                            if (coveredSlot == landedSlot)
-                            {
-                                targetInstance = inst;
-                                targetStart = start;
-                                targetSize = size;
-                                break;
-                            }
-                        }
-                        if (targetInstance != null) break;
-                    }
-                }
-                if (targetInstance != null) break;
-            }
+            // 2. landedSlot'u kaplayan segmenti bul (utility ile)
+            SegmentInstance targetInstance = SegmentWheelManipulationHandler.FindSegmentCoveringSlot(wheelManager, landedSlot);
             if (targetInstance == null) return;
+            int targetStart = targetInstance.startSlotIndex;
+            int targetSize = targetInstance.data.size;
 
             // 3. Swapper segmentini bul (kendi segmentini hariç tutmak için)
             SegmentInstance swapperInstance = null;
@@ -449,36 +471,9 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             var swapInstance = candidates[UnityEngine.Random.Range(0, candidates.Count)];
             int swapStart = swapInstance.startSlotIndex;
 
-            // 5. targetInstance ve swapInstance’in yerlerini değiştir
-            // a) targetInstance'i swapInstance'in yerine taşı
-            targetInstance.transform.SetParent(wheelManager.slots[swapStart], false);
-            targetInstance.transform.localPosition = Vector3.zero;
-            targetInstance.startSlotIndex = swapStart;
-            for (int s = 0; s < targetSize; s++)
-            {
-                int idx = (swapStart + s) % slotCount;
-                wheelManager.slotOccupied[idx] = true;
-            }
-            for (int s = 0; s < targetSize; s++)
-            {
-                int idx = (targetStart + s) % slotCount;
-                wheelManager.slotOccupied[idx] = false;
-            }
-
-            // b) swapInstance'i targetInstance'in eski yerine taşı
-            swapInstance.transform.SetParent(wheelManager.slots[targetStart], false);
-            swapInstance.transform.localPosition = Vector3.zero;
-            swapInstance.startSlotIndex = targetStart;
-            for (int s = 0; s < targetSize; s++)
-            {
-                int idx = (targetStart + s) % slotCount;
-                wheelManager.slotOccupied[idx] = true;
-            }
-            for (int s = 0; s < targetSize; s++)
-            {
-                int idx = (swapStart + s) % slotCount;
-                wheelManager.slotOccupied[idx] = false;
-            }
+            // 5. targetInstance ve swapInstance’in yerlerini değiştir (utility ile)
+            SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, targetInstance, swapStart);
+            SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, swapInstance, targetStart);
         }
     }
 } 

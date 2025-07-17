@@ -292,43 +292,7 @@ public class WheelManager : MonoBehaviour
         foreach (var (inst, mySlot) in wheelSegments)
         {
             var data = inst.data;
-            SegmentWheelManipulationHandler.IWheelEffect effect = null;
-            if (data.wheelManipulationType == WheelManipulationType.BlackHole)
-            {
-                effect = new SegmentWheelManipulationHandler.BlackHoleEffect(data.blackHoleRange);
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.Redirector)
-            {
-                effect = new SegmentWheelManipulationHandler.RedirectorEffect(data.redirectDirection);
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.Repulsor)
-            {
-                effect = new SegmentWheelManipulationHandler.RepulsorEffect(data.repulsorRange);
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.MirrorRedirect)
-            {
-                effect = new SegmentWheelManipulationHandler.MirrorRedirectEffect();
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.CommonRedirector)
-            {
-                effect = new SegmentWheelManipulationHandler.CommonRedirectorEffect(
-                    data.commonRedirectorRange,
-                    data.commonRedirectorMinRarity,
-                    data.commonRedirectorMaxRarity
-                );
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.SafeEscape)
-            {
-                effect = new SegmentWheelManipulationHandler.SafeEscapeEffect(data.safeEscapeRange);
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.ExplosiveEscape)
-            {
-                effect = new SegmentWheelManipulationHandler.ExplosiveEscapeEffect(data.explosiveEscapeRange);
-            }
-            else if (data.wheelManipulationType == WheelManipulationType.SegmentSwapper)
-            {
-                effect = new SegmentWheelManipulationHandler.SegmentSwapperEffect(data.swapperRange);
-            }
+            var effect = SegmentWheelManipulationHandler.CreateWheelEffect(data);
             if (effect != null)
             {
                 bool effectTriggered = false;
