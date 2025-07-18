@@ -49,22 +49,47 @@ public class MapRoomIntegrator : MonoBehaviour
     
     private void OnDestroy()
     {
+        isDestroyed = true;
+        
         // Sahne değişim olayından çık
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        
+        // Aktif coroutine'leri durdur
+        if (findGeneratorsCoroutine != null)
+        {
+            StopCoroutine(findGeneratorsCoroutine);
+            findGeneratorsCoroutine = null;
+        }
+        
+        if (delayedGenerationCoroutine != null)
+        {
+            StopCoroutine(delayedGenerationCoroutine);
+            delayedGenerationCoroutine = null;
+        }
     }
+    
+    private Coroutine findGeneratorsCoroutine = null;
+    private Coroutine delayedGenerationCoroutine = null;
+    private bool isDestroyed = false;
     
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if (isDestroyed) return;
+        
         Debug.Log($"Scene loaded: {scene.name}");
         
         // Yeni sahnede Generator'ları bul
-        StartCoroutine(FindGeneratorsAfterSceneLoad());
+        findGeneratorsCoroutine = StartCoroutine(FindGeneratorsAfterSceneLoad());
     }
     
     private IEnumerator FindGeneratorsAfterSceneLoad()
     {
+        if (isDestroyed) yield break;
+        
         // Sahne tam olarak yüklenene kadar bekle
         yield return new WaitForSeconds(0.2f);
+        
+        if (isDestroyed) yield break;
         
         // Önce ImprovedDungeonGenerator'ı kontrol et
         if (ImprovedDungeonGenerator.instance != null)
@@ -88,6 +113,8 @@ public class MapRoomIntegrator : MonoBehaviour
             }
         }
         
+        if (isDestroyed) yield break;
+        
         // RoomGenerator'ı da kontrol et (geriye dönük uyumluluk için)
         if (RoomGenerator.instance != null)
         {
@@ -109,6 +136,8 @@ public class MapRoomIntegrator : MonoBehaviour
                 Debug.Log("Created new RoomGenerator");
             }
         }
+        
+        if (isDestroyed) yield break;
         
         // Eğer oda verileri varsa, seçilen Generator'a uygula
         if (currentRoomData != null)
@@ -302,7 +331,7 @@ public class MapRoomIntegrator : MonoBehaviour
             }
             
             // Odayı oluştur
-            StartCoroutine(DelayedImprovedDungeonGeneration());
+            delayedGenerationCoroutine = StartCoroutine(DelayedImprovedDungeonGeneration());
         }
         else
         {
@@ -361,7 +390,7 @@ public class MapRoomIntegrator : MonoBehaviour
             }
             
             // Odayı oluştur
-            StartCoroutine(DelayedRoomGeneration());
+            delayedGenerationCoroutine = StartCoroutine(DelayedRoomGeneration());
         }
         else
         {

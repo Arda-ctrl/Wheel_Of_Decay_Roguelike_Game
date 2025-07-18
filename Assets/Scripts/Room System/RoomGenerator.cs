@@ -14,16 +14,16 @@ public class RoomGenerator : MonoBehaviour
 {
     public static RoomGenerator instance;
     
-    [Header("Room Settings")]
+    [Header("Debug Settings")]
+    [SerializeField] private bool enableDebugLogs = false; // Debug log'ları kapatmak için false yapın
+    
+    [Header("Generation Settings")]
+    public int numberOfRooms = 10;
     public RoomData[] roomPool;
-    public int numberOfRooms = 5;
     public float xOffset = 18f;
     public float yOffset = 10f;
     public LayerMask whatIsRoom;
-    
-    [Header("Generation Settings")]
-    public int maxAttempts = 3;
-    public float roomCheckRadius = 0.2f;
+    public float roomCheckRadius = 0.2f; // Oda çakışma kontrolü için yarıçap
     
     [Header("Connection Closure")]
     public GameObject doorCapPrefab; // Prefab to use for closing open doorways
@@ -43,12 +43,12 @@ public class RoomGenerator : MonoBehaviour
         }
         else if (instance != this)
         {
-            Debug.LogWarning("Multiple RoomGenerator instances found. Destroying duplicate.");
+            if (enableDebugLogs) Debug.LogWarning("Multiple RoomGenerator instances found. Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
         
-        Debug.Log("RoomGenerator initialized");
+        if (enableDebugLogs) Debug.Log("RoomGenerator initialized");
     }
 
     private void Start()
@@ -67,7 +67,7 @@ public class RoomGenerator : MonoBehaviour
 
     void GenerateLevel()
     {
-        Debug.Log("RoomGenerator.GenerateLevel() called");
+        if (enableDebugLogs) Debug.Log("RoomGenerator.GenerateLevel() called");
         
         // Check if room pool is valid
         if (roomPool == null || roomPool.Length == 0)
@@ -76,7 +76,7 @@ public class RoomGenerator : MonoBehaviour
             return;
         }
         
-        Debug.Log($"Room pool contains {roomPool.Length} rooms");
+        if (enableDebugLogs) Debug.Log($"Room pool contains {roomPool.Length} rooms");
         
         // Clear any previous data
         spawnedRooms.Clear();

@@ -13,8 +13,9 @@ public class ElementalStrike : MonoBehaviour, IAbility
     [SerializeField] private Sprite icon;
     [SerializeField] private float cooldownDuration = 0f; // Normal saldırı için cooldown yok
     [SerializeField] private float manaCost = 0f; // Normal saldırı için mana maliyeti yok
-    [SerializeField] private int stackAmount = 1; // Her vuruşta eklenecek stack miktarı
+    [SerializeField] private int stackAmount = 1; // Her vuruşta eklenecek stack miktarı (1 mermi = 1 stack)
     [SerializeField] private float strikeDamage = 10f; // Strike hasarı
+    [SerializeField] private ElementType targetElementType = ElementType.Fire; // Bu strike hangi element için
     
     private bool isOnCooldown;
     private float cooldownTimeRemaining;
@@ -42,6 +43,7 @@ public class ElementalStrike : MonoBehaviour, IAbility
         manaCost = data.manaCost;
         stackAmount = data.stackAmount;
         strikeDamage = data.strikeDamage;
+        targetElementType = data.elementType; // Element tipini ayarla
     }
     
     private void Update()
@@ -68,9 +70,10 @@ public class ElementalStrike : MonoBehaviour, IAbility
         
         currentElement = element;
         
-        // Element stack'ini hedefe uygula
+        // Element stack'ini hedefe uygula (1 mermi = 1 stack)
         if (currentElement != null)
         {
+            Debug.Log($"🔥 ElementalStrike: Applying {stackAmount} {targetElementType} stack(s) to {target.name}");
             currentElement.ApplyElementStack(target, stackAmount);
             
             // Strike hasarını uygula
@@ -79,7 +82,7 @@ public class ElementalStrike : MonoBehaviour, IAbility
             // VFX ve SFX oynat
             PlayStrikeEffects(caster, target);
             
-            Debug.Log($"⚔️ {caster.name} applied {currentElement.ElementName} stack to {target.name}");
+            Debug.Log($"⚔️ {caster.name} applied {currentElement.ElementName} stack to {target.name} ({stackAmount} stack)");
         }
         
         // Cooldown başlat
@@ -184,5 +187,14 @@ public class ElementalStrike : MonoBehaviour, IAbility
     public void SetStackAmount(int amount)
     {
         stackAmount = amount;
+    }
+    
+    /// <summary>
+    /// Bu strike'ın hangi element için olduğunu döndürür
+    /// </summary>
+    /// <returns>Element tipi</returns>
+    public ElementType GetTargetElementType()
+    {
+        return targetElementType;
     }
 } 

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1813448931481049784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4677564068298444290}
+  - component: {fileID: 952528022517935285}
+  m_Layer: 0
+  m_Name: DebugLogFilter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4677564068298444290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1813448931481049784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &952528022517935285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1813448931481049784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c3e2b1abdcbb0343be3ae3db3be1408, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableLogFiltering: 1
+  showWarnings: 0
+  showErrors: 1
+  showExceptions: 1
+  filteredKeywords:
+  - TLS Allocator
+  - ALLOC_TEMP_TLS
+  - ALLOC_TEMP_MAIN
+  - unfreed allocations
+  - 'Internal: Stack allocator'
+  - 69 6d 65 5c 45 78 70 6f 72 74 5c 44 65 62 75 67
+  - To Debug, run app with -diag-temp-memory-leak-validation
+  - has unfreed allocations, size
+  - unfreed allocations, size
+  allowedKeywords:
+  - Exception
+  - Error
+  - NullReferenceException
+  - MissingReferenceException

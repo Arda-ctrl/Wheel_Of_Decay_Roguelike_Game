@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Buff
+  m_Name: (Fire)Buff
   m_EditorClassIdentifier: 
   abilityName: Elemantal Buff
   description: stackletir

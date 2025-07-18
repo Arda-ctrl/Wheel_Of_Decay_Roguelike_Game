@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Overflow
+  m_Name: (Fire)Strike
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Overflow
-  description: 
+  abilityName: Elemantal Strike
+  description: stackletir
   icon: {fileID: 0}
-  abilityType: 7
+  abilityType: 1
   cooldownDuration: 0
   manaCost: 0
   elementType: 1
-  stackAmount: 1
+  stackAmount: 5
   strikeDamage: 10
   damageMultiplier: 1.5
   attackCountForProjectile: 3
@@ -50,5 +50,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
+  vfxPrefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
   sfxClip: {fileID: 0}

@@ -65,20 +65,12 @@ public class WeaponController : MonoBehaviour
             bulletScript.SetAbilityData(abilities[currentAbilityIndex]); // Ability data'yı ayarla
         }
 
-        // Elemental ability sistemini tetikle
-        if (elementalAbilityManager != null)
+        // Elemental ability manager referansını bullet'a ver
+        if (bulletScript != null && elementalAbilityManager != null)
         {
-            // En yakın düşmanı bul
-            GameObject nearestEnemy = FindNearestEnemy();
-            if (nearestEnemy != null)
-            {
-                // Elemental strike uygula
-                elementalAbilityManager.UseStrike(nearestEnemy);
-                // Projectile sayacını artır
-                elementalAbilityManager.OnAttack();
-                
-                Debug.Log($"🎯 Shot fired! Elemental abilities triggered on {nearestEnemy.name}");
-            }
+            bulletScript.SetElementalAbilityManager(elementalAbilityManager);
+            // Stack miktarını ayarla (1 mermi = 1 stack)
+            bulletScript.SetStackAmount(1);
         }
 
         // Ses efekti

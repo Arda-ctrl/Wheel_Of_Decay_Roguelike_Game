@@ -15,6 +15,8 @@ public class PlayerBullet : MonoBehaviour
     [Header("Elemental Settings")]
     private AbilityData currentAbilityData;
     private bool isElementalBuffActive = false;
+    private ElementalAbilityManager elementalAbilityManager;
+    [SerializeField] private int stackAmount = 1; // Bu mermi kaç stack ekleyecek
 
     private Rigidbody2D rb;
 
@@ -36,9 +38,15 @@ public class PlayerBullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
-            // Bu method artık kullanılmıyor
-            Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
+            Debug.Log("🔥 PlayerBullet hit an enemy!");
+            // Elemental strike'i sadece mermi düşmana çarptığında uygula
+            if (elementalAbilityManager != null)
+            {
+                // Stack miktarını ayarla ve strike uygula
+                SetStackAmountForStrike(stackAmount);
+                elementalAbilityManager.UseStrike(other.gameObject);
+                Debug.Log($"⚔️ Elemental strike applied to {other.gameObject.name} on hit! ({stackAmount} stack)");
+            }
 
             // Calculate final damage
             float finalDamage = CalculateFinalDamage(other.gameObject);
@@ -177,5 +185,42 @@ public class PlayerBullet : MonoBehaviour
     {
         isElementalBuffActive = active;
         Debug.Log($"⚡ Elemental buff {(active ? "activated" : "deactivated")}");
+    }
+    
+    /// <summary>
+    /// ElementalAbilityManager referansını ayarlar
+    /// </summary>
+    /// <param name="manager">ElementalAbilityManager referansı</param>
+    public void SetElementalAbilityManager(ElementalAbilityManager manager)
+    {
+        elementalAbilityManager = manager;
+    }
+    
+    /// <summary>
+    /// Stack miktarını ayarlar
+    /// </summary>
+    /// <param name="amount">Stack miktarı</param>
+    public void SetStackAmount(int amount)
+    {
+        stackAmount = amount;
+        Debug.Log($"📊 Stack amount set to: {stackAmount}");
+    }
+    
+    /// <summary>
+    /// Strike için stack miktarını ayarlar
+    /// </summary>
+    /// <param name="amount">Stack miktarı</param>
+    private void SetStackAmountForStrike(int amount)
+    {
+        if (elementalAbilityManager != null)
+        {
+            // ElementalStrike ability'sini bul ve stack miktarını ayarla
+            var strikeAbility = elementalAbilityManager.GetAbility(AbilityType.ElementalStrike) as ElementalStrike;
+            if (strikeAbility != null)
+            {
+                strikeAbility.SetStackAmount(amount);
+                Debug.Log($"⚔️ Strike stack amount set to: {amount}");
+            }
+        }
     }
 }

@@ -39,6 +39,17 @@ public class DialogueInteract : MonoBehaviour
         playerInputActions.Player.Interact.performed -= OnInteract;
         playerInputActions.Player.DialogueAdvance.performed -= OnDialogueAdvance;
     }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe from input events to prevent memory leaks
+        if (playerInputActions != null)
+        {
+            playerInputActions.Player.Interact.performed -= OnInteract;
+            playerInputActions.Player.DialogueAdvance.performed -= OnDialogueAdvance;
+            playerInputActions.Dispose();
+        }
+    }
 
     private void OnInteract(InputAction.CallbackContext context)
     {

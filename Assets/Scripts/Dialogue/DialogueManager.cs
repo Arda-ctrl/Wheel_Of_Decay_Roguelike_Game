@@ -23,6 +23,7 @@ public class DialogueManager : MonoBehaviour
     private bool isTyping;
     private bool isDialogueActive;
     private Coroutine typewriterCoroutine;
+    private bool isDestroyed = false;
     //private float lastPlayTime;
     private const float MIN_SOUND_INTERVAL = 0.05f;
 
@@ -58,6 +59,18 @@ public class DialogueManager : MonoBehaviour
             typingSoundSource.volume = typingSoundVolume;
         }
     }
+    
+    private void OnDestroy()
+    {
+        isDestroyed = true;
+        StopTypingSound();
+        
+        if (typewriterCoroutine != null)
+        {
+            StopCoroutine(typewriterCoroutine);
+            typewriterCoroutine = null;
+        }
+    }
 
     private void Start()
     {
@@ -66,7 +79,7 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialogue(DialogueData dialogue)
     {
-        if (isDialogueActive) return;
+        if (isDialogueActive || isDestroyed) return;
 
         currentDialogue = dialogue;
         currentLineIndex = 0;
@@ -126,19 +139,25 @@ public class DialogueManager : MonoBehaviour
 
     private IEnumerator TypewriterEffect(string textToType)
     {
+        if (isDestroyed) yield break;
+        
         isTyping = true;
         dialogueText.text = "";
         StartTypingSound();
 
         foreach (char letter in textToType.ToCharArray())
         {
+            if (isDestroyed) yield break;
             dialogueText.text += letter;
             yield return new WaitForSeconds(typewriterSpeed);
         }
 
-        StopTypingSound();
-        isTyping = false;
-        typewriterCoroutine = null;
+        if (!isDestroyed)
+        {
+            StopTypingSound();
+            isTyping = false;
+            typewriterCoroutine = null;
+        }
     }
 
     private void StartTypingSound()

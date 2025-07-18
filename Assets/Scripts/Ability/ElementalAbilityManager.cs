@@ -11,8 +11,8 @@ public class ElementalAbilityManager : MonoBehaviour
     [SerializeField] private ElementalAbilityData[] availableAbilities;
     [SerializeField] private ElementType currentElementType = ElementType.Fire;
     
-    // Active ability'ler
-    private Dictionary<AbilityType, IAbility> activeAbilities = new Dictionary<AbilityType, IAbility>();
+    // Active ability'ler - her element için ayrı
+    private Dictionary<ElementType, Dictionary<AbilityType, IAbility>> activeAbilities = new Dictionary<ElementType, Dictionary<AbilityType, IAbility>>();
     private IElement currentElement;
     
     // Events
@@ -44,6 +44,14 @@ public class ElementalAbilityManager : MonoBehaviour
     /// </summary>
     private void LoadActiveAbilities()
     {
+        // Her element için ayrı dictionary oluştur
+        foreach (ElementType elementType in System.Enum.GetValues(typeof(ElementType)))
+        {
+            if (elementType == ElementType.None) continue;
+            
+            activeAbilities[elementType] = new Dictionary<AbilityType, IAbility>();
+        }
+        
         foreach (var abilityData in availableAbilities)
         {
             if (abilityData != null)
@@ -51,29 +59,40 @@ public class ElementalAbilityManager : MonoBehaviour
                 IAbility ability = abilityData.CreateAbility(gameObject);
                 if (ability != null)
                 {
-                    activeAbilities[abilityData.abilityType] = ability;
+                    // Ability'yi ilgili element'in dictionary'sine ekle
+                    ElementType elementType = abilityData.elementType;
+                    AbilityType abilityType = abilityData.abilityType;
+                    
+                    if (!activeAbilities.ContainsKey(elementType))
+                    {
+                        activeAbilities[elementType] = new Dictionary<AbilityType, IAbility>();
+                    }
+                    
+                    activeAbilities[elementType][abilityType] = ability;
                     
                     // Element'i ayarla
                     if (ability is ElementalStrike strike)
                     {
-                        strike.SetElement(currentElement);
+                        strike.SetElement(abilityData.CreateElement());
                     }
                     else if (ability is ElementalBuff buff)
                     {
-                        buff.SetElement(currentElement);
+                        buff.SetElement(abilityData.CreateElement());
                     }
                     else if (ability is ElementalProjectile projectile)
                     {
-                        projectile.SetElement(currentElement);
+                        projectile.SetElement(abilityData.CreateElement());
                     }
                     else if (ability is ElementalArea area)
                     {
-                        area.SetElement(currentElement);
+                        area.SetElement(abilityData.CreateElement());
                         // ElementalArea'yı otomatik olarak aktif et
                         area.SetActive(true);
                     }
                     
-                    OnAbilityActivated?.Invoke(abilityData.abilityType, ability);
+                    OnAbilityActivated?.Invoke(abilityType, ability);
+                    
+                    Debug.Log($"🔥 Loaded {elementType} {abilityType} ability");
                 }
             }
         }
@@ -87,25 +106,6 @@ public class ElementalAbilityManager : MonoBehaviour
     {
         currentElementType = elementType;
         currentElement = CreateElement(elementType);
-        
-        // Tüm active ability'lere yeni elementi ayarla
-        foreach (var kvp in activeAbilities)
-        {
-            IAbility ability = kvp.Value;
-            
-            if (ability is ElementalStrike strike)
-            {
-                strike.SetElement(currentElement);
-            }
-            else if (ability is ElementalBuff buff)
-            {
-                buff.SetElement(currentElement);
-            }
-            else if (ability is ElementalProjectile projectile)
-            {
-                projectile.SetElement(currentElement);
-            }
-        }
         
         OnElementChanged?.Invoke(elementType);
         Debug.Log($"🔥 Element changed to: {elementType}");
@@ -138,9 +138,11 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <param name="target">Hedef GameObject</param>
     public void UseAbility(AbilityType abilityType, GameObject target)
     {
-        if (activeAbilities.ContainsKey(abilityType))
+        // Mevcut element için ability'yi kullan
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(abilityType))
         {
-            IAbility ability = activeAbilities[abilityType];
+            IAbility ability = activeAbilities[currentElementType][abilityType];
             if (ability.CanUseAbility(gameObject))
             {
                 ability.UseAbility(gameObject, target, currentElement);
@@ -166,9 +168,10 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <returns>Buff'lanmış hasar</returns>
     public float CalculateBuffDamage(float baseDamage, GameObject target, ElementType elementType)
     {
-        if (activeAbilities.ContainsKey(AbilityType.ElementalBuff))
+        if (activeAbilities.ContainsKey(elementType) && 
+            activeAbilities[elementType].ContainsKey(AbilityType.ElementalBuff))
         {
-            var buffAbility = activeAbilities[AbilityType.ElementalBuff] as ElementalBuff;
+            var buffAbility = activeAbilities[elementType][AbilityType.ElementalBuff] as ElementalBuff;
             if (buffAbility != null)
             {
                 return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
@@ -183,11 +186,12 @@ public class ElementalAbilityManager : MonoBehaviour
     /// </summary>
     public void OnAttack()
     {
-        if (activeAbilities.ContainsKey(AbilityType.ElementalProjectile))
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(AbilityType.ElementalProjectile))
         {
-            var projectileAbility = activeAbilities[AbilityType.ElementalProjectile] as ElementalProjectile;
+            var projectileAbility = activeAbilities[currentElementType][AbilityType.ElementalProjectile] as ElementalProjectile;
             projectileAbility?.OnAttack();
-            Debug.Log($"🎯 Attack counter increased for projectile ability");
+            Debug.Log($"🎯 Attack counter increased for {currentElementType} projectile ability");
         }
     }
     
@@ -198,25 +202,26 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <param name="active">Aktif mi?</param>
     public void SetAbilityActive(AbilityType abilityType, bool active)
     {
-        if (activeAbilities.ContainsKey(abilityType))
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(abilityType))
         {
-            IAbility ability = activeAbilities[abilityType];
+            IAbility ability = activeAbilities[currentElementType][abilityType];
             
             if (ability is ElementalStrike strike)
             {
                 // Strike ability'si her zaman aktif olmalı
-                Debug.Log($"⚔️ Strike ability is always active!");
+                Debug.Log($"⚔️ {currentElementType} Strike ability is always active!");
                 return;
             }
             else if (ability is ElementalBuff buff)
             {
                 buff.SetActive(active);
-                Debug.Log($"🛡️ Buff ability {(active ? "ACTIVATED" : "DEACTIVATED")}");
+                Debug.Log($"🛡️ {currentElementType} Buff ability {(active ? "ACTIVATED" : "DEACTIVATED")}");
             }
             else if (ability is ElementalProjectile projectile)
             {
                 projectile.SetActive(active);
-                Debug.Log($"🎯 Projectile ability {(active ? "ACTIVATED" : "DEACTIVATED")}");
+                Debug.Log($"🎯 {currentElementType} Projectile ability {(active ? "ACTIVATED" : "DEACTIVATED")}");
             }
             
             if (active)
@@ -249,15 +254,47 @@ public class ElementalAbilityManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Belirli bir ability'yi döndürür
+    /// </summary>
+    /// <param name="abilityType">Ability türü</param>
+    /// <returns>Ability instance'ı</returns>
+    public IAbility GetAbility(AbilityType abilityType)
+    {
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(abilityType))
+        {
+            return activeAbilities[currentElementType][abilityType];
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// Belirli bir element ve ability'yi döndürür
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <param name="abilityType">Ability türü</param>
+    /// <returns>Ability instance'ı</returns>
+    public IAbility GetAbility(ElementType elementType, AbilityType abilityType)
+    {
+        if (activeAbilities.ContainsKey(elementType) && 
+            activeAbilities[elementType].ContainsKey(abilityType))
+        {
+            return activeAbilities[elementType][abilityType];
+        }
+        return null;
+    }
+    
+    /// <summary>
     /// Ability'nin aktif olup olmadığını kontrol eder
     /// </summary>
     /// <param name="abilityType">Ability türü</param>
     /// <returns>Ability aktif mi?</returns>
     public bool IsAbilityActive(AbilityType abilityType)
     {
-        if (activeAbilities.ContainsKey(abilityType))
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(abilityType))
         {
-            IAbility ability = activeAbilities[abilityType];
+            IAbility ability = activeAbilities[currentElementType][abilityType];
             
             if (ability is ElementalStrike)
             {
@@ -287,9 +324,10 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <returns>0-1 arası progress değeri</returns>
     public float GetAbilityCooldownProgress(AbilityType abilityType)
     {
-        if (activeAbilities.ContainsKey(abilityType))
+        if (activeAbilities.ContainsKey(currentElementType) && 
+            activeAbilities[currentElementType].ContainsKey(abilityType))
         {
-            return activeAbilities[abilityType].GetCooldownProgress();
+            return activeAbilities[currentElementType][abilityType].GetCooldownProgress();
         }
         
         return 0f;
@@ -300,13 +338,14 @@ public class ElementalAbilityManager : MonoBehaviour
     /// </summary>
     public void ResetAllAbilities()
     {
-        foreach (var kvp in activeAbilities)
+        foreach (var elementAbilities in activeAbilities.Values)
         {
-            IAbility ability = kvp.Value;
-            
-            if (ability is ElementalProjectile projectile)
+            foreach (var ability in elementAbilities.Values)
             {
-                projectile.ResetAttackCounter();
+                if (ability is ElementalProjectile projectile)
+                {
+                    projectile.ResetAttackCounter();
+                }
             }
         }
     }
@@ -321,11 +360,15 @@ public class ElementalAbilityManager : MonoBehaviour
         info += $"Current Element: {currentElementType}\n";
         info += $"Active Abilities:\n";
         
-        foreach (var kvp in activeAbilities)
+        foreach (var elementAbilities in activeAbilities)
         {
-            bool isActive = IsAbilityActive(kvp.Key);
-            string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
-            info += $"- {kvp.Key}: {status}\n";
+            info += $"\n{elementAbilities.Key} Abilities:\n";
+            foreach (var kvp in elementAbilities.Value)
+            {
+                bool isActive = IsAbilityActive(kvp.Key);
+                string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
+                info += $"- {kvp.Key}: {status}\n";
+            }
         }
         
         info += $"\n🎮 System Info:\n";
@@ -336,70 +379,57 @@ public class ElementalAbilityManager : MonoBehaviour
         // Daha büyük ve görünür box
         GUI.color = Color.white;
         GUI.backgroundColor = new Color(0, 0, 0, 0.9f);
-        GUI.Box(new Rect(10, 10, 350, 250), "");
+        GUI.Box(new Rect(10, 10, 400, 300), "");
         
         // Başlık
         GUI.color = Color.yellow;
-        GUI.Label(new Rect(15, 15, 340, 30), "🔥 ELEMENTAL SYSTEM DEBUG 🔥");
+        GUI.Label(new Rect(15, 15, 390, 30), "🔥 ELEMENTAL SYSTEM DEBUG 🔥");
         
         // İçerik
         GUI.color = Color.white;
-        GUI.Label(new Rect(15, 45, 340, 200), info);
+        GUI.Label(new Rect(15, 45, 390, 250), info);
         
         // Element bilgisi için özel renk
         GUI.color = Color.cyan;
-        GUI.Label(new Rect(15, 65, 340, 20), $"Current Element: {currentElementType}");
-        
-        // Ability durumları için renkli gösterim
-        int yPos = 85;
-        foreach (var kvp in activeAbilities)
-        {
-            bool isActive = IsAbilityActive(kvp.Key);
-            GUI.color = isActive ? Color.green : Color.red;
-            string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
-            GUI.Label(new Rect(15, yPos, 340, 20), $"- {kvp.Key}: {status}");
-            yPos += 20;
-        }
+        GUI.Label(new Rect(15, 295, 390, 20), $"Current Element: {currentElementType}");
     }
-
+    
     private void Update()
     {
-        // ElementalArea'yı otomatik olarak aktif et (sadece gerektiğinde)
-        if (Time.frameCount % 60 == 0) // Her 60 frame'de bir kontrol et
-        {
-            EnsureElementalAreaActive();
-        }
+        // ElementalArea'yı her zaman aktif tut
+        EnsureElementalAreaActive();
     }
     
     /// <summary>
-    /// ElementalArea'nın aktif olduğundan emin olur
+    /// ElementalArea'yı her zaman aktif tutar
     /// </summary>
     private void EnsureElementalAreaActive()
     {
-        if (activeAbilities.ContainsKey(AbilityType.ElementalArea))
+        foreach (var elementAbilities in activeAbilities.Values)
         {
-            var areaAbility = activeAbilities[AbilityType.ElementalArea] as ElementalArea;
-            if (areaAbility != null && !areaAbility.IsActive())
+            if (elementAbilities.ContainsKey(AbilityType.ElementalArea))
             {
-                areaAbility.SetActive(true);
-                Debug.Log("🔥 ElementalArea automatically activated!");
+                var area = elementAbilities[AbilityType.ElementalArea] as ElementalArea;
+                if (area != null && !area.IsActive())
+                {
+                    area.SetActive(true);
+                }
             }
         }
     }
     
     /// <summary>
-    /// ElementalArea'yı manuel olarak aktif/pasif yapar
+    /// ElementalArea'yı aktif/pasif yapar
     /// </summary>
     /// <param name="active">Aktif mi?</param>
     public void SetElementalAreaActive(bool active)
     {
-        if (activeAbilities.ContainsKey(AbilityType.ElementalArea))
+        foreach (var elementAbilities in activeAbilities.Values)
         {
-            var areaAbility = activeAbilities[AbilityType.ElementalArea] as ElementalArea;
-            if (areaAbility != null)
+            if (elementAbilities.ContainsKey(AbilityType.ElementalArea))
             {
-                areaAbility.SetActive(active);
-                Debug.Log($"🔥 ElementalArea {(active ? "ACTIVATED" : "DEACTIVATED")}");
+                var area = elementAbilities[AbilityType.ElementalArea] as ElementalArea;
+                area?.SetActive(active);
             }
         }
     }

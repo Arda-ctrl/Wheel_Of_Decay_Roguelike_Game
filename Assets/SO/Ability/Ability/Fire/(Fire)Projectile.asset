@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Aura
+  m_Name: (Fire)Projectile
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Aura
-  description: 
+  abilityName: Elemantal Projectile
+  description: stackletir
   icon: {fileID: 0}
-  abilityType: 9
-  cooldownDuration: 0
+  abilityType: 3
+  cooldownDuration: 3
   manaCost: 0
   elementType: 1
   stackAmount: 1
   strikeDamage: 10
   damageMultiplier: 1.5
-  attackCountForProjectile: 3
+  attackCountForProjectile: 5
   projectileSpeed: 10
-  projectileDamage: 15
+  projectileDamage: 50
   projectileRange: 10
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
   damageReductionPercent: 30
   armorDuration: 10
   areaDamageRadius: 3
@@ -50,5 +50,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 5339739117810204693, guid: 26e1cb216e3635e4a820f58a1118d6b9, type: 3}
+  vfxPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
   sfxClip: {fileID: 0}

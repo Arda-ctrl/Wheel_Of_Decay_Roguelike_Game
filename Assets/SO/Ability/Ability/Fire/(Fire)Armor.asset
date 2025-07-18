@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Area
+  m_Name: (Fire)Armor
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Area
+  abilityName: Elemantal Armor
   description: 
   icon: {fileID: 0}
-  abilityType: 5
+  abilityType: 4
   cooldownDuration: 0
   manaCost: 0
   elementType: 1
@@ -50,5 +50,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 5985634496115995773, guid: 463cf9f7af4680240898f6aeba3fe3e6, type: 3}
+  vfxPrefab: {fileID: 8547867254204328264, guid: cf378989e15716e40a61692dcd97e628, type: 3}
   sfxClip: {fileID: 0}

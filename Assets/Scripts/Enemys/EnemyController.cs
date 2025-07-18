@@ -63,6 +63,12 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         // StrikeStack component'i artık gerekli değil
         Debug.Log("🔧 Elemental stacks are now managed by ElementalAbilityManager");
     }
+    
+    private void OnDestroy()
+    {
+        // Clear status effects to prevent memory leaks
+        activeStatusEffects.Clear();
+    }
 
     private void Update()
     {
@@ -162,7 +168,6 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     public void TakeDamage(float amount)
     {
         currentHealth -= amount;
-        Debug.Log($"Enemy took {amount} damage. Current health: {currentHealth}");
 
         if (currentHealth <= 0)
         {
@@ -177,7 +182,6 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     public void SetSpeedMultiplier(float multiplier)
     {
         speedMultiplier = Mathf.Clamp(multiplier, 0f, 1f);
-        Debug.Log($"Enemy speed multiplier set to: {speedMultiplier}");
     }
 
     public float GetCurrentSpeed() => baseSpeed * speedMultiplier;
@@ -187,7 +191,6 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     public void ApplyStatus(StatusEffectType statusType, float duration)
     {
         activeStatusEffects[statusType] = Time.time + duration;
-        Debug.Log($"Status effect applied: {statusType} for {duration} seconds");
     }
 
     public void RemoveStatus(StatusEffectType statusType)
@@ -195,7 +198,6 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         if (activeStatusEffects.ContainsKey(statusType))
         {
             activeStatusEffects.Remove(statusType);
-            Debug.Log($"Status effect removed: {statusType}");
         }
     }
 
@@ -206,16 +208,28 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
 
     private void Die()
     {
-        Debug.Log("Enemy died!");
-        
         // ElementalArea için ölüm event'ini tetikle
-        if (EventManager.Instance != null)
+        if (EventManager.Instance != null && gameObject != null)
         {
-            EventManager.Instance.TriggerEnemyDeath(gameObject);
+            try
+            {
+                EventManager.Instance.TriggerEnemyDeath(gameObject);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[EnemyController] Failed to trigger death event: {e.Message}");
+            }
         }
         
         // Implement death logic here (e.g., play animation, spawn particles, etc.)
-        Destroy(gameObject);
+        try
+        {
+            Destroy(gameObject);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[EnemyController] Failed to destroy enemy: {e.Message}");
+        }
     }
 
     // Debug visualization in editor

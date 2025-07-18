@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Armor
+  m_Name: (Ice)Strike
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Armor
-  description: 
+  abilityName: Elemantal Strike
+  description: stackletir
   icon: {fileID: 0}
-  abilityType: 4
+  abilityType: 1
   cooldownDuration: 0
   manaCost: 0
-  elementType: 1
-  stackAmount: 1
+  elementType: 2
+  stackAmount: 5
   strikeDamage: 10
   damageMultiplier: 1.5
   attackCountForProjectile: 3
@@ -50,5 +50,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 8547867254204328264, guid: cf378989e15716e40a61692dcd97e628, type: 3}
+  vfxPrefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
   sfxClip: {fileID: 0}

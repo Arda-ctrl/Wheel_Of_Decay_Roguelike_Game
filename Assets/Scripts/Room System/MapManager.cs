@@ -8,6 +8,9 @@ public class MapManager : MonoBehaviour
 {
     public static MapManager instance;
     
+    [Header("Debug Settings")]
+    [SerializeField] private bool enableDebugLogs = false; // Debug log'ları kapatmak için false yapın
+    
     [Header("Map Settings")]
     public bool useSerializedMap = true;
     public MapBranchData serializedMapData;
@@ -72,7 +75,7 @@ public class MapManager : MonoBehaviour
         // Ensure we have an EventSystem for UI interactions
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
         {
-            Debug.Log("No EventSystem found in scene. Creating one...");
+            if (enableDebugLogs) Debug.Log("No EventSystem found in scene. Creating one...");
             GameObject eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
             eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
@@ -90,14 +93,14 @@ public class MapManager : MonoBehaviour
         // M tuşuna basıldığında haritayı aç/kapat
         if (Input.GetKeyDown(KeyCode.M))
         {
-            Debug.Log("M key pressed - toggling map");
+            if (enableDebugLogs) Debug.Log("M key pressed - toggling map");
             ToggleMap();
         }
         
         // R tuşuna basıldığında haritayı yeniden oluştur (karıştır)
         if (Input.GetKeyDown(KeyCode.R))
         {
-            Debug.Log("R key pressed - reshuffling map");
+            if (enableDebugLogs) Debug.Log("R key pressed - reshuffling map");
             ShuffleMapNodes();
         }
     }
@@ -494,7 +497,7 @@ public class MapManager : MonoBehaviour
     
     private void UpdateNodeAccessibility()
     {
-        Debug.Log("Updating node accessibility...");
+        if (enableDebugLogs) Debug.Log("Updating node accessibility...");
         
         // Önce tüm düğümleri erişilemez olarak işaretle
         foreach (MapNode node in allNodes)

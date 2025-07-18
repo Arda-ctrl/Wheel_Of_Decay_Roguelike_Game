@@ -56,6 +56,22 @@ public class PlayerController : MonoBehaviour
     {
         playerInputActions.Disable();
     }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe from input events to prevent memory leaks
+        if (playerInputActions != null)
+        {
+            playerInputActions.Player.Movement.performed -= OnMovement;
+            playerInputActions.Player.Movement.canceled -= OnMovement;
+            playerInputActions.Player.Look.performed -= OnLook;
+            playerInputActions.Player.Fire.started -= OnFireStart;
+            playerInputActions.Player.Fire.canceled -= OnFireEnd;
+            playerInputActions.Player.Dash.performed -= OnDash;
+            
+            playerInputActions.Dispose();
+        }
+    }
 
     void Start()
     {

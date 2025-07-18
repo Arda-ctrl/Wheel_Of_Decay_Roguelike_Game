@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// ElementalArea - 5+ stack ile ölen düşman alan hasarı
@@ -16,27 +17,78 @@ public class ElementalArea : MonoBehaviour, IAbility
     [SerializeField] private float areaDamage = 20f;
     [SerializeField] private float areaRadius = 5f;
     [SerializeField] private float areaDuration = 5f;
-    [SerializeField] private float damageInterval = 0.5f; // Hasar uygulama aralığı
+    [SerializeField] private float damageInterval = 1f; // Hasar uygulama aralığı - 1 saniyeye çıkarıldı
+    [SerializeField] private ElementType targetElementType = ElementType.Fire; // Bu area hangi element için
     
     private IElement currentElement;
     private ElementalAbilityData abilityData;
     private bool isActive = true;
+    private Coroutine currentAreaCoroutine; // Coroutine referansını sakla
+    private bool isDestroyed = false; // Destroy edildiğini takip et
+    private bool isInitialized = false; // Initialize edildiğini takip et
     
     private void Start()
     {
+        if (isDestroyed) return;
+        
         // Düşman ölüm event'lerini dinle
         if (EventManager.Instance != null)
         {
-            EventManager.Instance.OnEnemyDeath += OnEnemyDeath;
+            try
+            {
+                EventManager.Instance.OnEnemyDeath += OnEnemyDeath;
+                isInitialized = true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[ElementalArea] Failed to subscribe to enemy death event: {e.Message}");
+            }
         }
     }
     
     private void OnDestroy()
     {
+        isDestroyed = true;
+        
         // Event listener'ı temizle
-        if (EventManager.Instance != null)
+        if (EventManager.Instance != null && isInitialized)
         {
-            EventManager.Instance.OnEnemyDeath -= OnEnemyDeath;
+            try
+            {
+                EventManager.Instance.OnEnemyDeath -= OnEnemyDeath;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[ElementalArea] Failed to unsubscribe from enemy death event: {e.Message}");
+            }
+        }
+        
+        // Aktif coroutine'i durdur
+        StopAreaCoroutine();
+    }
+    
+    private void OnDisable()
+    {
+        // Aktif coroutine'i durdur
+        StopAreaCoroutine();
+    }
+    
+    /// <summary>
+    /// Güvenli şekilde coroutine'i durdur
+    /// </summary>
+    private void StopAreaCoroutine()
+    {
+        if (currentAreaCoroutine != null && !isDestroyed)
+        {
+            try
+            {
+                StopCoroutine(currentAreaCoroutine);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[ElementalArea] Failed to stop coroutine: {e.Message}");
+            }
+            currentAreaCoroutine = null;
         }
     }
     
@@ -53,16 +105,26 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="data">Ability verileri</param>
     public void Initialize(ElementalAbilityData data)
     {
-        abilityData = data;
-        abilityName = data.abilityName;
-        description = data.description;
-        icon = data.icon;
-        cooldownDuration = data.cooldownDuration;
-        manaCost = data.manaCost;
-        requiredStacksForArea = data.requiredStacksForArea;
-        areaDamage = data.areaDamage;
-        areaRadius = data.areaRadius;
-        areaDuration = data.areaDuration;
+        if (isDestroyed) return;
+        
+        try
+        {
+            abilityData = data;
+            abilityName = data.abilityName;
+            description = data.description;
+            icon = data.icon;
+            cooldownDuration = data.cooldownDuration;
+            manaCost = data.manaCost;
+            requiredStacksForArea = data.requiredStacksForArea;
+            areaDamage = data.areaDamage;
+            areaRadius = data.areaRadius;
+            areaDuration = data.areaDuration;
+            targetElementType = data.elementType; // Element tipini ayarla
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[ElementalArea] Initialize failed: {e.Message}");
+        }
     }
     
     /// <summary>
@@ -73,8 +135,8 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="element">Kullanılacak element</param>
     public void UseAbility(GameObject caster, GameObject target, IElement element)
     {
+        if (isDestroyed) return;
         currentElement = element;
-        Debug.Log($"{caster.name} için {currentElement?.ElementName} area ability aktif");
     }
     
     /// <summary>
@@ -84,7 +146,7 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <returns>Kullanılabilir mi?</returns>
     public bool CanUseAbility(GameObject caster)
     {
-        return isActive;
+        return isActive && !isDestroyed && isInitialized;
     }
     
     /// <summary>
@@ -102,35 +164,40 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="deadEnemy">Ölen düşman GameObject</param>
     public void OnEnemyDeath(GameObject deadEnemy)
     {
-        if (!isActive || currentElement == null || deadEnemy == null) return;
-        
-        // Null check'leri ekle
+        // Erken çıkış kontrolleri
+        if (!isActive || isDestroyed || !isInitialized || deadEnemy == null) return;
         if (deadEnemy.transform == null) return;
+        if (gameObject == null || !gameObject.activeInHierarchy) return;
         
-        Debug.Log($"🔍 ElementalArea checking enemy death: {deadEnemy.name}");
-        
-        // Düşmanın element stack'lerini kontrol et
-        var elementStack = deadEnemy.GetComponent<ElementStack>();
-        if (elementStack == null) 
+        try
         {
-            Debug.Log($"❌ {deadEnemy.name} has no ElementStack component");
-            return;
+            // Düşmanın element stack'lerini kontrol et
+            var elementStack = deadEnemy.GetComponent<ElementStack>();
+            if (elementStack == null) return;
+            
+            // Sadece bu area'nın hedef elementinin stack'ini kontrol et
+            int targetElementStacks = elementStack.GetElementStack(targetElementType);
+            
+            // Gerekli stack miktarı var mı kontrol et
+            if (targetElementStacks >= requiredStacksForArea)
+            {
+                // Tetikleyen elementi ayarla
+                if (currentElement == null)
+                {
+                    // Eğer currentElement null ise, tetikleyen elementi kullan
+                    InitializeElementForType(targetElementType);
+                }
+                
+                // Güvenli şekilde pozisyon al
+                Vector3 position = deadEnemy.transform.position;
+                CreateAreaDamage(position);
+                
+                Debug.Log($"💥 {targetElementType} ElementalArea triggered! {targetElementStacks} stacks on {deadEnemy.name}");
+            }
         }
-        
-        int stackCount = elementStack.GetElementStackCount(currentElement.ElementType);
-        Debug.Log($"📊 {deadEnemy.name} has {stackCount} {currentElement.ElementName} stacks (required: {requiredStacksForArea})");
-        
-        // Gerekli stack miktarı var mı kontrol et
-        if (stackCount >= requiredStacksForArea)
+        catch (System.Exception e)
         {
-            // Güvenli şekilde pozisyon al
-            Vector3 position = deadEnemy.transform.position;
-            CreateAreaDamage(position);
-            Debug.Log($"💥 {deadEnemy.name} died with {stackCount} {currentElement.ElementName} stacks, creating area damage at {position}");
-        }
-        else
-        {
-            Debug.Log($"❌ {deadEnemy.name} didn't have enough stacks for area damage");
+            Debug.LogWarning($"[ElementalArea] OnEnemyDeath failed: {e.Message}");
         }
     }
     
@@ -140,35 +207,32 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="centerPosition">Merkez pozisyon</param>
     private void CreateAreaDamage(Vector3 centerPosition)
     {
-        Debug.Log($"💥 Creating area damage at {centerPosition}");
+        // Erken çıkış kontrolleri
+        if (isDestroyed || gameObject == null || !gameObject.activeInHierarchy) return;
+        if (currentElement == null) return;
         
-        // Alan hasarı VFX'i oluştur
-        if (abilityData?.vfxPrefab != null)
+        try
         {
-            GameObject areaVFX = Object.Instantiate(abilityData.vfxPrefab, centerPosition, Quaternion.identity);
+            // Önceki coroutine'i durdur
+            StopAreaCoroutine();
             
-            // Element rengine göre VFX'i ayarla
-            var particleSystem = areaVFX.GetComponent<ParticleSystem>();
-            if (particleSystem != null && currentElement != null)
+            // Alan hasarı uygula (coroutine'i güvenli şekilde başlat)
+            if (gameObject != null && gameObject.activeInHierarchy && !isDestroyed)
             {
-                var main = particleSystem.main;
-                main.startColor = currentElement.ElementColor;
+                try
+                {
+                    currentAreaCoroutine = StartCoroutine(ApplyAreaDamageOverTime(centerPosition));
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[ElementalArea] Coroutine start failed: {e.Message}");
+                    currentAreaCoroutine = null;
+                }
             }
-            
-            // VFX'i belirli süre sonra yok et
-            Destroy(areaVFX, areaDuration);
         }
-        
-        // Alan hasarı SFX'i oynat
-        if (abilityData?.sfxClip != null)
+        catch (System.Exception e)
         {
-            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
-        }
-        
-        // Alan hasarı uygula (coroutine'i güvenli şekilde başlat)
-        if (gameObject != null && gameObject.activeInHierarchy)
-        {
-            StartCoroutine(ApplyAreaDamageOverTime(centerPosition));
+            Debug.LogWarning($"[ElementalArea] CreateAreaDamage failed: {e.Message}");
         }
     }
     
@@ -178,49 +242,46 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="centerPosition">Merkez pozisyon</param>
     private System.Collections.IEnumerator ApplyAreaDamageOverTime(Vector3 centerPosition)
     {
-        float elapsedTime = 0f;
-        float lastDamageTime = 0f;
+        if (isDestroyed) yield break;
         
-        while (elapsedTime < areaDuration)
+        float elapsedTime = 0f;
+        HashSet<GameObject> enemiesHit = new HashSet<GameObject>(); // Hangi düşmanlara stack eklendiğini takip et
+        
+        while (elapsedTime < areaDuration && !isDestroyed && gameObject != null && gameObject.activeInHierarchy)
         {
-            // Hasar uygulama zamanı geldi mi kontrol et
-            if (Time.time - lastDamageTime >= damageInterval)
+            try
             {
                 // Alan içindeki düşmanları bul
                 Collider2D[] colliders = Physics2D.OverlapCircleAll(centerPosition, areaRadius);
                 
                 foreach (var collider in colliders)
                 {
-                    if (collider != null && collider.CompareTag("Enemy"))
+                    if (collider != null && collider.CompareTag("Enemy") && !isDestroyed && currentElement != null)
                     {
                         var health = collider.GetComponent<IHealth>();
                         if (health != null)
                         {
-                            // Hasar uygula (interval'e göre ayarla)
-                            float damagePerTick = areaDamage * damageInterval;
-                            health.TakeDamage(damagePerTick);
+                            // Hasar uygula (sabit hasar)
+                            health.TakeDamage(areaDamage);
                             
-                            // Element stack ekle (sadece bir kez)
-                            if (currentElement != null)
-                            {
-                                var elementStack = collider.GetComponent<ElementStack>();
-                                if (elementStack != null)
-                                {
-                                    currentElement.ApplyElementStack(collider.gameObject, 1);
-                                }
-                            }
+                            // Element stack ekleme kaldırıldı - sadece hasar ver
+                            // Stack sadece mermi çarptığında eklenmeli
+                            enemiesHit.Add(collider.gameObject);
                         }
                     }
                 }
-                
-                lastDamageTime = Time.time;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[ElementalArea] Area damage application failed: {e.Message}");
+                break;
             }
             
-            elapsedTime += Time.deltaTime;
-            yield return new WaitForSeconds(0.1f); // 0.1 saniye bekle
+            elapsedTime += damageInterval;
+            yield return new WaitForSeconds(damageInterval); // damageInterval kadar bekle
         }
         
-        Debug.Log($"💥 Area damage effect ended at {centerPosition}");
+        currentAreaCoroutine = null;
     }
     
     /// <summary>
@@ -229,6 +290,7 @@ public class ElementalArea : MonoBehaviour, IAbility
     /// <param name="element">Yeni element</param>
     public void SetElement(IElement element)
     {
+        if (isDestroyed) return;
         currentElement = element;
     }
     
@@ -242,12 +304,35 @@ public class ElementalArea : MonoBehaviour, IAbility
     }
     
     /// <summary>
+    /// Belirtilen element tipine göre elementi initialize eder
+    /// </summary>
+    /// <param name="elementType">Element tipi</param>
+    private void InitializeElementForType(ElementType elementType)
+    {
+        switch (elementType)
+        {
+            case ElementType.Fire:
+                currentElement = new FireElement();
+                break;
+            case ElementType.Ice:
+                currentElement = new IceElement();
+                break;
+            case ElementType.Poison:
+                currentElement = new PoisonElement();
+                break;
+            default:
+                Debug.LogWarning($"[ElementalArea] Unknown element type: {elementType}");
+                break;
+        }
+    }
+    
+    /// <summary>
     /// Ability'nin aktif olup olmadığını kontrol eder
     /// </summary>
-    /// <returns>Ability aktif mi?</returns>
+    /// <returns>Aktif mi?</returns>
     public bool IsActive()
     {
-        return isActive;
+        return isActive && !isDestroyed && isInitialized;
     }
     
     /// <summary>
@@ -257,6 +342,18 @@ public class ElementalArea : MonoBehaviour, IAbility
     public void SetActive(bool active)
     {
         isActive = active;
-        Debug.Log($"🔥 ElementalArea {(active ? "ACTIVATED" : "DEACTIVATED")}");
+        if (!active)
+        {
+            StopAreaCoroutine();
+        }
+    }
+    
+    /// <summary>
+    /// Bu area'nın hangi element için olduğunu döndürür
+    /// </summary>
+    /// <returns>Element tipi</returns>
+    public ElementType GetTargetElementType()
+    {
+        return targetElementType;
     }
 } 

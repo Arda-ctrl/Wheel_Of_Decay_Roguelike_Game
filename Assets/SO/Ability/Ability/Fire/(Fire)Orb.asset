@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: Burst
+  m_Name: (Fire)Orb
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Burst
+  abilityName: Elemantal Orb
   description: 
   icon: {fileID: 0}
-  abilityType: 8
+  abilityType: 10
   cooldownDuration: 0
   manaCost: 0
   elementType: 1
@@ -50,5 +50,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
+  vfxPrefab: {fileID: 725748389856807714, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
   sfxClip: {fileID: 0}
