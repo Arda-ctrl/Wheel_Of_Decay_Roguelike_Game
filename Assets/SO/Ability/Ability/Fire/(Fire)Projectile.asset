@@ -16,7 +16,7 @@ MonoBehaviour:
   description: stackletir
   icon: {fileID: 0}
   abilityType: 3
-  cooldownDuration: 3
+  cooldownDuration: 0
   manaCost: 0
   elementType: 1
   stackAmount: 1

@@ -152,11 +152,26 @@ public class ElementalAbilityManager : MonoBehaviour
     
     /// <summary>
     /// Strike ability'sini kullanır (normal saldırı için)
+    /// Artık tüm elementler için strike'ları çalıştırır
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     public void UseStrike(GameObject target)
     {
-        UseAbility(AbilityType.ElementalStrike, target);
+        // Tüm elementler için strike ability'lerini çalıştır
+        foreach (var elementAbilities in activeAbilities)
+        {
+            if (elementAbilities.Value.ContainsKey(AbilityType.ElementalStrike))
+            {
+                var strikeAbility = elementAbilities.Value[AbilityType.ElementalStrike] as ElementalStrike;
+                if (strikeAbility != null && strikeAbility.CanUseAbility(gameObject))
+                {
+                    // Her element için kendi element'ini oluştur
+                    IElement element = CreateElement(elementAbilities.Key);
+                    strikeAbility.UseAbility(gameObject, target, element);
+                    Debug.Log($"⚔️ {elementAbilities.Key} Strike applied to {target.name}");
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -168,11 +183,12 @@ public class ElementalAbilityManager : MonoBehaviour
     /// <returns>Buff'lanmış hasar</returns>
     public float CalculateBuffDamage(float baseDamage, GameObject target, ElementType elementType)
     {
+        // Sadece hedef element için buff'ı kontrol et
         if (activeAbilities.ContainsKey(elementType) && 
             activeAbilities[elementType].ContainsKey(AbilityType.ElementalBuff))
         {
             var buffAbility = activeAbilities[elementType][AbilityType.ElementalBuff] as ElementalBuff;
-            if (buffAbility != null)
+            if (buffAbility != null && buffAbility.IsActive())
             {
                 return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
             }
@@ -186,12 +202,18 @@ public class ElementalAbilityManager : MonoBehaviour
     /// </summary>
     public void OnAttack()
     {
-        if (activeAbilities.ContainsKey(currentElementType) && 
-            activeAbilities[currentElementType].ContainsKey(AbilityType.ElementalProjectile))
+        // Tüm elementler için projectile ability'lerini kontrol et
+        foreach (var elementAbilities in activeAbilities)
         {
-            var projectileAbility = activeAbilities[currentElementType][AbilityType.ElementalProjectile] as ElementalProjectile;
-            projectileAbility?.OnAttack();
-            Debug.Log($"🎯 Attack counter increased for {currentElementType} projectile ability");
+            if (elementAbilities.Value.ContainsKey(AbilityType.ElementalProjectile))
+            {
+                var projectileAbility = elementAbilities.Value[AbilityType.ElementalProjectile] as ElementalProjectile;
+                if (projectileAbility != null && projectileAbility.IsActive())
+                {
+                    projectileAbility.OnAttack();
+                    Debug.Log($"🎯 Attack counter increased for {elementAbilities.Key} projectile ability");
+                }
+            }
         }
     }
     
@@ -318,6 +340,72 @@ public class ElementalAbilityManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Belirli bir element için ability'nin aktif olup olmadığını kontrol eder
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <param name="abilityType">Ability türü</param>
+    /// <returns>Ability aktif mi?</returns>
+    public bool IsAbilityActive(ElementType elementType, AbilityType abilityType)
+    {
+        if (activeAbilities.ContainsKey(elementType) && 
+            activeAbilities[elementType].ContainsKey(abilityType))
+        {
+            IAbility ability = activeAbilities[elementType][abilityType];
+            
+            if (ability is ElementalStrike)
+            {
+                return true; // Strike her zaman aktif
+            }
+            else if (ability is ElementalBuff buff)
+            {
+                return buff.IsActive();
+            }
+            else if (ability is ElementalProjectile projectile)
+            {
+                return projectile.IsActive();
+            }
+            else if (ability is ElementalArea area)
+            {
+                return area.IsActive();
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Stack ile çalışan ability'lerin durumunu kontrol eder
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <param name="abilityType">Ability türü</param>
+    /// <returns>Stack varsa active, yoksa deactive</returns>
+    public bool IsStackBasedAbilityActive(ElementType elementType, AbilityType abilityType)
+    {
+        // Stack ile çalışan ability'ler: Buff, Area, Projectile
+        if (abilityType == AbilityType.ElementalBuff || 
+            abilityType == AbilityType.ElementalArea || 
+            abilityType == AbilityType.ElementalProjectile)
+        {
+            // Düşmanların üzerindeki stack'leri kontrol et
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (GameObject enemy in enemies)
+            {
+                var enemyElementStack = enemy.GetComponent<ElementStack>();
+                if (enemyElementStack != null)
+                {
+                    int stackCount = enemyElementStack.GetElementStack(elementType);
+                    if (stackCount > 0)
+                    {
+                        return true; // Herhangi bir düşmanda stack varsa active
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
     /// Ability'nin cooldown progress'ini döndürür
     /// </summary>
     /// <param name="abilityType">Ability türü</param>
@@ -360,26 +448,67 @@ public class ElementalAbilityManager : MonoBehaviour
         info += $"Current Element: {currentElementType}\n";
         info += $"Active Abilities:\n";
         
+        // Düşmanların stack'lerini al
+        Dictionary<ElementType, int> enemyStacks = new Dictionary<ElementType, int>();
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject enemy in enemies)
+        {
+            var enemyElementStack = enemy.GetComponent<ElementStack>();
+            if (enemyElementStack != null)
+            {
+                var enemyStackData = enemyElementStack.GetAllElementStacks();
+                foreach (var kvp in enemyStackData)
+                {
+                    if (enemyStacks.ContainsKey(kvp.Key))
+                    {
+                        enemyStacks[kvp.Key] += kvp.Value;
+                    }
+                    else
+                    {
+                        enemyStacks[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+        }
+        
         foreach (var elementAbilities in activeAbilities)
         {
             info += $"\n{elementAbilities.Key} Abilities:\n";
             foreach (var kvp in elementAbilities.Value)
             {
-                bool isActive = IsAbilityActive(kvp.Key);
-                string status = isActive ? "✅ ACTIVE" : "❌ INACTIVE";
+                bool isActive;
+                string status;
+                
+                // Stack ile çalışan ability'ler için özel kontrol
+                if (kvp.Key == AbilityType.ElementalBuff || 
+                    kvp.Key == AbilityType.ElementalArea || 
+                    kvp.Key == AbilityType.ElementalProjectile)
+                {
+                    // Stack varsa active, yoksa deactive
+                    int stackCount = enemyStacks.ContainsKey(elementAbilities.Key) ? enemyStacks[elementAbilities.Key] : 0;
+                    isActive = stackCount > 0;
+                    status = isActive ? $"✅ ACTIVE ({stackCount} stack)" : "❌ DEACTIVE (0 stack)";
+                }
+                else
+                {
+                    // Strike her zaman aktif
+                    isActive = true;
+                    status = "✅ ACTIVE";
+                }
+                
                 info += $"- {kvp.Key}: {status}\n";
             }
         }
         
         info += $"\n🎮 System Info:\n";
-        info += $"ElementalArea: Auto-activated when available\n";
         info += $"Strike: Always active\n";
-        info += $"Buff/Projectile: Manual toggle\n";
+        info += $"Buff/Area/Projectile: Active when stack > 0\n";
+        info += $"Element Effects: Applied based on stacks\n";
         
         // Daha büyük ve görünür box
         GUI.color = Color.white;
         GUI.backgroundColor = new Color(0, 0, 0, 0.9f);
-        GUI.Box(new Rect(10, 10, 400, 300), "");
+        GUI.Box(new Rect(10, 10, 400, 350), "");
         
         // Başlık
         GUI.color = Color.yellow;
@@ -387,11 +516,11 @@ public class ElementalAbilityManager : MonoBehaviour
         
         // İçerik
         GUI.color = Color.white;
-        GUI.Label(new Rect(15, 45, 390, 250), info);
+        GUI.Label(new Rect(15, 45, 390, 300), info);
         
         // Element bilgisi için özel renk
         GUI.color = Color.cyan;
-        GUI.Label(new Rect(15, 295, 390, 20), $"Current Element: {currentElementType}");
+        GUI.Label(new Rect(15, 345, 390, 20), $"Current Element: {currentElementType}");
     }
     
     private void Update()

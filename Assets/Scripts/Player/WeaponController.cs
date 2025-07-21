@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class WeaponController : MonoBehaviour
 {
@@ -9,30 +10,40 @@ public class WeaponController : MonoBehaviour
     private float nextFireTime;
     private bool isFiring = false;
 
-    [Header("Ability Settings")]
-    [SerializeField] private AbilityData[] abilities; // Unity'de atanacak yetenekler
-    [SerializeField] private KeyCode switchAbilityKey = KeyCode.Q;
-    private int currentAbilityIndex = 0;
-    
-    [Header("Elemental Ability Integration")]
-    [SerializeField] private ElementalAbilityManager elementalAbilityManager;
+    [Header("Weapon Data")]
+    [SerializeField] private WeaponData weaponData;
+    [SerializeField] private GameObject meleeHitboxPrefab; // Sword gibi yakın dövüş için (ileride)
 
-    [Header("UI References")]
-    [SerializeField] private UnityEngine.UI.Image abilityIcon; // Opsiyonel: Aktif yeteneği göstermek için
+    [Header("Visuals")]
+    public SpriteRenderer weaponSpriteRenderer;
+    [SerializeField] private float weaponShowTime = 0.3f;
+
+    void Start() {
+        if (weaponSpriteRenderer != null && weaponData != null)
+        {
+            weaponSpriteRenderer.sprite = weaponData.weaponSprite;
+            weaponSpriteRenderer.enabled = false; // Başlangıçta gizli
+        }
+    }
 
     private void Update()
     {
-        // Yetenek değiştirme
-        if (Input.GetKeyDown(switchAbilityKey))
-        {
-            SwitchAbility();
-        }
-
         // Ateş etme kontrolü
         if (isFiring && Time.time >= nextFireTime)
         {
-            Shoot();
-            nextFireTime = Time.time + fireRate;
+            if (weaponData != null)
+            {
+                if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle)
+                {
+                    ShootRanged();
+                    nextFireTime = Time.time + weaponData.fireRate;
+                }
+                else if (weaponData.weaponType == WeaponType.Sword)
+                {
+                    MeleeAttack();
+                    nextFireTime = Time.time + 0.5f; // Sword için sabit cooldown, ileride SO'dan alınabilir
+                }
+            }
         }
     }
 
@@ -40,8 +51,19 @@ public class WeaponController : MonoBehaviour
     {
         isFiring = true;
         // İlk atışı hemen yap
-        Shoot();
-        nextFireTime = Time.time + fireRate;
+        if (weaponData != null)
+        {
+            if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle)
+            {
+                ShootRanged();
+                nextFireTime = Time.time + weaponData.fireRate;
+            }
+            else if (weaponData.weaponType == WeaponType.Sword)
+            {
+                MeleeAttack();
+                nextFireTime = Time.time + 0.5f;
+            }
+        }
     }
 
     public void StopFiring()
@@ -49,49 +71,58 @@ public class WeaponController : MonoBehaviour
         isFiring = false;
     }
 
-    private void Shoot()
+    private IEnumerator ShowWeaponBriefly()
     {
-        if (bulletPrefab == null || firePoint == null) return;
-
-        // Mermiyi oluştur
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        PlayerBullet bulletScript = bullet.GetComponent<PlayerBullet>();
-
-        // Eğer bullet script ve aktif yetenek varsa, yeteneği uygula
-        if (bulletScript != null && abilities.Length > 0 && abilities[currentAbilityIndex] != null)
+        if (weaponSpriteRenderer != null)
         {
-            bulletScript.SetEffectType(abilities[currentAbilityIndex].effectType);
-            bulletScript.SetDamageMultiplier(1.0f); // Varsayılan hasar çarpanı
-            bulletScript.SetAbilityData(abilities[currentAbilityIndex]); // Ability data'yı ayarla
+            weaponSpriteRenderer.enabled = true;
+            yield return new WaitForSeconds(weaponShowTime);
+            weaponSpriteRenderer.enabled = false;
         }
-
-        // Elemental ability manager referansını bullet'a ver
-        if (bulletScript != null && elementalAbilityManager != null)
-        {
-            bulletScript.SetElementalAbilityManager(elementalAbilityManager);
-            // Stack miktarını ayarla (1 mermi = 1 stack)
-            bulletScript.SetStackAmount(1);
-        }
-
-        // Ses efekti
-        AudioManager.Instance.PlaySFX(12);
     }
 
-    private void SwitchAbility()
+    private void ShootRanged()
     {
-        if (abilities == null || abilities.Length == 0) return;
+        if (weaponData == null || weaponData.bulletPrefab == null || firePoint == null) return;
 
-        // Sonraki yeteneğe geç
-        currentAbilityIndex = (currentAbilityIndex + 1) % abilities.Length;
+        // Mermiyi oluştur
+        GameObject bullet = Instantiate(weaponData.bulletPrefab, firePoint.position, firePoint.rotation);
+        PlayerBullet bulletScript = bullet.GetComponent<PlayerBullet>();
 
-        // UI güncelleme (opsiyonel)
-        if (abilityIcon != null && abilities[currentAbilityIndex] != null)
+        // PlayerController'dan hasar çarpanını al
+        float damageMultiplier = 1.0f;
+        if (PlayerController.Instance != null)
         {
-            abilityIcon.sprite = abilities[currentAbilityIndex].icon;
+            damageMultiplier = PlayerController.Instance.GetDamageMultiplier();
+        }
+
+        // Eğer bullet script varsa, WeaponData'dan değerleri uygula
+        if (bulletScript != null && weaponData != null)
+        {
+            bulletScript.baseDamage = weaponData.damage;
+            bulletScript.SetEffectType((AbilityEffectType)weaponData.elementType); // Enumlar uyumlu ise
+            bulletScript.SetDamageMultiplier(damageMultiplier);
+            bulletScript.SetStackAmount(1);
+            bulletScript.elementData = weaponData.elementData; // ElementData'yı ata
         }
 
         // Debug log
-        Debug.Log($"Switched to ability: {abilities[currentAbilityIndex].abilityName}");
+        Debug.Log($"🎯 Shot fired with damage: {weaponData.damage}, element: {weaponData.elementType}");
+
+        // Ses efekti
+        AudioManager.Instance.PlaySFX(12);
+
+        // Silah sprite'ını kısa süreliğine göster
+        StartCoroutine(ShowWeaponBriefly());
+    }
+
+    private void MeleeAttack()
+    {
+        // Yakın dövüş saldırısı (ileride animasyon, hitbox vs. eklenecek)
+        Debug.Log($"🗡️ Melee attack with {weaponData.weaponName}");
+        StartCoroutine(ShowWeaponBriefly());
+        // Burada düşmana hasar verme, animasyon tetikleme vs. yapılacak
+        // Şimdilik log ve ileride hitbox prefabı ile gerçek saldırı
     }
     
     /// <summary>

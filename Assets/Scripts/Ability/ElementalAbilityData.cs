@@ -25,9 +25,15 @@ public class ElementalAbilityData : ScriptableObject
     [Header("Elemental Strike Settings")]
     public int stackAmount = 1;
     public float strikeDamage = 10f;
+    public float fireStackDamage = 5f; // Fire stack artışında verilen hasar
+    public float iceSlowPercent = 20f; // Ice stack aktifken yavaşlatma yüzdesi
+    public float poisonStackDamage = 5f; // Poison stack artışında verilen hasar
     
     [Header("Elemental Buff Settings")]
     public float damageMultiplier = 1.5f;
+    
+    [Header("Buff Settings")]
+    public float flatBonusDamage = 10f;
     
     [Header("Elemental Projectile Settings")]
     public int attackCountForProjectile = 3;

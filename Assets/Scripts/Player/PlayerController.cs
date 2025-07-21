@@ -26,6 +26,11 @@ public class PlayerController : MonoBehaviour
 
     private PlayerInputActions playerInputActions;
     private bool canControl = true;
+    
+    // Element stack efektleri için değişkenler
+    private float speedMultiplier = 1f;
+    private float damageMultiplier = 1f;
+    private float poisonDamage = 0f;
 
     void Awake()
     {
@@ -96,8 +101,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Handle movement
-        theRB.linearVelocity = moveInput * activeMoveSpeed;
+        // Handle movement with speed multiplier
+        theRB.linearVelocity = moveInput * (activeMoveSpeed * speedMultiplier);
 
         // Handle gun arm rotation
         Vector3 screenPoint = theCam.WorldToScreenPoint(transform.localPosition);
@@ -195,5 +200,55 @@ public class PlayerController : MonoBehaviour
             theRB.constraints = RigidbodyConstraints2D.None;
         }
         canControl = true;
+    }
+    
+    // Element stack efektleri için metodlar
+    
+    /// <summary>
+    /// Hız çarpanını ayarlar (Ice stack efekti için)
+    /// </summary>
+    /// <param name="multiplier">Hız çarpanı (0.8f = %20 yavaşlatma)</param>
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speedMultiplier = multiplier;
+        Debug.Log($"🎮 Player speed multiplier set to: {multiplier}");
+    }
+    
+    /// <summary>
+    /// Hasar çarpanını ayarlar (Fire stack efekti için)
+    /// </summary>
+    /// <param name="multiplier">Hasar çarpanı (1.5f = %50 artış)</param>
+    public void SetDamageMultiplier(float multiplier)
+    {
+        damageMultiplier = multiplier;
+        Debug.Log($"🎮 Player damage multiplier set to: {multiplier}");
+    }
+    
+    /// <summary>
+    /// Poison hasarını ayarlar (Poison stack efekti için)
+    /// </summary>
+    /// <param name="damage">Poison hasarı</param>
+    public void SetPoisonDamage(float damage)
+    {
+        poisonDamage = damage;
+        Debug.Log($"🎮 Player poison damage set to: {damage}");
+    }
+    
+    /// <summary>
+    /// Mevcut hasar çarpanını döndürür
+    /// </summary>
+    /// <returns>Hasar çarpanı</returns>
+    public float GetDamageMultiplier()
+    {
+        return damageMultiplier;
+    }
+    
+    /// <summary>
+    /// Mevcut poison hasarını döndürür
+    /// </summary>
+    /// <returns>Poison hasarı</returns>
+    public float GetPoisonDamage()
+    {
+        return poisonDamage;
     }
 }

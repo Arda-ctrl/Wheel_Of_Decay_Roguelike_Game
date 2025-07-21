@@ -14,6 +14,8 @@ public class ElementalBuff : MonoBehaviour, IAbility
     [SerializeField] private float cooldownDuration = 0f; // Pasif ability olduğu için cooldown yok
     [SerializeField] private float manaCost = 0f; // Pasif ability olduğu için mana maliyeti yok
     [SerializeField] private float damageMultiplier = 1.5f; // Hasar çarpanı
+    [SerializeField] private float flatBonusDamage = 10f; // Sabit bonus hasar
+    [SerializeField] private ElementType targetElementType = ElementType.Fire; // Bu buff hangi element için
     
     private IElement currentElement;
     private bool isActive = true;
@@ -39,6 +41,8 @@ public class ElementalBuff : MonoBehaviour, IAbility
         cooldownDuration = data.cooldownDuration;
         manaCost = data.manaCost;
         damageMultiplier = data.damageMultiplier;
+        flatBonusDamage = data.flatBonusDamage;
+        targetElementType = data.elementType; // Element tipini ayarla
     }
     
     /// <summary>
@@ -83,6 +87,9 @@ public class ElementalBuff : MonoBehaviour, IAbility
     {
         if (!isActive || currentElement == null) return baseDamage;
         
+        // Sadece bu buff'ın hedef elementi için çalış
+        if (elementType != targetElementType) return baseDamage;
+        
         // Hedefin element stack'lerini kontrol et
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack == null) return baseDamage;
@@ -90,12 +97,17 @@ public class ElementalBuff : MonoBehaviour, IAbility
         // Eşleşen element stack'i var mı kontrol et
         if (elementStack.HasElementStack(elementType))
         {
-            float buffedDamage = baseDamage * damageMultiplier;
+            // Sabit flat bonus hasar (stack sayısına bakmaksızın)
+            float buffedDamage = baseDamage + flatBonusDamage;
             
-            // Buff VFX'i oynat
-            PlayBuffEffects(target);
+            // Buff VFX'i oynat (sadece ilk kez)
+            if (!target.GetComponent<BuffApplied>())
+            {
+                PlayBuffEffects(target);
+                target.AddComponent<BuffApplied>();
+            }
             
-            Debug.Log($"🛡️ {target.name} has {elementType} stack, damage {baseDamage} -> {buffedDamage}");
+            Debug.Log($"🛡️ {target.name} has {elementType} stack, {targetElementType} buff applied: {baseDamage} -> {buffedDamage} (fixed {damageMultiplier}x)");
             
             return buffedDamage;
         }
@@ -155,6 +167,7 @@ public class ElementalBuff : MonoBehaviour, IAbility
     public void SetActive(bool active)
     {
         isActive = active;
+        Debug.Log($"🛡️ {targetElementType} Buff ability {(active ? "activated" : "deactivated")}");
     }
     
     /// <summary>
@@ -174,4 +187,22 @@ public class ElementalBuff : MonoBehaviour, IAbility
     {
         return isActive;
     }
+    
+    /// <summary>
+    /// Bu buff'ın hangi element için olduğunu döndürür
+    /// </summary>
+    /// <returns>Element tipi</returns>
+    public ElementType GetTargetElementType()
+    {
+        return targetElementType;
+    }
+} 
+
+/// <summary>
+/// Buff'ın uygulandığını işaretlemek için kullanılan marker component
+/// </summary>
+public class BuffApplied : MonoBehaviour
+{
+    // Bu component sadece buff'ın uygulandığını işaretlemek için kullanılır
+    // Herhangi bir özellik içermez
 } 

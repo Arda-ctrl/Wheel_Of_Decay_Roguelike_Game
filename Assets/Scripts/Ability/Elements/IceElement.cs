@@ -37,13 +37,23 @@ public class IceElement : IElement
     {
         // Yavaşlatma efekti uygula
         ApplySlowEffect(target, stackCount);
-        
+
+        // Eğer stack yoksa hızı sıfırla
+        if (stackCount <= 0)
+        {
+            var moveable = target.GetComponent<IMoveable>();
+            if (moveable != null)
+            {
+                moveable.SetSpeedMultiplier(1f); // Base speed'e döndür
+            }
+        }
+
         // Donma kontrolü
         if (stackCount >= freezeThreshold)
         {
             ApplyFreezeEffect(target);
         }
-        
+
         // VFX ve SFX oynat
         PlayIceEffects(target);
     }
@@ -58,8 +68,12 @@ public class IceElement : IElement
         var moveable = target.GetComponent<IMoveable>();
         if (moveable != null)
         {
-            float slowAmount = Mathf.Min(slowAmountPerStack * stackCount, 0.8f); // Maksimum %80 yavaşlatma
-            moveable.SetSpeedMultiplier(1f - slowAmount);
+            // Eğer zaten yavaşlatılmışsa tekrar uygulama
+            if (moveable.GetCurrentSpeed() >= moveable.GetBaseSpeed())
+            {
+                float slowAmount = slowAmountPerStack; // Sadece ilk stackte slow uygula
+                moveable.SetSpeedMultiplier(1f - slowAmount);
+            }
         }
     }
     

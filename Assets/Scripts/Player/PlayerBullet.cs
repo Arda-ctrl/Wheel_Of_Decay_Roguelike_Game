@@ -18,6 +18,9 @@ public class PlayerBullet : MonoBehaviour
     private ElementalAbilityManager elementalAbilityManager;
     [SerializeField] private int stackAmount = 1; // Bu mermi kaç stack ekleyecek
 
+    [Header("Elemental Data")]
+    public ElementData elementData; // Set by WeaponController when spawned
+
     private Rigidbody2D rb;
 
     private void Awake()
@@ -39,6 +42,11 @@ public class PlayerBullet : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Debug.Log("🔥 PlayerBullet hit an enemy!");
+            // Eğer elementData atanmışsa, ona göre efekt uygula
+            if (elementData != null)
+            {
+                ApplyElementEffect(other.gameObject);
+            }
             // Elemental strike'i sadece mermi düşmana çarptığında uygula
             if (elementalAbilityManager != null)
             {
@@ -51,8 +59,8 @@ public class PlayerBullet : MonoBehaviour
             // Calculate final damage
             float finalDamage = CalculateFinalDamage(other.gameObject);
 
-            // Apply ability effect if any
-            if (effectType != AbilityEffectType.Normal)
+            // Sadece elementli mermide efekt uygula
+            if (effectType != AbilityEffectType.Normal && effectType != 0)
             {
                 ApplyAbilityEffect(other.gameObject);
             }
@@ -120,6 +128,32 @@ public class PlayerBullet : MonoBehaviour
         Destroy(tempAbilityData);
     }
 
+    private void ApplyElementEffect(GameObject target)
+    {
+        if (elementData is FireElementData fire)
+        {
+            // Basit bir burn effect örneği (ileride daha gelişmiş olabilir)
+            var burn = target.AddComponent<TempBurnEffect>();
+            burn.duration = fire.burnDuration;
+            burn.damagePerTick = fire.burnDamagePerTick;
+            burn.tickRate = fire.burnTickRate;
+        }
+        else if (elementData is IceElementData ice)
+        {
+            var slow = target.AddComponent<TempSlowEffect>();
+            slow.slowPercent = ice.slowPercent;
+            slow.duration = ice.slowDuration;
+        }
+        else if (elementData is PoisonElementData poison)
+        {
+            var poisonEff = target.AddComponent<TempPoisonEffect>();
+            poisonEff.duration = poison.poisonDuration;
+            poisonEff.damagePerTick = poison.poisonDamagePerTick;
+            poisonEff.tickRate = poison.poisonTickRate;
+            poisonEff.slowPercent = poison.poisonSlowPercent;
+        }
+    }
+
     /// <summary>
     /// Elemental stack'i düşmana uygular
     /// </summary>
@@ -140,9 +174,37 @@ public class PlayerBullet : MonoBehaviour
     {
         float baseFinalDamage = baseDamage * damageMultiplier;
         
-        // Elemental stack sistemi artık ElementalAbilityManager tarafından yönetiliyor
-        // Bu method sadece temel hasar hesaplaması yapıyor
-        Debug.Log($"⚔️ Base damage: {baseFinalDamage}");
+        // Player'ın damage multiplier'ını uygula (Fire stack efekti)
+        if (PlayerController.Instance != null)
+        {
+            float playerDamageMultiplier = PlayerController.Instance.GetDamageMultiplier();
+            if (playerDamageMultiplier != 1f)
+            {
+                baseFinalDamage *= playerDamageMultiplier;
+                Debug.Log($"🔥 Player damage multiplier applied: {playerDamageMultiplier}x -> {baseFinalDamage}");
+            }
+        }
+        
+        // ElementalBuff'ı uygula (eğer varsa)
+        if (elementalAbilityManager != null)
+        {
+            // Her element için buff'ı kontrol et
+            foreach (ElementType elementType in System.Enum.GetValues(typeof(ElementType)))
+            {
+                if (elementType != ElementType.None)
+                {
+                    float buffedDamage = elementalAbilityManager.CalculateBuffDamage(baseFinalDamage, target, elementType);
+                    if (buffedDamage != baseFinalDamage)
+                    {
+                        baseFinalDamage = buffedDamage;
+                        Debug.Log($"🛡️ {elementType} buff applied: {baseDamage * damageMultiplier} -> {buffedDamage}");
+                        break; // İlk buff'lanan element'i kullan
+                    }
+                }
+            }
+        }
+        
+        Debug.Log($"⚔️ Final damage: {baseFinalDamage}");
         
         return baseFinalDamage;
     }

@@ -57,13 +57,14 @@ public class FireElement : IElement
         if (existingBurn != null)
         {
             // Mevcut efekti güncelle
-            existingBurn.UpdateBurnEffect(stackCount);
+            // Artık stackCount ne olursa olsun, yanma sabit kalsın
+            existingBurn.UpdateBurnEffect(1); // Sadece 1 stack gibi davran
         }
         else
         {
             // Yeni yanma efekti ekle
             var burnEffect = target.AddComponent<ElementalFireBurnEffect>();
-            burnEffect.Initialize(stackCount, burnDamagePerStack, burnTickRate, burnDuration);
+            burnEffect.Initialize(1, burnDamagePerStack, burnTickRate, burnDuration); // Sadece 1 stack gibi davran
         }
     }
     
