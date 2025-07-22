@@ -112,13 +112,13 @@ public class PlayerElementalIntegration : MonoBehaviour
     /// Elementi değiştirir
     /// </summary>
     /// <param name="elementType">Yeni element türü</param>
-    public void ChangeElement(ElementType elementType)
-    {
-        if (elementalAbilityManager != null)
-        {
-            elementalAbilityManager.SetElement(elementType);
-        }
-    }
+    // public void ChangeElement(ElementType elementType)
+    // {
+    //     if (elementalAbilityManager != null)
+    //     {
+    //         elementalAbilityManager.SetElement(elementType);
+    //     }
+    // }
     
     /// <summary>
     /// Ability'yi aktif/pasif yapar
@@ -137,15 +137,14 @@ public class PlayerElementalIntegration : MonoBehaviour
     /// Mevcut element türünü döndürür
     /// </summary>
     /// <returns>Mevcut element türü</returns>
-    public ElementType GetCurrentElementType()
-    {
-        if (elementalAbilityManager != null)
-        {
-            return elementalAbilityManager.GetCurrentElementType();
-        }
-        
-        return ElementType.Fire; // Default element
-    }
+    // public ElementType GetCurrentElementType()
+    // {
+    //     if (elementalAbilityManager != null)
+    //     {
+    //         return elementalAbilityManager.GetCurrentElementType();
+    //     }
+    //     return ElementType.Fire; // Default element
+    // }
     
     /// <summary>
     /// Ability'nin aktif olup olmadığını kontrol eder
@@ -203,17 +202,17 @@ public class PlayerElementalIntegration : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             Debug.Log("🔥 Key 1 pressed - Changing to FIRE element");
-            ChangeElement(ElementType.Fire);
+            // ChangeElement(ElementType.Fire); // Removed as per edit hint
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             Debug.Log("❄️ Key 2 pressed - Changing to ICE element");
-            ChangeElement(ElementType.Ice);
+            // ChangeElement(ElementType.Ice); // Removed as per edit hint
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
             Debug.Log("☠️ Key 3 pressed - Changing to POISON element");
-            ChangeElement(ElementType.Poison);
+            // ChangeElement(ElementType.Poison); // Removed as per edit hint
         }
         
         // Ability toggle input'ları

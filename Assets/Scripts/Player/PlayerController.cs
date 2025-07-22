@@ -154,8 +154,16 @@ public class PlayerController : MonoBehaviour
 
     private void OnFireStart(InputAction.CallbackContext context)
     {
-        if (!canControl || weaponController == null) return;
-        weaponController.StartFiring();
+        if (!canControl) return;
+        if (weaponController != null)
+        {
+            weaponController.StartFiring();
+        }
+        // Elemental yeteneklerin saldırı bazlı efektlerini tetikle
+        if (elementalAbilityManager != null)
+        {
+            elementalAbilityManager.OnAttack();
+        }
     }
 
     private void OnFireEnd(InputAction.CallbackContext context)

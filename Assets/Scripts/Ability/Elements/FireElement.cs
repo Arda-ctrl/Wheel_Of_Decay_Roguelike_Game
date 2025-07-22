@@ -52,20 +52,9 @@ public class FireElement : IElement
     /// <param name="stackCount">Stack sayısı</param>
     private void StartBurnEffect(GameObject target, int stackCount)
     {
-        // Mevcut yanma efektini kontrol et
-        var existingBurn = target.GetComponent<ElementalFireBurnEffect>();
-        if (existingBurn != null)
-        {
-            // Mevcut efekti güncelle
-            // Artık stackCount ne olursa olsun, yanma sabit kalsın
-            existingBurn.UpdateBurnEffect(1); // Sadece 1 stack gibi davran
-        }
-        else
-        {
-            // Yeni yanma efekti ekle
-            var burnEffect = target.AddComponent<ElementalFireBurnEffect>();
-            burnEffect.Initialize(1, burnDamagePerStack, burnTickRate, burnDuration); // Sadece 1 stack gibi davran
-        }
+        // Her mermi için yeni bir yanma efekti başlat
+        var burnEffect = target.AddComponent<ElementalFireBurnEffect>();
+        burnEffect.Initialize(1, burnDamagePerStack, burnTickRate, burnDuration);
     }
     
     /// <summary>

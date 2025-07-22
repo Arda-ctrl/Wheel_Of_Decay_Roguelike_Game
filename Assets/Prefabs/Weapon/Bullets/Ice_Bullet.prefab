@@ -178,3 +178,5 @@ MonoBehaviour:
   speed: 15
   lifeTime: 2
   baseDamage: 10
+  stackAmount: 1
+  elementData: {fileID: 11400000, guid: 20720242b98f40745a15a7aaa20bd591, type: 2}

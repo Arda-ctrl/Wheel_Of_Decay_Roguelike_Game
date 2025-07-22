@@ -14,7 +14,6 @@ public class ElementalBuff : MonoBehaviour, IAbility
     [SerializeField] private float cooldownDuration = 0f; // Pasif ability olduğu için cooldown yok
     [SerializeField] private float manaCost = 0f; // Pasif ability olduğu için mana maliyeti yok
     [SerializeField] private float damageMultiplier = 1.5f; // Hasar çarpanı
-    [SerializeField] private float flatBonusDamage = 10f; // Sabit bonus hasar
     [SerializeField] private ElementType targetElementType = ElementType.Fire; // Bu buff hangi element için
     
     private IElement currentElement;
@@ -41,7 +40,6 @@ public class ElementalBuff : MonoBehaviour, IAbility
         cooldownDuration = data.cooldownDuration;
         manaCost = data.manaCost;
         damageMultiplier = data.damageMultiplier;
-        flatBonusDamage = data.flatBonusDamage;
         targetElementType = data.elementType; // Element tipini ayarla
     }
     
@@ -97,8 +95,8 @@ public class ElementalBuff : MonoBehaviour, IAbility
         // Eşleşen element stack'i var mı kontrol et
         if (elementStack.HasElementStack(elementType))
         {
-            // Sabit flat bonus hasar (stack sayısına bakmaksızın)
-            float buffedDamage = baseDamage + flatBonusDamage;
+            // Sabit 1.5x hasar (stack sayısına bakmaksızın)
+            float buffedDamage = baseDamage * damageMultiplier;
             
             // Buff VFX'i oynat (sadece ilk kez)
             if (!target.GetComponent<BuffApplied>())

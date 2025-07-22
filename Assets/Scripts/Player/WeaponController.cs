@@ -104,6 +104,12 @@ public class WeaponController : MonoBehaviour
             bulletScript.SetDamageMultiplier(damageMultiplier);
             bulletScript.SetStackAmount(1);
             bulletScript.elementData = weaponData.elementData; // ElementData'yı ata
+            // ElementalAbilityManager referansını ata
+            if (PlayerController.Instance != null)
+            {
+                var abilityManager = PlayerController.Instance.GetComponent<ElementalAbilityManager>();
+                bulletScript.SetElementalAbilityManager(abilityManager);
+            }
         }
 
         // Debug log

@@ -53,19 +53,9 @@ public class PoisonElement : IElement
     /// <param name="stackCount">Stack sayısı</param>
     private void StartPoisonEffect(GameObject target, int stackCount)
     {
-        // Mevcut zehir efektini kontrol et
-        var existingPoison = target.GetComponent<ElementalPoisonEffect>();
-        if (existingPoison != null)
-        {
-            // Mevcut efekti güncelle
-            existingPoison.UpdatePoisonEffect(stackCount);
-        }
-        else
-        {
-            // Yeni zehir efekti ekle
-            var poisonEffect = target.AddComponent<ElementalPoisonEffect>();
-            poisonEffect.Initialize(stackCount, poisonDamagePerStack, poisonTickRate, slowAmountPerStack, maxSlowAmount);
-        }
+        // Her mermi için yeni bir zehir efekti başlat
+        var poisonEffect = target.AddComponent<ElementalPoisonEffect>();
+        poisonEffect.Initialize(stackCount, poisonDamagePerStack, poisonTickRate, slowAmountPerStack, maxSlowAmount);
     }
     
     /// <summary>

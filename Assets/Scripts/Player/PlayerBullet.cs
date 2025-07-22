@@ -42,33 +42,25 @@ public class PlayerBullet : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Debug.Log("🔥 PlayerBullet hit an enemy!");
-            // Eğer elementData atanmışsa, ona göre efekt uygula
+
+            // 1. Önce karakterdeki strike'ları uygula (stack ekle)
+            if (elementalAbilityManager != null)
+            {
+                elementalAbilityManager.UseStrike(other.gameObject);
+                Debug.Log($"⚔️ Elemental strike(s) applied to {other.gameObject.name} on hit!");
+            }
+
+            // 2. Efekt uygula (VFX/SFX)
             if (elementData != null)
             {
                 ApplyElementEffect(other.gameObject);
             }
-            // Elemental strike'i sadece mermi düşmana çarptığında uygula
-            if (elementalAbilityManager != null)
-            {
-                // Stack miktarını ayarla ve strike uygula
-                SetStackAmountForStrike(stackAmount);
-                elementalAbilityManager.UseStrike(other.gameObject);
-                Debug.Log($"⚔️ Elemental strike applied to {other.gameObject.name} on hit! ({stackAmount} stack)");
-            }
 
-            // Calculate final damage
-            float finalDamage = CalculateFinalDamage(other.gameObject);
-
-            // Sadece elementli mermide efekt uygula
-            if (effectType != AbilityEffectType.Normal && effectType != 0)
-            {
-                ApplyAbilityEffect(other.gameObject);
-            }
-
-            // Apply damage
+            // 3. Hasar uygula
             var health = other.GetComponent<IHealth>();
             if (health != null)
             {
+                float finalDamage = CalculateFinalDamage(other.gameObject);
                 health.TakeDamage(finalDamage);
             }
 
@@ -172,41 +164,14 @@ public class PlayerBullet : MonoBehaviour
     /// <returns>Hesaplanmış final hasar</returns>
     private float CalculateFinalDamage(GameObject target)
     {
-        float baseFinalDamage = baseDamage * damageMultiplier;
-        
-        // Player'ın damage multiplier'ını uygula (Fire stack efekti)
-        if (PlayerController.Instance != null)
-        {
-            float playerDamageMultiplier = PlayerController.Instance.GetDamageMultiplier();
-            if (playerDamageMultiplier != 1f)
-            {
-                baseFinalDamage *= playerDamageMultiplier;
-                Debug.Log($"🔥 Player damage multiplier applied: {playerDamageMultiplier}x -> {baseFinalDamage}");
-            }
-        }
-        
-        // ElementalBuff'ı uygula (eğer varsa)
+        float finalDamage = baseDamage * damageMultiplier;
+        // Eğer elementalAbilityManager varsa, buff etkisini uygula
         if (elementalAbilityManager != null)
         {
-            // Her element için buff'ı kontrol et
-            foreach (ElementType elementType in System.Enum.GetValues(typeof(ElementType)))
-            {
-                if (elementType != ElementType.None)
-                {
-                    float buffedDamage = elementalAbilityManager.CalculateBuffDamage(baseFinalDamage, target, elementType);
-                    if (buffedDamage != baseFinalDamage)
-                    {
-                        baseFinalDamage = buffedDamage;
-                        Debug.Log($"🛡️ {elementType} buff applied: {baseDamage * damageMultiplier} -> {buffedDamage}");
-                        break; // İlk buff'lanan element'i kullan
-                    }
-                }
-            }
+            // Varsayılan olarak Fire elementini kullanıyoruz, istersen burayı dinamik yapabilirsin
+            finalDamage = elementalAbilityManager.CalculateBuffDamage(finalDamage, target, ElementType.Fire);
         }
-        
-        Debug.Log($"⚔️ Final damage: {baseFinalDamage}");
-        
-        return baseFinalDamage;
+        return finalDamage;
     }
 
     // Setters for bullet modifications

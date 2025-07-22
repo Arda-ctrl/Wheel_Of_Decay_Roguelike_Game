@@ -950,8 +950,8 @@ MonoBehaviour:
   availableAbilities:
   - {fileID: 11400000, guid: 47b6d653b2f92b9448b74343b72a0563, type: 2}
   - {fileID: 11400000, guid: 5815102afa8fe7f479835f73dc695a7c, type: 2}
+  - {fileID: 11400000, guid: bb6e97519aa6a314c8aedd057498a475, type: 2}
   - {fileID: 11400000, guid: 540feedf2c5fd8a40b76005d43382e9a, type: 2}
-  currentElementType: 0
 --- !u!114 &1245168964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1898,7 +1898,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
   firePoint: {fileID: 2226368523323116583}
   fireRate: 0.5
-  weaponData: {fileID: 11400000, guid: 4c832b9837ec4ec47a3d3d5414e5d4df, type: 2}
+  weaponData: {fileID: 11400000, guid: 71c0c741ba9277344ba78550e62495f7, type: 2}
   meleeHitboxPrefab: {fileID: 540043543}
   weaponSpriteRenderer: {fileID: 8495274878920736208}
   weaponShowTime: 0.3

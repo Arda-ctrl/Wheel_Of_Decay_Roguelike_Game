@@ -179,3 +179,4 @@ MonoBehaviour:
   lifeTime: 2
   baseDamage: 10
   stackAmount: 1
+  elementData: {fileID: 11400000, guid: a97f63cf3d6eb144ca76688689f426fd, type: 2}

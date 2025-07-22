@@ -17,6 +17,6 @@ MonoBehaviour:
   elementType: 3
   damage: 10
   fireRate: 0.5
-  weaponSprite: {fileID: -4254059877319897387, guid: 48d85d1ef51430e42b6aef57f02c863d, type: 3}
+  weaponSprite: {fileID: 7635507552806468132, guid: 48d85d1ef51430e42b6aef57f02c863d, type: 3}
   bulletPrefab: {fileID: 7060172690428923814, guid: 6408072e0ce738e418b3e221f4ea6822, type: 3}
-  elementData: {fileID: 0}
+  elementData: {fileID: 11400000, guid: a97f63cf3d6eb144ca76688689f426fd, type: 2}
