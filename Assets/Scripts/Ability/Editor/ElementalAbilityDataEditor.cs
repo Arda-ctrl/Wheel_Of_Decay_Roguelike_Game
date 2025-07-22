@@ -214,6 +214,24 @@ public class ElementalAbilityDataEditor : Editor
         EditorGUILayout.LabelField("Elemental Strike Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(stackAmountProp);
         EditorGUILayout.PropertyField(strikeDamageProp);
+
+        // Element tipine göre özel alanlar
+        ElementType selectedElementType = (ElementType)elementTypeProp.enumValueIndex;
+        switch (selectedElementType)
+        {
+            case ElementType.Fire:
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("fireStackDamage"), new GUIContent("Fire Stack Damage"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("burstDamage"), new GUIContent("Burst Damage (Fire)"));
+                break;
+            case ElementType.Ice:
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("iceSlowPercent"), new GUIContent("Slow Percent (Ice)"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("areaDuration"), new GUIContent("Slow Duration (Ice)"));
+                break;
+            case ElementType.Poison:
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("poisonStackDamage"), new GUIContent("Poison Tick Damage"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("areaDuration"), new GUIContent("Poison Duration"));
+                break;
+        }
     }
     
     private void ShowElementalBuffSettings()

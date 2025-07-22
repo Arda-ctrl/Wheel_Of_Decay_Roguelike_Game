@@ -80,7 +80,7 @@ public class FireEffect : AbilityEffect
         }
     }
 
-    protected override void EndEffect()
+    public override void EndEffect()
     {
         affectedTargets.Clear();
         base.EndEffect();

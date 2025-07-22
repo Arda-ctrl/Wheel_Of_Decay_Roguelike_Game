@@ -83,7 +83,7 @@ public class FreezeEffect : AbilityEffect
         }
     }
 
-    protected override void EndEffect()
+    public override void EndEffect()
     {
         if (moveable != null)
         {

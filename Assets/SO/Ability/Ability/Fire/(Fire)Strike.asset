@@ -21,7 +21,11 @@ MonoBehaviour:
   elementType: 1
   stackAmount: 5
   strikeDamage: 10
+  fireStackDamage: 5
+  iceSlowPercent: 20
+  poisonStackDamage: 5
   damageMultiplier: 1.5
+  flatBonusDamage: 10
   attackCountForProjectile: 3
   projectileSpeed: 10
   projectileDamage: 15

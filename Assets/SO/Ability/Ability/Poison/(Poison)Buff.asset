@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: (Ice)Strike
+  m_Name: (Poison)Buff
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Strike
+  abilityName: Elemantal Bufff
   description: stackletir
   icon: {fileID: 0}
-  abilityType: 1
+  abilityType: 2
   cooldownDuration: 0
   manaCost: 0
-  elementType: 2
-  stackAmount: 5
-  strikeDamage: 0
+  elementType: 3
+  stackAmount: 1
+  strikeDamage: 10
   fireStackDamage: 5
   iceSlowPercent: 20
   poisonStackDamage: 5
-  damageMultiplier: 1.5
+  damageMultiplier: 10
   flatBonusDamage: 10
   attackCountForProjectile: 3
   projectileSpeed: 10
@@ -54,5 +54,5 @@ MonoBehaviour:
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
+  vfxPrefab: {fileID: 904662820145583817, guid: 019faff12646bd8438ea56e8e7861fd8, type: 3}
   sfxClip: {fileID: 0}

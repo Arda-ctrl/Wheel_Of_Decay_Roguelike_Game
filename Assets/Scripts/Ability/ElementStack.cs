@@ -101,6 +101,31 @@ public class ElementStack : MonoBehaviour
             stackDecayTimers.Remove(elementType);
             OnStackRemoved?.Invoke(elementType);
             Debug.Log($"🗑️ {gameObject.name} {elementType} stack completely removed");
+
+            // Poison ise, aktif PoisonEffect'leri bitir
+            if (elementType == ElementType.Poison)
+            {
+                var poisonEffects = GetComponentsInChildren<PoisonEffect>();
+                foreach (var poisonEffect in poisonEffects)
+                {
+                    if (poisonEffect != null)
+                        poisonEffect.EndEffect();
+                }
+            }
+            // Ice ise, hız ve animasyonu normale döndür, donma efektlerini temizle
+            if (elementType == ElementType.Ice)
+            {
+                var moveable = GetComponent<IMoveable>();
+                if (moveable != null)
+                    moveable.SetSpeedMultiplier(1f);
+                var animator = GetComponent<Animator>();
+                if (animator != null)
+                    animator.speed = 1f;
+                // Aktif donma efektini temizle
+                var freezeEffect = GetComponent<ElementalIceFreezeEffect>();
+                if (freezeEffect != null)
+                    Destroy(freezeEffect);
+            }
         }
         else
         {

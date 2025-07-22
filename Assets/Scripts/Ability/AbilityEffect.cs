@@ -31,7 +31,7 @@ public abstract class AbilityEffect : MonoBehaviour
 
     protected abstract void OnEffectUpdate();
     
-    protected virtual void EndEffect()
+    public virtual void EndEffect()
     {
         isActive = false;
         EventManager.Instance.TriggerAbilityEnded(eventData);

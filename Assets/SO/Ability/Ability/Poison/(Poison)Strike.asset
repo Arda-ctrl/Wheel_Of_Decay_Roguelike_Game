@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: (Ice)Strike
+  m_Name: (Poison)Strike
   m_EditorClassIdentifier: 
   abilityName: Elemantal Strike
   description: stackletir
@@ -18,9 +18,9 @@ MonoBehaviour:
   abilityType: 1
   cooldownDuration: 0
   manaCost: 0
-  elementType: 2
+  elementType: 3
   stackAmount: 5
-  strikeDamage: 0
+  strikeDamage: 10
   fireStackDamage: 5
   iceSlowPercent: 20
   poisonStackDamage: 5
@@ -37,7 +37,7 @@ MonoBehaviour:
   requiredStacksForArea: 5
   areaDamage: 20
   areaRadius: 5
-  areaDuration: 5
+  areaDuration: 3
   lanceCount: 5
   lanceDamage: 25
   lanceRange: 8
