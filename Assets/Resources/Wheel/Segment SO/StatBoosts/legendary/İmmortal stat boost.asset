@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
+  m_Name: "\u0130mmortal stat boost"
+  m_EditorClassIdentifier: 
+  segmentID: immortalstatboost
+  size: 1
+  type: 0
+  rarity: 4
+  description: "+2 stat verir silinece\u011Fi zaman daha \xE7ok g\xFC\xE7lenir"
+  segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
+  segmentColor: {r: 0.79423136, g: 0.10679956, b: 0.9056604, a: 1}
+  effectType: 0
+  statType: 0
+  statAmount: 2
+  statBonusMode: 6
+  wheelManipulationType: 0
+  redirectDirection: 0
+  blackHoleRange: 1
+  repulsorRange: 1
+  commonRedirectorRange: 1
+  commonRedirectorMinRarity: 0
+  commonRedirectorMaxRarity: 0
+  safeEscapeRange: 1
+  explosiveEscapeRange: 1
+  swapperRange: 1
+  rewardRarity: 0
+  rewardType: 0
+  rewardFillMode: 0

@@ -2,11 +2,12 @@ using UnityEngine;
 
 public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 public enum Type { StatBoost, WheelManipulation, OnRemoveEffect }
-public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance }
+public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance, Random }
 public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
+public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, RandomPerSegment }
 
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
@@ -25,6 +26,7 @@ public class SegmentData : ScriptableObject
     [Header("Stat Boost Ayarları")]
     public StatType statType;
     public float statAmount;
+    public StatBonusMode statBonusMode = StatBonusMode.Fixed;
 
     // Wheel manipulation için
     [Header("Wheel Manipulation Ayarları")]

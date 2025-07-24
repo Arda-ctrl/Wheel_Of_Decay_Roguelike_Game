@@ -38,7 +38,6 @@ public class WheelManager : MonoBehaviour
         if (isDestroyed) yield break;
         
         wheelEffectInProgress = true;
-        Debug.Log($"[HandleWheelEffectSequence] Wheel effect başlatılıyor: {targetSlot}");
         
         // İğneyi hedef slota taşı
         float duration = 1f;
@@ -138,6 +137,8 @@ public class WheelManager : MonoBehaviour
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null)
             sr.color = data.segmentColor;
+        // Segment yerleştirildikten sonra stat boostları güncelle
+        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
     private bool AreSlotsAvailable(int startIndex, int size)
     {
@@ -187,14 +188,6 @@ public class WheelManager : MonoBehaviour
     {
         if (selectedSegmentForPlacement == null || selectedSlotForPlacement == -1) return;
         PlaceSegment(selectedSegmentForPlacement, selectedSlotForPlacement);
-        if (selectedSegmentForPlacement.statAmount != 0)
-        {
-            string effectId = selectedSegmentForPlacement.segmentID;
-            if (!activeEffectCounts.ContainsKey(effectId))
-                activeEffectCounts[effectId] = 0;
-            activeEffectCounts[effectId]++;
-            SegmentStatBoostHandler.Instance.ActivateSegmentEffect(selectedSegmentForPlacement, 1);
-        }
         RemoveTempSegment();
         selectedSegmentForPlacement = null;
         selectedSlotForPlacement = -1;
@@ -203,7 +196,6 @@ public class WheelManager : MonoBehaviour
     {
         if (!isSpinning && !wheelEffectInProgress && !isDestroyed)
         {
-            Debug.Log("[SpinWheel] Çark döndürülüyor.");
             isSpinning = true;
             spinCoroutine = StartCoroutine(SpinWheelCoroutine());
         }
@@ -301,7 +293,6 @@ public class WheelManager : MonoBehaviour
         if (isDestroyed) yield break;
         
         int selectedSlot = GetSlotUnderIndicator();
-        Debug.Log($"[SpinEnd] İğne hangi slota geldi: {selectedSlot}");
 
         // 1. Tüm WheelManipulation segmentlerini bul
         List<(SegmentInstance, int)> wheelSegments = new List<(SegmentInstance, int)>();
@@ -411,9 +402,8 @@ public class WheelManager : MonoBehaviour
         }
         return closestSlot;
     }
-    public void RemoveSegmentAtSlot(int slotIndex)
+    public void RemoveSegmentAtSlot(int slotIndex, bool recalcStatBoosts = true)
     {
-        Debug.Log($"[RemoveSegmentAtSlot] Slot: {slotIndex} siliniyor... Açı: {slotParent.localEulerAngles.z}");
         int maxSize = 3;
         for (int offset = maxSize - 1; offset >= 0; offset--)
         {
@@ -440,17 +430,20 @@ public class WheelManager : MonoBehaviour
                         SegmentData onRemoveData = isOnRemoveEffect ? inst.data : null;
                         int onRemoveStartSlot = isOnRemoveEffect ? segStart : -1;
 
-                        Debug.Log($"[RemoveSegmentAtSlot] Segment siliniyor: {inst.data.segmentID}, StartSlot: {segStart}, Size: {size}");
-                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst.data.statAmount != 0)
+                        // Persistent segment ise yok etme, boost'u artır
+                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst.data.statBonusMode == StatBonusMode.Persistent)
                         {
-                            string effectId = inst.data.segmentID;
-                            if (activeEffectCounts.ContainsKey(effectId))
-                            {
-                                SegmentStatBoostHandler.Instance.DeactivateSegmentEffect(inst.data, 1);
-                                activeEffectCounts[effectId]--;
-                                if (activeEffectCounts[effectId] <= 0)
-                                    activeEffectCounts.Remove(effectId);
-                            }
+                            inst._currentStatAmount += inst._baseStatAmount;
+                            StartCoroutine(DelayedRecalcStatBoosts());
+                            return;
+                        }
+                        // Stat boost segmenti ise, statı silmeden önce sıfırla
+                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst._appliedStatBoost != 0f)
+                        {
+                            StatType statType = inst.data.statType == StatType.Random ? inst._randomStatType : inst.data.statType;
+                            SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
+                            inst._appliedStatBoost = 0f;
+                            inst._randomStatType = StatType.Random;
                         }
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
@@ -463,11 +456,20 @@ public class WheelManager : MonoBehaviour
                         {
                             SegmentOnRemoveEffectHandler.Instance.HandleOnRemoveEffect(onRemoveData, onRemoveStartSlot);
                         }
+                        // Stat boostları güncellemek için bir frame bekle
+                        if (recalcStatBoosts)
+                            StartCoroutine(DelayedRecalcStatBoosts());
                         return;
                     }
                 }
             }
         }
+    }
+
+    private IEnumerator DelayedRecalcStatBoosts()
+    {
+        yield return null;
+        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
 
     public void FillWheelWithSegment(SegmentData data)
@@ -476,38 +478,27 @@ public class WheelManager : MonoBehaviour
         for (int i = 0; i < slotCount; i++)
         {
             PlaceSegment(data, i);
-            if (data.statAmount != 0)
-            {
-                string effectId = data.segmentID;
-                if (!activeEffectCounts.ContainsKey(effectId))
-                    activeEffectCounts[effectId] = 0;
-                activeEffectCounts[effectId]++;
-                SegmentStatBoostHandler.Instance.ActivateSegmentEffect(data, 1);
-            }
         }
+        // FillWheelWithSegment sonrası stat boostları güncelle
+        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
 
     public void AddSegmentToSlot(SegmentData data, int slotIndex)
     {
         if (data == null || data.segmentPrefab == null) return;
         PlaceSegment(data, slotIndex);
-        if (data.statAmount != 0)
-        {
-            string effectId = data.segmentID;
-            if (!activeEffectCounts.ContainsKey(effectId))
-                activeEffectCounts[effectId] = 0;
-            activeEffectCounts[effectId]++;
-            SegmentStatBoostHandler.Instance.ActivateSegmentEffect(data, 1);
-        }
+        // AddSegmentToSlot sonrası stat boostları güncelle
+        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
 
     public void ClearWheel()
     {
         for (int i = 0; i < slotCount; i++)
         {
-            RemoveSegmentAtSlot(i);
+            RemoveSegmentAtSlot(i, false);
         }
-        activeEffectCounts.Clear();
+        // Tüm segmentler silindikten sonra stat boostları güncelle
+        StartCoroutine(DelayedRecalcStatBoosts());
     }
 
     private void Update()

@@ -61,6 +61,41 @@ public class SegmentDataEditor : Editor
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("statType"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("statAmount"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("statBonusMode"));
+            var statType = (StatType)serializedObject.FindProperty("statType").enumValueIndex;
+            if (statType == StatType.Random)
+            {
+                EditorGUILayout.HelpBox("Bu segment her seferinde rastgele bir statı güçlendirir. Oyun sırasında segment başına random stat atanır.", MessageType.Info);
+            }
+            var statBonusMode = (StatBonusMode)serializedObject.FindProperty("statBonusMode").enumValueIndex;
+            if (statBonusMode == StatBonusMode.EmptySlotCount)
+            {
+                EditorGUILayout.HelpBox("Her boş slot için statAmount kadar bonus verir.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.FilledSlotCount)
+            {
+                EditorGUILayout.HelpBox("Her dolu slot için statAmount kadar bonus verir.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.SmallSegmentCount)
+            {
+                EditorGUILayout.HelpBox("Çarktaki küçük segment (size=1) sayısına göre bonus verir.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.LargeSegmentCount)
+            {
+                EditorGUILayout.HelpBox("Çarktaki büyük segment (size>1) sayısına göre bonus verir.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.SiblingAdjacency)
+            {
+                EditorGUILayout.HelpBox("Aynı tip segmentler yan yana ise bonus iki katına çıkar.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.Persistent)
+            {
+                EditorGUILayout.HelpBox("Bu segment iğneye gelince silinmez, statı güçlenir.", MessageType.None);
+            }
+            else if (statBonusMode == StatBonusMode.RandomPerSegment)
+            {
+                EditorGUILayout.HelpBox("Her segment kendi random statını seçer.", MessageType.None);
+            }
         }
         else if (effectType == SegmentEffectType.WheelManipulation)
         {
