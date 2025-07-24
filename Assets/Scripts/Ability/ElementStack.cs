@@ -92,6 +92,8 @@ public class ElementStack : MonoBehaviour
         int currentStacks = elementStacks[elementType];
         int newStacks = Mathf.Max(0, currentStacks - amount);
         
+        Debug.Log($"🗑️ [ElementStack] {gameObject.name} - Removing {amount} {elementType} stack(s): {currentStacks} -> {newStacks}");
+        
         elementStacks[elementType] = newStacks;
         
         if (newStacks == 0)
@@ -100,16 +102,33 @@ public class ElementStack : MonoBehaviour
             elementStacks.Remove(elementType);
             stackDecayTimers.Remove(elementType);
             OnStackRemoved?.Invoke(elementType);
-            Debug.Log($"🗑️ {gameObject.name} {elementType} stack completely removed");
+            Debug.Log($"🗑️ {gameObject.name} {elementType} stack completely removed - cleaning up effects");
 
             // Poison ise, aktif PoisonEffect'leri bitir
             if (elementType == ElementType.Poison)
             {
+                Debug.Log($"☠️ [ElementStack] Cleaning up Poison effects on {gameObject.name}");
                 var poisonEffects = GetComponentsInChildren<PoisonEffect>();
+                Debug.Log($"☠️ [ElementStack] Found {poisonEffects.Length} PoisonEffect components");
                 foreach (var poisonEffect in poisonEffects)
                 {
                     if (poisonEffect != null)
+                    {
+                        Debug.Log($"☠️ [ElementStack] Ending PoisonEffect on {gameObject.name}");
                         poisonEffect.EndEffect();
+                    }
+                }
+                
+                // ElementalPoisonEffect'leri de temizle
+                var elementalPoisonEffects = GetComponentsInChildren<ElementalPoisonEffect>();
+                Debug.Log($"☠️ [ElementStack] Found {elementalPoisonEffects.Length} ElementalPoisonEffect components");
+                foreach (var elementalPoisonEffect in elementalPoisonEffects)
+                {
+                    if (elementalPoisonEffect != null)
+                    {
+                        Debug.Log($"☠️ [ElementStack] Destroying ElementalPoisonEffect on {gameObject.name}");
+                        Destroy(elementalPoisonEffect);
+                    }
                 }
             }
             // Ice ise, hız ve animasyonu normale döndür, donma efektlerini temizle
@@ -131,7 +150,7 @@ public class ElementStack : MonoBehaviour
         {
             // Decay timer'ı sıfırla
             stackDecayTimers[elementType] = stackDecayTime;
-            Debug.Log($"📉 {gameObject.name} {elementType} stack reduced: {currentStacks} -> {newStacks}");
+            Debug.Log($"📉 {gameObject.name} {elementType} stack reduced: {currentStacks} -> {newStacks} - timer reset");
         }
         
         OnStackChanged?.Invoke(elementType, newStacks);
@@ -195,6 +214,7 @@ public class ElementStack : MonoBehaviour
             if (remainingTime <= 0)
             {
                 // Stack'i azalt
+                Debug.Log($"⏰ [ElementStack] {gameObject.name} - {elementType} stack decay triggered. Current stacks: {GetElementStack(elementType)}");
                 RemoveElementStack(elementType, 1);
             }
         }

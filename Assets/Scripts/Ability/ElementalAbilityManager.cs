@@ -170,11 +170,11 @@ public class ElementalAbilityManager : MonoBehaviour
                 var elementStack = target.GetComponent<ElementStack>();
                 if (elementStack != null && elementStack.HasElementStack(elementType))
                 {
-                    Debug.Log($"[BuffCheck] {elementType} için stack kontrolü. Target: {target.name}");
                     return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
                 }
             }
         }
+        
         return baseDamage;
     }
     

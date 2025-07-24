@@ -66,6 +66,7 @@ public class PoisonEffect : AbilityEffect
         var elementStack = eventData.Target.GetComponent<ElementStack>();
         if (elementStack == null || !elementStack.HasElementStack(ElementType.Poison))
         {
+            Debug.Log($"☠️ [PoisonEffect] {eventData.Target.name} - No poison stack found, ending effect. HasElementStack: {elementStack?.HasElementStack(ElementType.Poison)}");
             EndEffect();
             return;
         }
@@ -76,6 +77,7 @@ public class PoisonEffect : AbilityEffect
             float tickDamage = eventData.AbilityData.damage * stackMultiplier * 
                              (eventData.AbilityData.poisonTickRate / eventData.AbilityData.effectDuration);
             
+            Debug.Log($"☠️ [PoisonEffect] {eventData.Target.name} - Applying poison damage: {tickDamage} (stacks: {currentStacks})");
             ApplyDamage(eventData.Target, tickDamage);
             lastDamageTime = Time.time;
         }
@@ -84,6 +86,15 @@ public class PoisonEffect : AbilityEffect
     // EndEffect fonksiyonunu public yap
     public override void EndEffect()
     {
+        Debug.Log($"☠️ [PoisonEffect] {eventData?.Target?.name ?? "Unknown"} - EndEffect called, cleaning up");
+        
+        // Static dictionary'den bu effect'i kaldır
+        if (eventData?.Target != null && activeEffects.ContainsKey(eventData.Target))
+        {
+            activeEffects.Remove(eventData.Target);
+            Debug.Log($"☠️ [PoisonEffect] Removed {eventData.Target.name} from activeEffects dictionary");
+        }
+        
         base.EndEffect();
     }
 } 

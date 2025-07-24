@@ -165,12 +165,24 @@ public class PlayerBullet : MonoBehaviour
     private float CalculateFinalDamage(GameObject target)
     {
         float finalDamage = baseDamage * damageMultiplier;
+        
         // Eğer elementalAbilityManager varsa, buff etkisini uygula
         if (elementalAbilityManager != null)
         {
-            // Varsayılan olarak Fire elementini kullanıyoruz, istersen burayı dinamik yapabilirsin
-            finalDamage = elementalAbilityManager.CalculateBuffDamage(finalDamage, target, ElementType.Fire);
+            // Tüm element tipleri için buff'ları kontrol et
+            foreach (ElementType elementType in System.Enum.GetValues(typeof(ElementType)))
+            {
+                if (elementType == ElementType.None) continue;
+                
+                float buffedDamage = elementalAbilityManager.CalculateBuffDamage(finalDamage, target, elementType);
+                if (buffedDamage != finalDamage)
+                {
+                    finalDamage = buffedDamage;
+                    break; // İlk buff'ı uygula ve çık
+                }
+            }
         }
+        
         return finalDamage;
     }
 
