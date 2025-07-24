@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
   m_Name: Random Redirector+
   m_EditorClassIdentifier: 
-  segmentID: randomredirector
+  segmentID: randomredirector+
   size: 1
   type: 1
   rarity: 3
@@ -23,6 +23,7 @@ MonoBehaviour:
   effectType: 1
   statType: 0
   statAmount: 0
+  statBonusMode: 0
   wheelManipulationType: 4
   redirectDirection: 0
   blackHoleRange: 1
@@ -30,6 +31,9 @@ MonoBehaviour:
   commonRedirectorRange: 2
   commonRedirectorMinRarity: 0
   commonRedirectorMaxRarity: 4
+  safeEscapeRange: 1
+  explosiveEscapeRange: 1
+  swapperRange: 1
   rewardRarity: 0
   rewardType: 0
   rewardFillMode: 0

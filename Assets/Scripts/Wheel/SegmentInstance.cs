@@ -6,9 +6,6 @@ public class SegmentInstance : MonoBehaviour
     [HideInInspector] public SegmentData data;
     [HideInInspector] public int startSlotIndex;
     public float _appliedStatBoost = 0f;
-    public StatType _randomStatType = StatType.Random;
-    // Eğer random stat geçmişi tutulacaksa:
-    public List<StatType> _randomStatHistory = new List<StatType>();
     public float _baseStatAmount = 0f; // Persistent için orijinal değer
     public float _currentStatAmount = 0f; // Persistent için runtime boost
     private SpriteRenderer sr;
@@ -33,10 +30,6 @@ public class SegmentInstance : MonoBehaviour
         _appliedStatBoost = 0f;
         _baseStatAmount = data.statAmount; // ilk değer burada saklanır
         _currentStatAmount = data.statAmount;
-        if (data.statType == StatType.Random)
-            this._randomStatType = (StatType)Random.Range(0, (int)StatType.Random);
-        else
-            this._randomStatType = StatType.Random;
         if (sr != null)
             sr.sortingOrder = SegmentOrderInLayer;
     }

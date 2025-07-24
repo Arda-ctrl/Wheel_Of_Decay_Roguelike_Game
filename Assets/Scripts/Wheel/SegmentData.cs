@@ -2,12 +2,12 @@ using UnityEngine;
 
 public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 public enum Type { StatBoost, WheelManipulation, OnRemoveEffect }
-public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance, Random }
+public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance }
 public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
-public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, RandomPerSegment }
+public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent }
 
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject

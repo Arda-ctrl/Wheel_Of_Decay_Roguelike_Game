@@ -63,10 +63,6 @@ public class SegmentDataEditor : Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("statAmount"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("statBonusMode"));
             var statType = (StatType)serializedObject.FindProperty("statType").enumValueIndex;
-            if (statType == StatType.Random)
-            {
-                EditorGUILayout.HelpBox("Bu segment her seferinde rastgele bir statı güçlendirir. Oyun sırasında segment başına random stat atanır.", MessageType.Info);
-            }
             var statBonusMode = (StatBonusMode)serializedObject.FindProperty("statBonusMode").enumValueIndex;
             if (statBonusMode == StatBonusMode.EmptySlotCount)
             {
@@ -91,10 +87,6 @@ public class SegmentDataEditor : Editor
             else if (statBonusMode == StatBonusMode.Persistent)
             {
                 EditorGUILayout.HelpBox("Bu segment iğneye gelince silinmez, statı güçlenir.", MessageType.None);
-            }
-            else if (statBonusMode == StatBonusMode.RandomPerSegment)
-            {
-                EditorGUILayout.HelpBox("Her segment kendi random statını seçer.", MessageType.None);
             }
         }
         else if (effectType == SegmentEffectType.WheelManipulation)

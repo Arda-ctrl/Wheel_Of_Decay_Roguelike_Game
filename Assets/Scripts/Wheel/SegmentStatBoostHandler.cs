@@ -111,7 +111,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
         // 3. Tüm statları sıfırla
         foreach (var inst in allSegments)
         {
-            StatType statType = inst.data.statType == StatType.Random ? inst._randomStatType : inst.data.statType;
+            StatType statType = inst.data.statType;
             if (inst._appliedStatBoost != 0f)
             {
                 RemoveStat(inst, inst._appliedStatBoost, statType);
@@ -123,12 +123,6 @@ public class SegmentStatBoostHandler : MonoBehaviour
         foreach (var inst in allSegments)
         {
             StatType statType = inst.data.statType;
-            if (statType == StatType.Random)
-            {
-                if (inst._randomStatType == StatType.Random)
-                    inst._randomStatType = (StatType)Random.Range(0, (int)StatType.Random); // Random hariç bir stat seç
-                statType = inst._randomStatType;
-            }
             float boost = inst.data.statBonusMode == StatBonusMode.SiblingAdjacency
                 ? CalculateStatBoost(inst, wheelManager, siblingMap)
                 : CalculateStatBoost(inst, wheelManager);
@@ -185,9 +179,6 @@ public class SegmentStatBoostHandler : MonoBehaviour
             case StatBonusMode.Persistent:
                 // Sadece instance boost'unu uygula
                 return inst._currentStatAmount;
-            case StatBonusMode.RandomPerSegment:
-                // Her segment random stat seçer, miktar normal şekilde hesaplanır
-                return baseAmount;
             default:
                 return baseAmount;
         }

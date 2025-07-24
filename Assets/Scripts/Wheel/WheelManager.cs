@@ -440,10 +440,9 @@ public class WheelManager : MonoBehaviour
                         // Stat boost segmenti ise, statı silmeden önce sıfırla
                         if (inst.data.effectType == SegmentEffectType.StatBoost && inst._appliedStatBoost != 0f)
                         {
-                            StatType statType = inst.data.statType == StatType.Random ? inst._randomStatType : inst.data.statType;
+                            StatType statType = inst.data.statType;
                             SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
                             inst._appliedStatBoost = 0f;
-                            inst._randomStatType = StatType.Random;
                         }
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
