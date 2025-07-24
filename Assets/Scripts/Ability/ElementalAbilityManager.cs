@@ -164,12 +164,17 @@ public class ElementalAbilityManager : MonoBehaviour
             activeAbilities[elementType].ContainsKey(AbilityType.ElementalBuff))
         {
             var buffAbility = activeAbilities[elementType][AbilityType.ElementalBuff] as ElementalBuff;
-            if (buffAbility != null && buffAbility.IsActive())
+            if (buffAbility != null)
             {
-                return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
+                // Stack kontrolü: Hedefte stack varsa buff aktif
+                var elementStack = target.GetComponent<ElementStack>();
+                if (elementStack != null && elementStack.HasElementStack(elementType))
+                {
+                    Debug.Log($"[BuffCheck] {elementType} için stack kontrolü. Target: {target.name}");
+                    return buffAbility.CalculateBuffDamage(baseDamage, target, elementType);
+                }
             }
         }
-        
         return baseDamage;
     }
     

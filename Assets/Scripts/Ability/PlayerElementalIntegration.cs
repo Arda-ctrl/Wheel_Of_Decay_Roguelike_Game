@@ -8,9 +8,9 @@ public class PlayerElementalIntegration : MonoBehaviour
 {
     [Header("Elemental Integration Settings")]
     [SerializeField] private ElementalAbilityManager elementalAbilityManager;
-    [SerializeField] private bool enableElementalStrike = true;
-    [SerializeField] private bool enableElementalBuff = true;
-    [SerializeField] private bool enableElementalProjectile = true;
+    // [SerializeField] private bool enableElementalStrike = true;
+    // [SerializeField] private bool enableElementalBuff = true;
+    // [SerializeField] private bool enableElementalProjectile = true;
     
     // Mevcut PlayerController referansı
     private PlayerController playerController;
@@ -62,14 +62,7 @@ public class PlayerElementalIntegration : MonoBehaviour
     /// </summary>
     private void InitializeElementalSystem()
     {
-        // Ability'leri aktif/pasif yap
-        if (elementalAbilityManager != null)
-        {
-            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalStrike, enableElementalStrike);
-            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalBuff, enableElementalBuff);
-            elementalAbilityManager.SetAbilityActive(AbilityType.ElementalProjectile, enableElementalProjectile);
-        }
-        
+        // Artık ability'leri elle enable/disable etmiyoruz, stack'e bağlı olacak
         Debug.Log("Player Elemental Integration initialized");
     }
     
@@ -190,7 +183,7 @@ public class PlayerElementalIntegration : MonoBehaviour
     // Input handling örnekleri
     private void Update()
     {
-        HandleElementalInputs();
+        // Sadece element değiştirme veya başka inputlar için kullanılabilir
     }
     
     /// <summary>
@@ -219,12 +212,12 @@ public class PlayerElementalIntegration : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             Debug.Log("🛡️ Key Q pressed - Toggling BUFF ability");
-            ToggleAbility(AbilityType.ElementalBuff);
+            // ToggleAbility(AbilityType.ElementalBuff); // Removed as per edit hint
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
             Debug.Log("🎯 Key E pressed - Toggling PROJECTILE ability");
-            ToggleAbility(AbilityType.ElementalProjectile);
+            // ToggleAbility(AbilityType.ElementalProjectile); // Removed as per edit hint
         }
     }
     

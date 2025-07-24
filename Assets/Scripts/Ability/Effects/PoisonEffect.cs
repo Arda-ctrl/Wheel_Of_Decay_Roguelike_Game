@@ -62,6 +62,14 @@ public class PoisonEffect : AbilityEffect
 
     protected override void OnEffectUpdate()
     {
+        // Eğer hedefte Poison stack yoksa, efekti bitir
+        var elementStack = eventData.Target.GetComponent<ElementStack>();
+        if (elementStack == null || !elementStack.HasElementStack(ElementType.Poison))
+        {
+            EndEffect();
+            return;
+        }
+
         if (Time.time - lastDamageTime >= eventData.AbilityData.poisonTickRate)
         {
             float stackMultiplier = 1f + (eventData.AbilityData.stackDamageMultiplier * (currentStacks - 1));
@@ -73,19 +81,9 @@ public class PoisonEffect : AbilityEffect
         }
     }
 
-    protected override void EndEffect()
+    // EndEffect fonksiyonunu public yap
+    public override void EndEffect()
     {
-        if (moveable != null)
-        {
-            moveable.SetSpeedMultiplier(1f);
-        }
-        
-        // Remove from active effects
-        if (activeEffects.ContainsKey(eventData.Target))
-        {
-            activeEffects.Remove(eventData.Target);
-        }
-        
         base.EndEffect();
     }
 } 
