@@ -24,7 +24,7 @@ MonoBehaviour:
   fireStackDamage: 5
   iceSlowPercent: 20
   poisonStackDamage: 5
-  damageMultiplier: 10
+  damageMultiplier: 2
   flatBonusDamage: 10
   attackCountForProjectile: 3
   projectileSpeed: 10

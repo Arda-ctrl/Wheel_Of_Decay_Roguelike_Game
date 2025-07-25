@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
-  m_Name: (Fire)Projectile
+  m_Name: (Ice)Aura
   m_EditorClassIdentifier: 
-  abilityName: Elemantal Projectile
-  description: stackletir
+  abilityName: Elemantal Aura
+  description: 
   icon: {fileID: 0}
-  abilityType: 3
+  abilityType: 9
   cooldownDuration: 0
   manaCost: 0
-  elementType: 1
+  elementType: 2
   stackAmount: 1
   strikeDamage: 10
   fireStackDamage: 5
@@ -26,11 +26,11 @@ MonoBehaviour:
   poisonStackDamage: 5
   damageMultiplier: 1.5
   flatBonusDamage: 10
-  attackCountForProjectile: 5
+  attackCountForProjectile: 3
   projectileSpeed: 10
-  projectileDamage: 50
+  projectileDamage: 15
   projectileRange: 10
-  projectilePrefab: {fileID: 7060172690428923814, guid: e5be5b3b6be942846aeabf1008d61865, type: 3}
+  projectilePrefab: {fileID: 0}
   fireBurnDamage: 5
   fireBurnDuration: 3
   fireBurnTickRate: 0.5
@@ -56,12 +56,11 @@ MonoBehaviour:
   burstTriggerStacks: 3
   burstDamage: 40
   burstRadius: 4
-  auraDamage: 5
   auraRadius: 6
   auraStackTime: 3
   orbDamage: 15
   orbDuration: 10
   orbSpeed: 5
   orbPrefab: {fileID: 0}
-  vfxPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
+  vfxPrefab: {fileID: 5339739117810204693, guid: 26e1cb216e3635e4a820f58a1118d6b9, type: 3}
   sfxClip: {fileID: 0}

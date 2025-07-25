@@ -42,6 +42,21 @@ public class ElementalAbilityData : ScriptableObject
     public float projectileRange = 10f;
     public GameObject projectilePrefab;
     
+    // Fire Projectile Settings
+    public float fireBurnDamage = 5f;
+    public float fireBurnDuration = 3f;
+    public float fireBurnTickRate = 0.5f;
+    
+    // Ice Projectile Settings
+    public float iceSlowPercentProjectile = 30f;
+    public float iceSlowDurationProjectile = 4f;
+    public float iceFreezeChance = 0.1f;
+    
+    // Poison Projectile Settings
+    public float poisonDamageProjectile = 3f;
+    public float poisonDurationProjectile = 5f;
+    public float poisonTickRateProjectile = 1f;
+    
     [Header("Elemental Armor Settings")]
     public float damageReductionPercent = 30f;
     public float armorDuration = 10f;
@@ -69,9 +84,8 @@ public class ElementalAbilityData : ScriptableObject
     public float burstRadius = 4f;
     
     [Header("Elemental Aura Settings")]
-    public float auraDamage = 5f;
     public float auraRadius = 6f;
-    public float auraStackTime = 3f;
+    public float auraStackTime = 2f;
     
     [Header("Elemental Orb Settings")]
     public float orbDamage = 15f;

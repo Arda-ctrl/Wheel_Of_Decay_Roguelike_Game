@@ -11,7 +11,7 @@ public class ElementalOverflow : MonoBehaviour, IAbility
     [SerializeField] private string description = "Odadaki tüm düşmanlara 5 stack yükler";
     [SerializeField] private Sprite icon;
     [SerializeField] private float cooldownDuration = 30f;
-    [SerializeField] private float manaCost = 100f;
+    [SerializeField] private float manaCost = 0f; // SO'dan ayarlanacak
     [SerializeField] private int overflowStackAmount = 5;
     [SerializeField] private float overflowDamage = 30f;
     [SerializeField] private int requiredEnemyKills = 20;
@@ -68,27 +68,51 @@ public class ElementalOverflow : MonoBehaviour, IAbility
     {
         if (!CanUseAbility(caster)) return;
         
+        // Mana tüket
+        var manaController = PlayerManaController.Instance;
+        if (manaController != null)
+        {
+            if (!manaController.ConsumeMana(manaCost))
+            {
+                Debug.Log($"❌ Failed to consume mana for {abilityName}!");
+                return;
+            }
+                         Debug.Log($"💧 {abilityName} consumed {manaCost} mana (from SO settings)");
+        }
+        
         currentElement = element;
+        
+        Debug.Log($"🎯 ElementalOverflow: Caster is {caster.name} with tag '{caster.tag}'");
         
         // Odadaki tüm düşmanları bul
         Collider2D[] colliders = Physics2D.OverlapCircleAll(caster.transform.position, 50f); // Geniş alan
         var enemies = new System.Collections.Generic.List<GameObject>();
         
+        Debug.Log($"🔍 Found {colliders.Length} total colliders in range");
+        
         foreach (var collider in colliders)
         {
-            if (collider.CompareTag("Enemy"))
+            // Sadece Enemy tag'ine sahip objeler VE caster kendisi değil
+            if (collider.CompareTag("Enemy") && collider.gameObject != caster)
             {
                 enemies.Add(collider.gameObject);
+                Debug.Log($"🎯 Found enemy for overflow: {collider.gameObject.name}");
+            }
+            else if (collider.gameObject == caster)
+            {
+                Debug.Log($"🚫 Skipping caster (self): {collider.gameObject.name}");
             }
         }
+        
+        Debug.Log($"✅ Final enemy count for overflow: {enemies.Count}");
         
         if (enemies.Count > 0)
         {
             // Overflow saldırısını başlat
             StartCoroutine(PerformOverflowAttack(caster, enemies));
             
-            // VFX ve SFX oynat
-            PlayOverflowEffects(caster);
+            // Sadece SFX oynat (VFX her düşman için ayrı ayrı oynatılıyor)
+            PlayOverflowSFX();
             
             Debug.Log($"💥 {caster.name} performed {currentElement?.ElementName} overflow on {enemies.Count} enemies");
         }
@@ -106,20 +130,31 @@ public class ElementalOverflow : MonoBehaviour, IAbility
     {
         foreach (var enemy in enemies)
         {
+            // Güvenlik kontrolü: Sadece Enemy tag'ine sahip ve caster olmayan objeler
+            if (!enemy.CompareTag("Enemy") || enemy == caster)
+            {
+                Debug.Log($"⚠️ Skipping invalid target: {enemy.name} (Tag: {enemy.tag})");
+                continue;
+            }
+            
+            Debug.Log($"💥 Applying overflow to enemy: {enemy.name}");
+            
             // Hasar uygula
             var health = enemy.GetComponent<IHealth>();
             if (health != null)
             {
                 health.TakeDamage(overflowDamage);
+                Debug.Log($"💥 Dealt {overflowDamage} damage to {enemy.name}");
             }
             
             // Element stack ekle
             if (currentElement != null)
             {
                 currentElement.ApplyElementStack(enemy, overflowStackAmount);
+                Debug.Log($"🔥 Applied {overflowStackAmount} {currentElement.ElementType} stacks to {enemy.name}");
             }
             
-            // Overflow VFX'i oluştur
+            // Düşmanın üzerinde VFX oluştur
             if (abilityData?.vfxPrefab != null)
             {
                 GameObject overflowVFX = Object.Instantiate(abilityData.vfxPrefab, enemy.transform.position, Quaternion.identity);
@@ -134,6 +169,7 @@ public class ElementalOverflow : MonoBehaviour, IAbility
                 
                 // VFX'i kısa süre sonra yok et
                 Destroy(overflowVFX, 2f);
+                Debug.Log($"✨ Created overflow VFX for {enemy.name} (will destroy in 2s)");
             }
             
             // Kısa bekleme
@@ -174,7 +210,22 @@ public class ElementalOverflow : MonoBehaviour, IAbility
     /// <returns>Kullanılabilir mi?</returns>
     public bool CanUseAbility(GameObject caster)
     {
-        return !isOnCooldown;
+        // Cooldown kontrolü
+        if (isOnCooldown)
+        {
+            Debug.Log($"❌ {abilityName} is on cooldown: {cooldownTimeRemaining:F1}s remaining");
+            return false;
+        }
+        
+        // Mana kontrolü
+        var manaController = PlayerManaController.Instance;
+        if (manaController != null && !manaController.HasEnoughMana(manaCost))
+        {
+            Debug.Log($"❌ Not enough mana for {abilityName}! Required: {manaCost}, Current: {manaController.GetCurrentMana()}");
+            return false;
+        }
+        
+        return true;
     }
     
     /// <summary>
@@ -197,30 +248,29 @@ public class ElementalOverflow : MonoBehaviour, IAbility
     }
     
     /// <summary>
-    /// Overflow efektlerini oynatır (VFX ve SFX)
+    /// Overflow SFX'ini oynatır (VFX yok, sadece ses)
+    /// </summary>
+    private void PlayOverflowSFX()
+    {
+        // Sadece SFX oynat - VFX her düşmanın üzerinde ayrı ayrı oluşturuluyor
+        if (abilityData?.sfxClip != null)
+        {
+            //AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+            Debug.Log($"🔊 Playing overflow SFX (no VFX on player)");
+        }
+    }
+    
+    /// <summary>
+    /// Overflow efektlerini oynatır (VFX ve SFX) - DEPRECATED: Artık kullanılmıyor
     /// </summary>
     /// <param name="caster">Caster GameObject</param>
     private void PlayOverflowEffects(GameObject caster)
     {
-        // Overflow VFX'i oynat
-        if (abilityData?.vfxPrefab != null)
-        {
-            GameObject vfxInstance = Object.Instantiate(abilityData.vfxPrefab, caster.transform.position, Quaternion.identity);
-            
-            // Element rengine göre VFX'i ayarla
-            var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
-            if (particleSystem != null && currentElement != null)
-            {
-                var main = particleSystem.main;
-                main.startColor = currentElement.ElementColor;
-            }
-        }
+        // Bu metod artık kullanılmıyor - Player üzerinde VFX oluşturmasını engellemek için
+        Debug.Log("⚠️ PlayOverflowEffects deprecated - use PlayOverflowSFX instead");
         
-        // Overflow SFX'i oynat
-        if (abilityData?.sfxClip != null)
-        {
-            //AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
-        }
+        // Sadece SFX
+        PlayOverflowSFX();
     }
     
     /// <summary>

@@ -1,25 +1,27 @@
 using UnityEngine;
 
 /// <summary>
-/// ElementalAura - Yakındaki düşmanlara sürekli hasar
-/// Sana yakın olan düşmanlar element hasarı alır eğer 3 saniye yakında kalırlarsa aynı elementten 1 stack eklenir
+/// ElementalAura - Yakındaki düşmanlara element stack ekler
+/// Sana yakın olan düşmanlar eğer 2 saniye yakında kalırlarsa aynı elementten 1 stack eklenir
 /// </summary>
 public class ElementalAura : MonoBehaviour, IAbility
 {
     [Header("Elemental Aura Settings")]
     [SerializeField] private string abilityName = "Elemental Aura";
-    [SerializeField] private string description = "Yakındaki düşmanlara sürekli hasar verir";
+    [SerializeField] private string description = "Yakındaki düşmanlara element stack ekler";
     [SerializeField] private Sprite icon;
     [SerializeField] private float cooldownDuration = 0f; // Pasif ability
     [SerializeField] private float manaCost = 0f;
-    [SerializeField] private float auraDamage = 5f;
     [SerializeField] private float auraRadius = 6f;
-    [SerializeField] private float auraStackTime = 3f;
+    [SerializeField] private float auraStackTime = 2f; // 2 saniye
     
     private IElement currentElement;
     private ElementalAbilityData abilityData;
     private bool isActive = true;
     private System.Collections.Generic.Dictionary<GameObject, float> enemyAuraTimes = new System.Collections.Generic.Dictionary<GameObject, float>();
+    
+    // Player'a atandığını kontrol etmek için
+    private bool isAttachedToPlayer = false;
     
     // IAbility Interface Implementation
     public string AbilityName => abilityName;
@@ -27,6 +29,26 @@ public class ElementalAura : MonoBehaviour, IAbility
     public Sprite Icon => icon;
     public float CooldownDuration => cooldownDuration;
     public float ManaCost => manaCost;
+    
+    private void Start()
+    {
+        // Player'a atandığını kontrol et
+        CheckIfAttachedToPlayer();
+    }
+    
+    /// <summary>
+    /// Player'a atandığını kontrol eder
+    /// </summary>
+    private void CheckIfAttachedToPlayer()
+    {
+        // PlayerController component'i varsa player'a atanmış demektir
+        var playerController = GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            isAttachedToPlayer = true;
+            Debug.Log("🔥 ElementalAura attached to Player!");
+        }
+    }
     
     /// <summary>
     /// Ability'yi ElementalAbilityData ile başlatır
@@ -40,9 +62,12 @@ public class ElementalAura : MonoBehaviour, IAbility
         icon = data.icon;
         cooldownDuration = data.cooldownDuration;
         manaCost = data.manaCost;
-        auraDamage = data.auraDamage;
+        
+        // SO'dan aura ayarlarını al
         auraRadius = data.auraRadius;
         auraStackTime = data.auraStackTime;
+        
+        Debug.Log($"🔥 ElementalAura initialized - Radius: {auraRadius}, StackTime: {auraStackTime}");
     }
     
     private void Update()
@@ -52,39 +77,27 @@ public class ElementalAura : MonoBehaviour, IAbility
         // Yakındaki düşmanları bul
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, auraRadius);
         
+        // Şu anki frame'de aura içinde olan düşmanları takip et
+        var currentFrameEnemies = new System.Collections.Generic.HashSet<GameObject>();
+        
         foreach (var collider in colliders)
         {
             if (collider.CompareTag("Enemy"))
             {
                 GameObject enemy = collider.gameObject;
+                currentFrameEnemies.Add(enemy);
                 
-                // Aura hasarı uygula
-                ApplyAuraDamage(enemy);
-                
-                // Aura süresini takip et
+                // Aura süresini takip et ve stack ekle
                 TrackAuraTime(enemy);
             }
         }
         
-        // Aura süresini temizle
-        CleanupAuraTimes();
+        // Artık aura içinde olmayan düşmanları temizle
+        CleanupAuraTimes(currentFrameEnemies);
     }
     
     /// <summary>
-    /// Aura hasarını uygular
-    /// </summary>
-    /// <param name="enemy">Düşman GameObject</param>
-    private void ApplyAuraDamage(GameObject enemy)
-    {
-        var health = enemy.GetComponent<IHealth>();
-        if (health != null)
-        {
-            health.TakeDamage(auraDamage * Time.deltaTime);
-        }
-    }
-    
-    /// <summary>
-    /// Aura süresini takip eder
+    /// Aura süresini takip eder ve stack ekler
     /// </summary>
     /// <param name="enemy">Düşman GameObject</param>
     private void TrackAuraTime(GameObject enemy)
@@ -102,10 +115,10 @@ public class ElementalAura : MonoBehaviour, IAbility
             if (currentElement != null)
             {
                 currentElement.ApplyElementStack(enemy, 1);
-                Debug.Log($"🔥 {enemy.name} stayed in {currentElement.ElementName} aura for {auraStackTime}s, adding stack");
+                Debug.Log($"🔥 {enemy.name} stayed in {currentElement.ElementName} aura for {auraStackTime}s, adding 1 stack");
             }
             
-            // Süreyi sıfırla
+            // Süreyi sıfırla (her 2 saniyede bir stack eklemek için)
             enemyAuraTimes[enemy] = 0f;
         }
     }
@@ -113,13 +126,15 @@ public class ElementalAura : MonoBehaviour, IAbility
     /// <summary>
     /// Aura sürelerini temizler
     /// </summary>
-    private void CleanupAuraTimes()
+    /// <param name="currentFrameEnemies">Bu frame'de aura içinde olan düşmanlar</param>
+    private void CleanupAuraTimes(System.Collections.Generic.HashSet<GameObject> currentFrameEnemies)
     {
         var keysToRemove = new System.Collections.Generic.List<GameObject>();
         
         foreach (var kvp in enemyAuraTimes)
         {
-            if (kvp.Key == null)
+            // Null olan veya artık aura içinde olmayan düşmanları kaldır
+            if (kvp.Key == null || !currentFrameEnemies.Contains(kvp.Key))
             {
                 keysToRemove.Add(kvp.Key);
             }
@@ -128,6 +143,10 @@ public class ElementalAura : MonoBehaviour, IAbility
         foreach (var key in keysToRemove)
         {
             enemyAuraTimes.Remove(key);
+            if (key != null)
+            {
+                Debug.Log($"🔥 {key.name} left the aura, resetting timer");
+            }
         }
     }
     
@@ -140,7 +159,7 @@ public class ElementalAura : MonoBehaviour, IAbility
     public void UseAbility(GameObject caster, GameObject target, IElement element)
     {
         currentElement = element;
-        Debug.Log($"{caster.name} için {currentElement?.ElementName} aura aktif");
+        Debug.Log($"🔥 {caster.name} için {currentElement?.ElementName} aura aktif");
     }
     
     /// <summary>
@@ -195,6 +214,8 @@ public class ElementalAura : MonoBehaviour, IAbility
         {
             CreateAuraVFX();
         }
+        
+        Debug.Log($"🔥 ElementalAura element set to: {currentElement?.ElementName}");
     }
     
     /// <summary>
@@ -217,6 +238,51 @@ public class ElementalAura : MonoBehaviour, IAbility
         if (active && currentElement != null)
         {
             CreateAuraVFX();
+        }
+        
+        Debug.Log($"🔥 ElementalAura {(active ? "ACTIVATED" : "DEACTIVATED")}");
+    }
+    
+    /// <summary>
+    /// Aktif durumunu döndürür
+    /// </summary>
+    /// <returns>Aktif mi?</returns>
+    public bool IsActive()
+    {
+        return isActive;
+    }
+    
+    /// <summary>
+    /// Aura radius'unu görselleştirmek için gizmos çizer
+    /// Player'a atandığında ve seçildiğinde radius'u gösterir
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        if (isAttachedToPlayer)
+        {
+            // Aura radius'unu çiz
+            Gizmos.color = currentElement != null ? currentElement.ElementColor : Color.yellow;
+            Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, Gizmos.color.b, 0.3f); // Transparanlık ekle
+            Gizmos.DrawWireSphere(transform.position, auraRadius);
+            
+            // İç daire çiz
+            Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, Gizmos.color.b, 0.1f);
+            Gizmos.DrawSphere(transform.position, auraRadius);
+        }
+    }
+    
+    /// <summary>
+    /// Her zaman görünür aura radius'u (sadece Player'dayken)
+    /// </summary>
+    private void OnDrawGizmos()
+    {
+        // Sadece Player'a atandığında ve aktifken çiz
+        if (isAttachedToPlayer && isActive && currentElement != null)
+        {
+            // İnce wireframe çiz
+            Gizmos.color = currentElement.ElementColor;
+            Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, Gizmos.color.b, 0.15f);
+            Gizmos.DrawWireSphere(transform.position, auraRadius);
         }
     }
 } 
