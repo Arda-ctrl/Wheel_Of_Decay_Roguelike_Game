@@ -42,8 +42,21 @@ public class TempSlowEffect : MonoBehaviour
         moveable = GetComponent<IMoveable>();
         if (moveable != null)
         {
+            float currentSpeed = moveable.GetCurrentSpeed();
+            float baseSpeed = moveable.GetBaseSpeed();
+            Debug.Log($"❄️ TempSlowEffect: Found IMoveable on {gameObject.name}");
+            Debug.Log($"❄️ Current speed: {currentSpeed}, Base speed: {baseSpeed}");
+            Debug.Log($"❄️ Applying {slowPercent * 100}% slow");
+            
             moveable.SetSpeedMultiplier(1f - slowPercent);
             slowed = true;
+            
+            float newSpeed = moveable.GetCurrentSpeed();
+            Debug.Log($"❄️ New speed after slow: {newSpeed}");
+        }
+        else
+        {
+            Debug.LogError($"❄️ TempSlowEffect: No IMoveable found on {gameObject.name}!");
         }
     }
     void Update()
@@ -52,7 +65,10 @@ public class TempSlowEffect : MonoBehaviour
         if (elapsed >= duration)
         {
             if (moveable != null && slowed)
+            {
+                Debug.Log($"❄️ TempSlowEffect: Slow effect ended, restoring speed to 1.0");
                 moveable.SetSpeedMultiplier(1f);
+            }
             Destroy(this);
         }
     }
@@ -93,6 +109,37 @@ public class TempPoisonEffect : MonoBehaviour
         {
             if (moveable != null && slowed)
                 moveable.SetSpeedMultiplier(1f);
+            Destroy(this);
+        }
+    }
+}
+
+public class TempFreezeEffect : MonoBehaviour
+{
+    public float duration = 2f;
+    private float elapsed = 0f;
+    private IMoveable moveable;
+    private bool frozen = false;
+    private float originalSpeed;
+    
+    void Start()
+    {
+        moveable = GetComponent<IMoveable>();
+        if (moveable != null)
+        {
+            originalSpeed = moveable.GetCurrentSpeed();
+            moveable.SetSpeedMultiplier(0f); // Completely freeze
+            frozen = true;
+        }
+    }
+    
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        if (elapsed >= duration)
+        {
+            if (moveable != null && frozen)
+                moveable.SetSpeedMultiplier(1f); // Restore original speed
             Destroy(this);
         }
     }

@@ -18,15 +18,28 @@ MonoBehaviour:
   abilityType: 3
   cooldownDuration: 3
   manaCost: 0
-  elementType: 1
+  elementType: 2
   stackAmount: 1
   strikeDamage: 10
+  fireStackDamage: 5
+  iceSlowPercent: 20
+  poisonStackDamage: 5
   damageMultiplier: 1.5
+  flatBonusDamage: 10
   attackCountForProjectile: 5
   projectileSpeed: 10
   projectileDamage: 50
   projectileRange: 10
-  projectilePrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
+  projectilePrefab: {fileID: 7060172690428923814, guid: e5fa89e66fd68cd42b024c5a47f112fa, type: 3}
+  fireBurnDamage: 5
+  fireBurnDuration: 3
+  fireBurnTickRate: 0.5
+  iceSlowPercentProjectile: 30
+  iceSlowDurationProjectile: 4
+  iceFreezeChance: 0.1
+  poisonDamageProjectile: 3
+  poisonDurationProjectile: 5
+  poisonTickRateProjectile: 1
   damageReductionPercent: 30
   armorDuration: 10
   areaDamageRadius: 3

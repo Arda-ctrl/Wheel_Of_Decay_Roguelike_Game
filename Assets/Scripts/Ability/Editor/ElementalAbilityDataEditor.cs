@@ -35,6 +35,21 @@ public class ElementalAbilityDataEditor : Editor
     private SerializedProperty projectileRangeProp;
     private SerializedProperty projectilePrefabProp;
     
+    // Fire Projectile Settings
+    private SerializedProperty fireBurnDamageProp;
+    private SerializedProperty fireBurnDurationProp;
+    private SerializedProperty fireBurnTickRateProp;
+    
+    // Ice Projectile Settings
+    private SerializedProperty iceSlowPercentProjectileProp;
+    private SerializedProperty iceSlowDurationProjectileProp;
+    private SerializedProperty iceFreezeChanceProp;
+    
+    // Poison Projectile Settings
+    private SerializedProperty poisonDamageProjectileProp;
+    private SerializedProperty poisonDurationProjectileProp;
+    private SerializedProperty poisonTickRateProjectileProp;
+    
     // Elemental Armor Settings
     private SerializedProperty damageReductionPercentProp;
     private SerializedProperty armorDurationProp;
@@ -62,7 +77,6 @@ public class ElementalAbilityDataEditor : Editor
     private SerializedProperty burstRadiusProp;
     
     // Elemental Aura Settings
-    private SerializedProperty auraDamageProp;
     private SerializedProperty auraRadiusProp;
     private SerializedProperty auraStackTimeProp;
     
@@ -105,6 +119,21 @@ public class ElementalAbilityDataEditor : Editor
         projectileRangeProp = serializedObject.FindProperty("projectileRange");
         projectilePrefabProp = serializedObject.FindProperty("projectilePrefab");
         
+        // Fire Projectile Settings
+        fireBurnDamageProp = serializedObject.FindProperty("fireBurnDamage");
+        fireBurnDurationProp = serializedObject.FindProperty("fireBurnDuration");
+        fireBurnTickRateProp = serializedObject.FindProperty("fireBurnTickRate");
+        
+        // Ice Projectile Settings
+        iceSlowPercentProjectileProp = serializedObject.FindProperty("iceSlowPercentProjectile");
+        iceSlowDurationProjectileProp = serializedObject.FindProperty("iceSlowDurationProjectile");
+        iceFreezeChanceProp = serializedObject.FindProperty("iceFreezeChance");
+        
+        // Poison Projectile Settings
+        poisonDamageProjectileProp = serializedObject.FindProperty("poisonDamageProjectile");
+        poisonDurationProjectileProp = serializedObject.FindProperty("poisonDurationProjectile");
+        poisonTickRateProjectileProp = serializedObject.FindProperty("poisonTickRateProjectile");
+        
         // Elemental Armor Settings
         damageReductionPercentProp = serializedObject.FindProperty("damageReductionPercent");
         armorDurationProp = serializedObject.FindProperty("armorDuration");
@@ -132,7 +161,6 @@ public class ElementalAbilityDataEditor : Editor
         burstRadiusProp = serializedObject.FindProperty("burstRadius");
         
         // Elemental Aura Settings
-        auraDamageProp = serializedObject.FindProperty("auraDamage");
         auraRadiusProp = serializedObject.FindProperty("auraRadius");
         auraStackTimeProp = serializedObject.FindProperty("auraStackTime");
         
@@ -250,6 +278,33 @@ public class ElementalAbilityDataEditor : Editor
         EditorGUILayout.PropertyField(projectileDamageProp);
         EditorGUILayout.PropertyField(projectileRangeProp);
         EditorGUILayout.PropertyField(projectilePrefabProp);
+
+        // Element tipine göre özel alanlar
+        ElementType selectedElementType = (ElementType)elementTypeProp.enumValueIndex;
+        switch (selectedElementType)
+        {
+            case ElementType.Fire:
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Fire Projectile Effects", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(fireBurnDamageProp, new GUIContent("Burn Damage per Tick"));
+                EditorGUILayout.PropertyField(fireBurnDurationProp, new GUIContent("Burn Duration (seconds)"));
+                EditorGUILayout.PropertyField(fireBurnTickRateProp, new GUIContent("Burn Tick Rate (seconds)"));
+                break;
+            case ElementType.Ice:
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Ice Projectile Effects", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(iceSlowPercentProjectileProp, new GUIContent("Slow Percent (%)"));
+                EditorGUILayout.PropertyField(iceSlowDurationProjectileProp, new GUIContent("Slow Duration (seconds)"));
+                EditorGUILayout.PropertyField(iceFreezeChanceProp, new GUIContent("Freeze Chance (0-1)"));
+                break;
+            case ElementType.Poison:
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Poison Projectile Effects", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(poisonDamageProjectileProp, new GUIContent("Poison Damage per Tick"));
+                EditorGUILayout.PropertyField(poisonDurationProjectileProp, new GUIContent("Poison Duration (seconds)"));
+                EditorGUILayout.PropertyField(poisonTickRateProjectileProp, new GUIContent("Poison Tick Rate (seconds)"));
+                break;
+        }
     }
     
     private void ShowElementalArmorSettings()
@@ -302,7 +357,6 @@ public class ElementalAbilityDataEditor : Editor
     {
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Elemental Aura Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(auraDamageProp);
         EditorGUILayout.PropertyField(auraRadiusProp);
         EditorGUILayout.PropertyField(auraStackTimeProp);
     }

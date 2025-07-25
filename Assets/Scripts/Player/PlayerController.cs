@@ -44,6 +44,8 @@ public class PlayerController : MonoBehaviour
         playerInputActions.Player.Fire.started += OnFireStart;
         playerInputActions.Player.Fire.canceled += OnFireEnd;
         playerInputActions.Player.Dash.performed += OnDash;
+        
+        // Test için Overflow ability'si (T tuşu) - Input Action kullanmadan direkt key check yapacağız
 
         // Get WeaponController reference if not set
         if (weaponController == null)
@@ -137,6 +139,18 @@ public class PlayerController : MonoBehaviour
         {
             dashCoolCounter -= Time.deltaTime;
         }
+        
+        // Test için T tuşu kontrolü
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            TestElementalOverflow();
+        }
+        
+        // Mana test için M tuşu kontrolü
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            TestManaSystem();
+        }
     }
 
     private void OnMovement(InputAction.CallbackContext context)
@@ -171,6 +185,49 @@ public class PlayerController : MonoBehaviour
         if (weaponController != null)
         {
             weaponController.StopFiring();
+        }
+    }
+
+    private void TestElementalOverflow()
+    {
+        if (!canControl) return;
+        
+        // Test için ElementalOverflow'u tetikle
+        if (elementalAbilityManager != null)
+        {
+            var overflowAbility = elementalAbilityManager.GetAbility(ElementType.Fire, AbilityType.ElementalOverflow) as ElementalOverflow;
+            if (overflowAbility != null)
+            {
+                Debug.Log("🧪 Testing ElementalOverflow with T key");
+                overflowAbility.UseAbility(gameObject, null, new FireElement());
+            }
+            else
+            {
+                Debug.Log("❌ ElementalOverflow ability not found");
+            }
+        }
+        else
+        {
+            Debug.Log("❌ ElementalAbilityManager not found");
+        }
+    }
+    
+    private void TestManaSystem()
+    {
+        var manaController = PlayerManaController.Instance;
+        if (manaController != null)
+        {
+            Debug.Log($"💧 Current Mana: {manaController.GetCurrentMana()}/{manaController.GetMaxMana()} ({manaController.GetManaPercentage() * 100:F1}%)");
+            Debug.Log($"💧 PlayerManaController found and working!");
+            
+            // Test mana consumption
+            Debug.Log("🧪 Testing 25 mana consumption...");
+            bool success = manaController.ConsumeMana(25f);
+            Debug.Log($"🧪 Mana consumption result: {success}");
+        }
+        else
+        {
+            Debug.LogError("❌ PlayerManaController not found! Please add PlayerManaController component to Player GameObject!");
         }
     }
 

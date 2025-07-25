@@ -181,7 +181,10 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     // IMoveable Implementation
     public void SetSpeedMultiplier(float multiplier)
     {
+        float oldMultiplier = speedMultiplier;
         speedMultiplier = Mathf.Clamp(multiplier, 0f, 1f);
+        Debug.Log($"🐛 {gameObject.name} speed multiplier changed from {oldMultiplier:F2} to {speedMultiplier:F2}");
+        Debug.Log($"🐛 New effective speed: {GetCurrentSpeed():F2} (base: {baseSpeed:F2})");
     }
 
     public float GetCurrentSpeed() => baseSpeed * speedMultiplier;
