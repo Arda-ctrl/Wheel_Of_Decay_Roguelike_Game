@@ -26,7 +26,7 @@ public class WheelDebugWindow : EditorWindow
     private Dictionary<SegmentEffectType, Dictionary<Rarity, List<SegmentData>>> categorizedSegments;
     private string[] categoryNames = { "Stat Boost", "Wheel Manipulation", "On Remove Effect" };
     private string[] rarityNames = { "Tümü", "Common", "Uncommon", "Rare", "Epic", "Legendary" };
-    private bool showAllRarities = false;
+    private bool showAllRarities = true; // Debug window açılınca "Tümü" seçili olsun
 
     [MenuItem("Tools/Wheel Debug Window")]
     public static void ShowWindow()

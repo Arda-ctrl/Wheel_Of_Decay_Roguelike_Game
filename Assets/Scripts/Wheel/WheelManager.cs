@@ -404,8 +404,8 @@ public class WheelManager : MonoBehaviour
     }
     public void RemoveSegmentAtSlot(int slotIndex, bool recalcStatBoosts = true)
     {
-        int maxSize = 3;
-        for (int offset = maxSize - 1; offset >= 0; offset--)
+        int slotCount = slots.Length;
+        for (int offset = 0; offset < slotCount; offset++)
         {
             int i = (slotIndex - offset + slotCount) % slotCount;
             Transform slot = slots[i];
@@ -444,6 +444,8 @@ public class WheelManager : MonoBehaviour
                             SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
                             inst._appliedStatBoost = 0f;
                         }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
                         {
@@ -509,6 +511,8 @@ public class WheelManager : MonoBehaviour
                             SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
                             inst._appliedStatBoost = 0f;
                         }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
                     }
                     Destroy(child.gameObject);
                 }

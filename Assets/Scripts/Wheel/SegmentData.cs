@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 public enum Type { StatBoost, WheelManipulation, OnRemoveEffect }
-public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance }
+public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance, Random }
 public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
@@ -27,6 +27,14 @@ public class SegmentData : ScriptableObject
     public StatType statType;
     public float statAmount;
     public StatBonusMode statBonusMode = StatBonusMode.Fixed;
+
+    // Random Stat için (sadece statType Random seçiliyse kullanılır)
+    [Header("Random Stat Ayarları")]
+    public bool includeAttack = true;
+    public bool includeDefence = true;
+    public bool includeAttackSpeed = true;
+    public bool includeMovementSpeed = true;
+    public bool includeCriticalChance = true;
 
     // Wheel manipulation için
     [Header("Wheel Manipulation Ayarları")]
