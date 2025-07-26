@@ -151,11 +151,11 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 return baseAmount * filled;
             case StatBonusMode.SmallSegmentCount:
                 int small = 0;
-                foreach (var seg in GetAllStatBoostSegments(wheelManager)) if (seg.data.size == 1) small++;
+                foreach (var seg in GetAllSegments(wheelManager)) if (seg.data.size == 1) small++;
                 return baseAmount * small;
             case StatBonusMode.LargeSegmentCount:
                 int large = 0;
-                foreach (var seg in GetAllStatBoostSegments(wheelManager)) if (seg.data.size > 1) large++;
+                foreach (var seg in GetAllSegments(wheelManager)) if (seg.data.size > 1) large++;
                 return baseAmount * large;
             case StatBonusMode.SiblingAdjacency:
                 // Sadece boyut 1 segmentler için yan yana boost
@@ -183,7 +183,9 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 return baseAmount;
         }
     }
-    private List<SegmentInstance> GetAllStatBoostSegments(WheelManager wheelManager)
+
+    // Tüm segmentleri döndür (StatBoost, WheelManipulation, OnRemoveEffect fark etmez)
+    private List<SegmentInstance> GetAllSegments(WheelManager wheelManager)
     {
         List<SegmentInstance> list = new List<SegmentInstance>();
         int slotCount = wheelManager.slots.Length;
@@ -192,7 +194,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
             foreach (Transform child in wheelManager.slots[i])
             {
                 var inst = child.GetComponent<SegmentInstance>();
-                if (inst != null && inst.data != null && inst.data.effectType == SegmentEffectType.StatBoost && !list.Contains(inst))
+                if (inst != null && inst.data != null && !list.Contains(inst))
                     list.Add(inst);
             }
         }

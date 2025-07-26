@@ -492,10 +492,35 @@ public class WheelManager : MonoBehaviour
 
     public void ClearWheel()
     {
+        // Tüm segmentleri doğrudan yok et
         for (int i = 0; i < slotCount; i++)
         {
-            RemoveSegmentAtSlot(i, false);
+            foreach (Transform child in slots[i])
+            {
+                if (child != null)
+                {
+                    var inst = child.GetComponent<SegmentInstance>();
+                    if (inst != null && inst.data != null)
+                    {
+                        // Stat boost segmenti ise, statı silmeden önce sıfırla
+                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst._appliedStatBoost != 0f)
+                        {
+                            StatType statType = inst.data.statType;
+                            SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
+                            inst._appliedStatBoost = 0f;
+                        }
+                    }
+                    Destroy(child.gameObject);
+                }
+            }
         }
+        
+        // Tüm slotları boş olarak işaretle
+        for (int i = 0; i < slotCount; i++)
+        {
+            slotOccupied[i] = false;
+        }
+        
         // Tüm segmentler silindikten sonra stat boostları güncelle
         StartCoroutine(DelayedRecalcStatBoosts());
     }
