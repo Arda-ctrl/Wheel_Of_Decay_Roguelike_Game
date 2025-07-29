@@ -88,6 +88,39 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.HelpBox("Bu segment iğneye gelince silinmez, statı güçlenir.", MessageType.None);
             }
+            else if (statBonusMode == StatBonusMode.Isolated)
+            {
+                EditorGUILayout.HelpBox("Yanında hiç segment olmayan (boş slotlarla çevrili) segmentler isolatedBonusAmount kadar bonus alır. Yanı doluysa adjacentBonusAmount kadar bonus alır.", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("isolatedBonusAmount"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("adjacentBonusAmount"));
+            }
+            else if (statBonusMode == StatBonusMode.DecayOverTime)
+            {
+                EditorGUILayout.HelpBox("Segment her spin sonrası bonusunu yavaşça kaybeder (her spin sonrası -X stat). 0'a inince silinsin mi? (toggle)", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayStartValue"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayAmountPerSpin"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayRemoveAtZero"));
+            }
+            else if (statBonusMode == StatBonusMode.GrowthOverTime)
+            {
+                EditorGUILayout.HelpBox("Segment her spin sonrası bonusunu artırır (her spin sonrası +X stat).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("growthStartValue"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("growthAmountPerSpin"));
+            }
+            
+            // Random stat ayarları (sadece statType Random seçiliyse göster)
+            if (statType == StatType.Random)
+            {
+                EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Random Stat Ayarları:", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("Hangi statların rastgele seçilebileceğini belirleyin.", MessageType.None);
+                
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeAttack"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeDefence"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeAttackSpeed"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeMovementSpeed"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeCriticalChance"));
+            }
         }
         else if (effectType == SegmentEffectType.WheelManipulation)
         {

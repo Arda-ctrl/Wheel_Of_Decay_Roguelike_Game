@@ -78,6 +78,8 @@ public class WheelManager : MonoBehaviour
         
         wheelEffectInProgress = false;
         isSpinning = false;
+        // Stat boost decay/growth güncelle
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     
     private void Start()
@@ -237,6 +239,9 @@ public class WheelManager : MonoBehaviour
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     // Sadece debug için: belirli bir slota döndür
     public void SpinWheelForDebug(int targetSlot)
@@ -286,6 +291,9 @@ public class WheelManager : MonoBehaviour
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     private void OnSpinEnd() { spinEndCoroutine = StartCoroutine(SpinEndSequence()); }
     private IEnumerator SpinEndSequence()
@@ -404,8 +412,8 @@ public class WheelManager : MonoBehaviour
     }
     public void RemoveSegmentAtSlot(int slotIndex, bool recalcStatBoosts = true)
     {
-        int maxSize = 3;
-        for (int offset = maxSize - 1; offset >= 0; offset--)
+        int slotCount = slots.Length;
+        for (int offset = 0; offset < slotCount; offset++)
         {
             int i = (slotIndex - offset + slotCount) % slotCount;
             Transform slot = slots[i];
@@ -444,6 +452,8 @@ public class WheelManager : MonoBehaviour
                             SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
                             inst._appliedStatBoost = 0f;
                         }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
                         {
@@ -492,10 +502,37 @@ public class WheelManager : MonoBehaviour
 
     public void ClearWheel()
     {
+        // Tüm segmentleri doğrudan yok et
         for (int i = 0; i < slotCount; i++)
         {
-            RemoveSegmentAtSlot(i, false);
+            foreach (Transform child in slots[i])
+            {
+                if (child != null)
+                {
+                    var inst = child.GetComponent<SegmentInstance>();
+                    if (inst != null && inst.data != null)
+                    {
+                        // Stat boost segmenti ise, statı silmeden önce sıfırla
+                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst._appliedStatBoost != 0f)
+                        {
+                            StatType statType = inst.data.statType;
+                            SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
+                            inst._appliedStatBoost = 0f;
+                        }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
+                    }
+                    Destroy(child.gameObject);
+                }
+            }
         }
+        
+        // Tüm slotları boş olarak işaretle
+        for (int i = 0; i < slotCount; i++)
+        {
+            slotOccupied[i] = false;
+        }
+        
         // Tüm segmentler silindikten sonra stat boostları güncelle
         StartCoroutine(DelayedRecalcStatBoosts());
     }

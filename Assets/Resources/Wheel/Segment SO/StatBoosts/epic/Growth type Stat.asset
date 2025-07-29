@@ -10,20 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: Sibling stat boost
+  m_Name: Growth type Stat
   m_EditorClassIdentifier: 
-  segmentID: siblingstatboost
+  segmentID: growthtypestat
   size: 1
   type: 0
-  rarity: 4
-  description: "+2 stat verir e\u011Fer yan\u0131nda karde\u015Fi varsa daha \xE7ok
-    verir"
+  rarity: 3
+  description: "her \xE7ark d\xF6nd\xFC\u011F\xFCnde stat\u0131 +1 art\u0131yor."
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.79423136, g: 0.10679956, b: 0.9056604, a: 1}
+  segmentColor: {r: 0.5566038, g: 0.128649, b: 0.462985, a: 1}
   effectType: 0
   statType: 0
-  statAmount: 2
-  statBonusMode: 5
+  statAmount: 0
+  statBonusMode: 9
+  isolatedBonusAmount: 0
+  adjacentBonusAmount: 0
+  decayStartValue: 0
+  decayAmountPerSpin: 1
+  decayRemoveAtZero: 1
+  growthStartValue: 0
+  growthAmountPerSpin: 1
+  includeAttack: 1
+  includeDefence: 1
+  includeAttackSpeed: 1
+  includeMovementSpeed: 1
+  includeCriticalChance: 1
   wheelManipulationType: 0
   redirectDirection: 0
   blackHoleRange: 1
