@@ -7,7 +7,7 @@ public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
-public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent }
+public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, Isolated, DecayOverTime, GrowthOverTime }
 
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
@@ -27,6 +27,22 @@ public class SegmentData : ScriptableObject
     public StatType statType;
     public float statAmount;
     public StatBonusMode statBonusMode = StatBonusMode.Fixed;
+
+    // Isolated Segment Boost için
+    [Header("Isolated Segment Boost Ayarları")]
+    public float isolatedBonusAmount = 0f; // Yanı boşken
+    public float adjacentBonusAmount = 0f; // Yanı doluyken
+
+    // Decay Over Time
+    [Header("Decay Over Time Ayarları")]
+    public float decayStartValue = 0f;
+    public float decayAmountPerSpin = 1f;
+    public bool decayRemoveAtZero = true;
+
+    // Growth Over Time
+    [Header("Growth Over Time Ayarları")]
+    public float growthStartValue = 0f;
+    public float growthAmountPerSpin = 1f;
 
     // Random Stat için (sadece statType Random seçiliyse kullanılır)
     [Header("Random Stat Ayarları")]

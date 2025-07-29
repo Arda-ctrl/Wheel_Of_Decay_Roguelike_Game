@@ -78,6 +78,8 @@ public class WheelManager : MonoBehaviour
         
         wheelEffectInProgress = false;
         isSpinning = false;
+        // Stat boost decay/growth güncelle
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     
     private void Start()
@@ -237,6 +239,9 @@ public class WheelManager : MonoBehaviour
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     // Sadece debug için: belirli bir slota döndür
     public void SpinWheelForDebug(int targetSlot)
@@ -286,6 +291,9 @@ public class WheelManager : MonoBehaviour
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     private void OnSpinEnd() { spinEndCoroutine = StartCoroutine(SpinEndSequence()); }
     private IEnumerator SpinEndSequence()

@@ -10,19 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: "\u0130mmortal stat boost"
+  m_Name: Isolated Segment Boost
   m_EditorClassIdentifier: 
-  segmentID: immortalstatboost
+  segmentID: isolatedsegmentboost
   size: 1
   type: 0
-  rarity: 4
-  description: "+2 stat verir silinece\u011Fi zaman daha \xE7ok g\xFC\xE7lenir"
+  rarity: 1
+  description: 
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.79423136, g: 0.10679956, b: 0.9056604, a: 1}
+  segmentColor: {r: 0.3721965, g: 0.48183578, b: 0.6415094, a: 1}
   effectType: 0
   statType: 0
-  statAmount: 2
-  statBonusMode: 6
+  statAmount: 0
+  statBonusMode: 7
+  isolatedBonusAmount: 6
+  adjacentBonusAmount: 2
+  includeAttack: 1
+  includeDefence: 1
+  includeAttackSpeed: 1
+  includeMovementSpeed: 1
+  includeCriticalChance: 1
   wheelManipulationType: 0
   redirectDirection: 0
   blackHoleRange: 1

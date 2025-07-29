@@ -16,6 +16,7 @@ public class WheelDebugWindow : EditorWindow
     private SegmentEffectType selectedCategory = SegmentEffectType.StatBoost;
     private Rarity selectedRarity = Rarity.Common;
     private SegmentData selectedSegment;
+    private string searchText = ""; // Arama için
     
     // Scroll view'lar
     private Vector2 categoryScroll;
@@ -134,6 +135,9 @@ public class WheelDebugWindow : EditorWindow
         
         EditorGUILayout.Space(10);
         
+        // Arama kutusu
+        searchText = EditorGUILayout.TextField("Arama:", searchText, GUILayout.Height(25));
+        
         // Seçili segment bilgisi
         if (selectedSegment != null)
         {
@@ -188,6 +192,12 @@ public class WheelDebugWindow : EditorWindow
                 return;
             }
             segments = categorizedSegments[selectedCategory][selectedRarity];
+        }
+        
+        // Arama filtresi uygula
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            segments = segments.Where(s => s.segmentID.ToLower().Contains(searchText.ToLower())).ToList();
         }
         
         if (segments.Count == 0)
@@ -312,20 +322,19 @@ public class WheelDebugWindow : EditorWindow
     
     private void DrawGeneralControls()
     {
-        // Genel kontroller
-        EditorGUILayout.LabelField("Genel", EditorStyles.boldLabel, GUILayout.Height(20));
+        EditorGUILayout.LabelField("Genel Kontroller", EditorStyles.boldLabel, GUILayout.Height(25));
         
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Çarkı Temizle", GUILayout.Height(30)))
         {
-            Undo.RecordObject(wheelManager, "Clear Wheel");
-            wheelManager.ClearWheel();
+            if (wheelManager != null)
+                wheelManager.ClearWheel();
         }
-        
-        EditorGUILayout.Space(5);
         
         if (GUILayout.Button("Segmentleri Yeniden Yükle", GUILayout.Height(30)))
         {
             LoadAllSegments();
         }
+        EditorGUILayout.EndHorizontal();
     }
 } 

@@ -83,12 +83,53 @@ public class SegmentStatBoostHandler : MonoBehaviour
 {
     public static SegmentStatBoostHandler Instance { get; private set; }
     private Dictionary<SegmentInstance, RandomStatStack> randomStatStacks = new Dictionary<SegmentInstance, RandomStatStack>();
+    // Decay/Growth segmentlerinin runtime değerleri
+    private Dictionary<SegmentInstance, float> decayGrowthValues = new Dictionary<SegmentInstance, float>();
+
     private void Awake()
     {
         if (Instance == null)
             Instance = this;
         else
             Destroy(gameObject);
+    }
+
+    // Her spin sonrası decay/growth güncelle
+    public void OnSpinEnd()
+    {
+        var wheelManager = FindAnyObjectByType<WheelManager>();
+        if (wheelManager == null) return;
+        int slotCount = wheelManager.slots.Length;
+        for (int i = 0; i < slotCount; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var inst = child.GetComponent<SegmentInstance>();
+                if (inst == null || inst.data == null) continue;
+                var data = inst.data;
+                if (data.statBonusMode == StatBonusMode.DecayOverTime)
+                {
+                    if (!decayGrowthValues.ContainsKey(inst))
+                        decayGrowthValues[inst] = data.decayStartValue;
+                    decayGrowthValues[inst] -= data.decayAmountPerSpin;
+                    if (decayGrowthValues[inst] <= 0f && data.decayRemoveAtZero)
+                    {
+                        // Segmenti sil
+                        WheelManager wm = FindAnyObjectByType<WheelManager>();
+                        if (wm != null)
+                            wm.RemoveSegmentAtSlot(inst.startSlotIndex);
+                    }
+                }
+                else if (data.statBonusMode == StatBonusMode.GrowthOverTime)
+                {
+                    if (!decayGrowthValues.ContainsKey(inst))
+                        decayGrowthValues[inst] = data.growthStartValue;
+                    decayGrowthValues[inst] += data.growthAmountPerSpin;
+                }
+            }
+        }
+        // Decay/Growth değerleri güncellendikten sonra stat boost'ları yeniden hesapla
+        RecalculateAllStatBoosts();
     }
 
     // Yardımcı fonksiyonlar
@@ -207,6 +248,8 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 ? CalculateStatBoost(inst, wheelManager, siblingMap)
                 : CalculateStatBoost(inst, wheelManager);
             inst._appliedStatBoost = boost;
+            
+            // Random stat değilse normal uygula (Random stat'lar stack'te yönetiliyor)
             if (statType != StatType.Random)
             {
                 ApplyStat(inst, boost, statType);
@@ -220,6 +263,20 @@ public class SegmentStatBoostHandler : MonoBehaviour
         var data = inst.data;
         int slotCount = wheelManager.slots.Length;
         float baseAmount = data.statAmount;
+
+        // Decay/Growth segmentleri için runtime değerini kullan
+        if (data.statBonusMode == StatBonusMode.DecayOverTime)
+        {
+            if (!decayGrowthValues.ContainsKey(inst))
+                decayGrowthValues[inst] = data.decayStartValue;
+            return Mathf.Max(0f, decayGrowthValues[inst]);
+        }
+        if (data.statBonusMode == StatBonusMode.GrowthOverTime)
+        {
+            if (!decayGrowthValues.ContainsKey(inst))
+                decayGrowthValues[inst] = data.growthStartValue;
+            return decayGrowthValues[inst];
+        }
 
         // Eğer random stat ise stack sistemiyle yönet
         if (data.statType == StatType.Random)
@@ -248,6 +305,9 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 case StatBonusMode.Persistent:
                     count = 1;
                     break;
+                case StatBonusMode.Isolated:
+                    count = 1;
+                    break;
                 default:
                     count = 1;
                     break;
@@ -258,9 +318,26 @@ public class SegmentStatBoostHandler : MonoBehaviour
             return 0f; // Boost stack'te yönetiliyor
         }
 
-        // Random stat değilse klasik sistem
         switch (data.statBonusMode)
         {
+            case StatBonusMode.Isolated:
+                // Yanındaki slotlar boşsa isolatedBonusAmount, değilse adjacentBonusAmount
+                int left = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+                int right = (inst.startSlotIndex + inst.data.size) % slotCount;
+                bool leftEmpty = true, rightEmpty = true;
+                foreach (Transform child in wheelManager.slots[left])
+                {
+                    var seg = child.GetComponent<SegmentInstance>();
+                    if (seg != null && seg != inst)
+                        leftEmpty = false;
+                }
+                foreach (Transform child in wheelManager.slots[right])
+                {
+                    var seg = child.GetComponent<SegmentInstance>();
+                    if (seg != null && seg != inst)
+                        rightEmpty = false;
+                }
+                return (leftEmpty && rightEmpty) ? data.isolatedBonusAmount : data.adjacentBonusAmount;
             case StatBonusMode.Fixed:
                 return baseAmount;
             case StatBonusMode.EmptySlotCount:

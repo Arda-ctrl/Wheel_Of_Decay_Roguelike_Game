@@ -10,19 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: Big Stat Boost
+  m_Name: Decay type Stat
   m_EditorClassIdentifier: 
-  segmentID: bigstatboost
-  size: 2
+  segmentID: decaytypestat
+  size: 1
   type: 0
-  rarity: 4
-  description: "her orta/b\xFCy\xFCk segment i\xE7in +1 stat boost"
-  segmentPrefab: {fileID: 5493077626770474679, guid: 2375849ed9e17f44d80f514102e28469, type: 3}
-  segmentColor: {r: 0.79423136, g: 0.10679956, b: 0.9056604, a: 1}
+  rarity: 3
+  description: "her \xE7ark d\xF6nd\xFC\u011F\xFCnde stat\u0131 -1 azal\u0131yor."
+  segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
+  segmentColor: {r: 1, g: 0.16509432, b: 0.52926356, a: 1}
   effectType: 0
   statType: 0
-  statAmount: 1
-  statBonusMode: 4
+  statAmount: 0
+  statBonusMode: 8
+  isolatedBonusAmount: 0
+  adjacentBonusAmount: 0
+  decayStartValue: 10
+  decayAmountPerSpin: 1
+  decayRemoveAtZero: 1
+  growthStartValue: 0
+  growthAmountPerSpin: 1
+  includeAttack: 1
+  includeDefence: 1
+  includeAttackSpeed: 1
+  includeMovementSpeed: 1
+  includeCriticalChance: 1
   wheelManipulationType: 0
   redirectDirection: 0
   blackHoleRange: 1
