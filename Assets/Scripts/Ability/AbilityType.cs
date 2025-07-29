@@ -14,14 +14,12 @@ public enum AbilityType
     ElementalArmor,
     // 5. Elemental Area - 5+ stack ile ölen düşman alan hasarı
     ElementalArea,
-    // 6. Elemental Lance Barrage - Big, etrafındaki düşmanlara 5 saldırı
-    ElementalLanceBarrage,
-    // 7. Elemental Overflow - Big, odadaki tüm düşmanlara 5 stack
+    // 6. Elemental Overflow - Big, odadaki tüm düşmanlara 5 stack
     ElementalOverflow,
-    // 8. Elemental Burst - 3 stack olduğunda patlama
+    // 7. Elemental Burst - 3 stack olduğunda patlama
     ElementalBurst,
-    // 9. Elemental Aura - Yakındaki düşmanlara sürekli hasar
+    // 8. Elemental Aura - Yakındaki düşmanlara sürekli hasar
     ElementalAura,
-    // 10. Elemental Orb - Otomatik saldıran küre
+    // 9. Elemental Orb - Otomatik saldıran küre
     ElementalOrb
 } 

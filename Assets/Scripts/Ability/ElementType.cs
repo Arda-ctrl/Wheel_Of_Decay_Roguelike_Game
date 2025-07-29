@@ -9,5 +9,6 @@ public enum ElementType
     Poison,
     Lightning,
     Earth,
-    Wind
+    Wind,
+    Void
 } 

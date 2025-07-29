@@ -41,10 +41,8 @@ public class ElementalOrb : MonoBehaviour, IAbility
         icon = data.icon;
         cooldownDuration = data.cooldownDuration;
         manaCost = data.manaCost;
-        orbDamage = data.orbDamage;
         orbDuration = data.orbDuration;
         orbSpeed = data.orbSpeed;
-        orbPrefab = data.orbPrefab;
     }
     
     private void Update()
@@ -60,27 +58,15 @@ public class ElementalOrb : MonoBehaviour, IAbility
     }
     
     /// <summary>
-    /// Ability'yi kullanır
+    /// Ability'yi kullanır (artık pasif sistem - manuel kullanılmaz)
     /// </summary>
     /// <param name="caster">Ability'yi kullanan GameObject</param>
     /// <param name="target">Hedef GameObject</param>
     /// <param name="element">Kullanılacak element</param>
     public void UseAbility(GameObject caster, GameObject target, IElement element)
     {
-        if (!CanUseAbility(caster)) return;
-        
-        currentElement = element;
-        
-        // Orb oluştur
-        CreateOrb(caster);
-        
-        // VFX ve SFX oynat
-        PlayOrbEffects(caster);
-        
-        Debug.Log($"🔮 {caster.name} created {currentElement?.ElementName} orb");
-        
-        // Cooldown başlat
-        StartCooldown();
+        // Bu ability artık pasif çalışıyor - manuel kullanım yok
+        Debug.Log("🔮 ElementalOrb is now a passive ability - orbs spawn automatically when collecting 10 stacks");
     }
     
     /// <summary>
@@ -123,7 +109,8 @@ public class ElementalOrb : MonoBehaviour, IAbility
     /// <returns>Kullanılabilir mi?</returns>
     public bool CanUseAbility(GameObject caster)
     {
-        return !isOnCooldown;
+        // Pasif ability - manuel kullanılamaz
+        return false;
     }
     
     /// <summary>
@@ -197,15 +184,29 @@ public class ElementalOrb : MonoBehaviour, IAbility
 public class ElementalOrbController : MonoBehaviour
 {
     private IElement element;
-    private float damage;
+    private ElementType elementType;
+    private float damage = 15f;
     private float speed;
     private float duration;
     private ElementalAbilityData abilityData;
     private float lifeTime;
     private GameObject nearestEnemy;
     
+    // Pasif orb için özel değişkenler
+    private bool isPassiveOrb = false;
+    private Transform playerTransform;
+    private float rotationSpeed = 60f;
+    private float orbitRadius = 2f;
+    private float orbitAngle = 0f;
+    private float attackCooldown = 2f;
+    private float lastAttackTime = 0f;
+    private float attackRange = 8f; // Saldırı alanı
+    
+    // Events
+    public System.Action OnOrbDestroyed;
+    
     /// <summary>
-    /// Orb'u başlatır
+    /// Orb'u başlatır (eski sistem için)
     /// </summary>
     /// <param name="element">Element</param>
     /// <param name="damage">Hasar</param>
@@ -220,16 +221,95 @@ public class ElementalOrbController : MonoBehaviour
         this.duration = duration;
         this.abilityData = abilityData;
         this.lifeTime = 0f;
+        this.isPassiveOrb = false;
+    }
+    
+    /// <summary>
+    /// Pasif orb olarak başlatır (yeni sistem)
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <param name="playerTransform">Player transform</param>
+    /// <param name="abilityData">Orb verileri</param>
+    public void InitializeAsPassiveOrb(ElementType elementType, Transform playerTransform, ElementalAbilityData abilityData)
+    {
+        this.elementType = elementType;
+        this.playerTransform = playerTransform;
+        this.isPassiveOrb = true;
+        this.duration = float.MaxValue; // Süresiz
+        this.lifeTime = 0f;
+        this.abilityData = abilityData;
+        this.attackRange = abilityData.orbDetectionRadius;
+        this.damage = 15f; // Sabit damage değeri
+        
+        // Element oluştur
+        this.element = CreateElementFromType(elementType);
+        
+        // Orb pozisyonunu belirle (0, 90, 180, 270 derece)
+        this.orbitAngle = CalculateOrbAngle();
+        
+        Debug.Log($"🔮 Passive {elementType} orb initialized - Range: {attackRange}, Damage: {damage}");
     }
     
     private void Update()
     {
         lifeTime += Time.deltaTime;
         
+        if (isPassiveOrb)
+        {
+            UpdatePassiveOrb();
+        }
+        else
+        {
+            UpdateActiveOrb();
+        }
+    }
+    
+    /// <summary>
+    /// Pasif orb'u günceller (karakter etrafında döner)
+    /// </summary>
+    private void UpdatePassiveOrb()
+    {
+        if (playerTransform == null)
+        {
+            DestroyOrb();
+            return;
+        }
+        
+        // Karakter etrafında dön
+        orbitAngle += rotationSpeed * Time.deltaTime;
+        if (orbitAngle >= 360f) orbitAngle -= 360f;
+        
+        // Pozisyonu hesapla
+        float radians = orbitAngle * Mathf.Deg2Rad;
+        Vector3 orbitPosition = new Vector3(
+            Mathf.Cos(radians) * orbitRadius,
+            Mathf.Sin(radians) * orbitRadius,
+            0f
+        );
+        
+        transform.position = playerTransform.position + orbitPosition;
+        
+        // Otomatik saldırı
+        if (Time.time - lastAttackTime >= attackCooldown)
+        {
+            FindNearestEnemy();
+            if (nearestEnemy != null)
+            {
+                AttackEnemy(nearestEnemy);
+                lastAttackTime = Time.time;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Aktif orb'u günceller (düşmana doğru hareket eder)
+    /// </summary>
+    private void UpdateActiveOrb()
+    {
         // Süre dolduysa yok et
         if (lifeTime >= duration)
         {
-            Destroy(gameObject);
+            DestroyOrb();
             return;
         }
         
@@ -249,7 +329,7 @@ public class ElementalOrbController : MonoBehaviour
     /// </summary>
     private void FindNearestEnemy()
     {
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 10f);
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, attackRange);
         float nearestDistance = float.MaxValue;
         nearestEnemy = null;
         
@@ -258,7 +338,7 @@ public class ElementalOrbController : MonoBehaviour
             if (collider.CompareTag("Enemy"))
             {
                 float distance = Vector3.Distance(transform.position, collider.transform.position);
-                if (distance < nearestDistance)
+                if (distance < nearestDistance && distance <= attackRange)
                 {
                     nearestDistance = distance;
                     nearestEnemy = collider.gameObject;
@@ -267,42 +347,200 @@ public class ElementalOrbController : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Düşmana saldırır (projectile fırlatır)
+    /// </summary>
+    /// <param name="enemy">Hedef düşman</param>
+    private void AttackEnemy(GameObject enemy)
+    {
+        if (enemy == null) return;
+        
+        // Projectile fırlat
+        FireProjectileAtEnemy(enemy);
+        
+        Debug.Log($"🔮 {elementType} orb fired projectile at {enemy.name}");
+    }
+    
+    /// <summary>
+    /// Düşmana projectile fırlatır
+    /// </summary>
+    /// <param name="enemy">Hedef düşman</param>
+    private void FireProjectileAtEnemy(GameObject enemy)
+    {
+        if (abilityData == null || enemy == null) return;
+        
+        GameObject projectileGO;
+        
+        // SO'dan projectile prefab'i varsa kullan
+        if (abilityData.orbProjectilePrefab != null)
+        {
+            projectileGO = Object.Instantiate(abilityData.orbProjectilePrefab, transform.position, Quaternion.identity);
+        }
+        else
+        {
+            // Varsayılan projectile oluştur
+            projectileGO = CreateDefaultProjectile();
+        }
+        
+        // Projectile controller ekle
+        var projectileController = projectileGO.GetComponent<OrbProjectileController>();
+        if (projectileController == null)
+        {
+            projectileController = projectileGO.AddComponent<OrbProjectileController>();
+        }
+        
+        // Projectile'ı initialize et
+        Vector3 direction = (enemy.transform.position - transform.position).normalized;
+        projectileController.Initialize(direction, damage, element, abilityData);
+    }
+    
+    /// <summary>
+    /// Varsayılan projectile oluşturur
+    /// </summary>
+    /// <returns>Projectile GameObject</returns>
+    private GameObject CreateDefaultProjectile()
+    {
+        GameObject projectileGO = new GameObject($"{elementType} Orb Projectile");
+        projectileGO.transform.position = transform.position;
+        projectileGO.transform.localScale = Vector3.one * 0.3f;
+        
+        // Sprite renderer ekle
+        var spriteRenderer = projectileGO.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = CreateProjectileSprite();
+        spriteRenderer.color = element?.ElementColor ?? Color.white;
+        spriteRenderer.sortingOrder = 6;
+        
+        // Collider ekle
+        var collider = projectileGO.AddComponent<CircleCollider2D>();
+        collider.isTrigger = true;
+        collider.radius = 0.1f;
+        
+        return projectileGO;
+    }
+    
+    /// <summary>
+    /// Projectile için küçük sprite oluşturur
+    /// </summary>
+    /// <returns>Projectile sprite</returns>
+    private Sprite CreateProjectileSprite()
+    {
+        int size = 16;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.ARGB32, false);
+        
+        Vector2 center = new Vector2(size / 2f, size / 2f);
+        float radius = size / 2f - 1f;
+        
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                Vector2 pos = new Vector2(x, y);
+                float distance = Vector2.Distance(pos, center);
+                
+                if (distance <= radius)
+                {
+                    texture.SetPixel(x, y, Color.white);
+                }
+                else
+                {
+                    texture.SetPixel(x, y, Color.clear);
+                }
+            }
+        }
+        
+        texture.Apply();
+        
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+        return sprite;
+    }
+    
+
+    
+    /// <summary>
+    /// Orb'u yok eder
+    /// </summary>
+    private void DestroyOrb()
+    {
+        OnOrbDestroyed?.Invoke();
+        Destroy(gameObject);
+    }
+    
+    /// <summary>
+    /// Element türünden IElement oluşturur
+    /// </summary>
+    /// <param name="elementType">Element türü</param>
+    /// <returns>IElement instance</returns>
+    private IElement CreateElementFromType(ElementType elementType)
+    {
+        switch (elementType)
+        {
+            case ElementType.Fire:
+                return new FireElement();
+            case ElementType.Ice:
+                return new IceElement();
+            case ElementType.Poison:
+                return new PoisonElement();
+            case ElementType.Lightning:
+                return new LightningElement();
+            case ElementType.Earth:
+                return new EarthElement();
+            case ElementType.Wind:
+                return new WindElement();
+            default:
+                return new FireElement();
+        }
+    }
+    
+    /// <summary>
+    /// Element türünü döndürür
+    /// </summary>
+    /// <returns>Element türü</returns>
+    public ElementType GetElementType()
+    {
+        return elementType;
+    }
+    
+    /// <summary>
+    /// Orb'un açısını hesaplar (0, 90, 180, 270 derece)
+    /// </summary>
+    /// <returns>Açı değeri</returns>
+    private float CalculateOrbAngle()
+    {
+        // OrbStackManager'dan mevcut orb sayısını al
+        int orbCount = OrbStackManager.Instance?.GetActiveOrbCount() ?? 0;
+        
+        // 4 orb için 90 derece aralıklarla yerleştir
+        float[] angles = { 0f, 90f, 180f, 270f };
+        return angles[orbCount % 4];
+    }
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy"))
+        // Sadece aktif orb'lar için trigger kullan (pasif orb'lar otomatik saldırı yapar)
+        if (!isPassiveOrb && other.CompareTag("Enemy"))
         {
-            // Hasar uygula
-            var health = other.GetComponent<IHealth>();
-            if (health != null)
-            {
-                health.TakeDamage(damage);
-            }
+            AttackEnemy(other.gameObject);
+            DestroyOrb();
+        }
+    }
+    
+    /// <summary>
+    /// Saldırı alanını görselleştirir
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        if (isPassiveOrb)
+        {
+            // Saldırı alanını yeşil renkte göster
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, attackRange);
             
-            // Element stack ekle
-            if (element != null)
+            // Orb'un orbital yolunu mavi renkte göster
+            if (playerTransform != null)
             {
-                element.ApplyElementStack(other.gameObject, 1);
+                Gizmos.color = Color.blue;
+                Gizmos.DrawWireSphere(playerTransform.position, orbitRadius);
             }
-            
-            // Orb VFX'i oluştur
-            if (abilityData?.vfxPrefab != null)
-            {
-                GameObject hitVFX = Object.Instantiate(abilityData.vfxPrefab, transform.position, Quaternion.identity);
-                
-                // Element rengine göre VFX'i ayarla
-                var particleSystem = hitVFX.GetComponent<ParticleSystem>();
-                if (particleSystem != null && element != null)
-                {
-                    var main = particleSystem.main;
-                    main.startColor = element.ElementColor;
-                }
-                
-                // VFX'i kısa süre sonra yok et
-                Destroy(hitVFX, 1f);
-            }
-            
-            // Orb'u yok et
-            Destroy(gameObject);
         }
     }
 } 

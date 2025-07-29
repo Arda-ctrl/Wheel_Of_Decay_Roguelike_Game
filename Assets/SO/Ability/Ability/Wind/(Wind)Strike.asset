@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06a27f312a7bb7e488528ee7465cdd74, type: 3}
+  m_Name: (Wind)Strike
+  m_EditorClassIdentifier: 
+  abilityName: Wind Strike
+  description: Wind element strike - 2 stack'te knockback uygular
+  icon: {fileID: 0}
+  abilityType: 1
+  cooldownDuration: 0
+  manaCost: 0
+  elementType: 6
+  stackAmount: 1
+  strikeDamage: 10
+  fireStackDamage: 5
+  iceSlowPercent: 20
+  poisonStackDamage: 5
+  windKnockbackForce: 8
+  windKnockbackThreshold: 2
+  windKnockbackStunDuration: 0.5
+  damageMultiplier: 1.5
+  flatBonusDamage: 10
+  attackCountForProjectile: 3
+  projectileSpeed: 10
+  projectileDamage: 15
+  projectileRange: 10
+  projectilePrefab: {fileID: 0}
+  fireBurnDamage: 5
+  fireBurnDuration: 3
+  fireBurnTickRate: 0.5
+  iceSlowPercentProjectile: 30
+  iceSlowDurationProjectile: 4
+  iceFreezeChance: 0.1
+  poisonDamageProjectile: 3
+  poisonDurationProjectile: 5
+  poisonTickRateProjectile: 1
+  windForceProjectile: 8
+  windDurationProjectile: 3
+  windSpeedBoostPercent: 25
+  damageReductionPercent: 30
+  armorDuration: 10
+  areaDamageRadius: 3
+  requiredStacksForArea: 5
+  areaDamage: 20
+  areaRadius: 5
+  areaDuration: 5
+  overflowStackAmount: 5
+  overflowDamage: 30
+  requiredEnemyKills: 20
+  burstTriggerStacks: 3
+  burstDamage: 40
+  burstRadius: 4
+  auraRadius: 6
+  auraStackTime: 3
+  orbDuration: 10
+  orbSpeed: 5
+  orbSprite: {fileID: 0}
+  orbDetectionRadius: 8
+  orbProjectilePrefab: {fileID: 0}
+  vfxPrefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
+  sfxClip: {fileID: 0}

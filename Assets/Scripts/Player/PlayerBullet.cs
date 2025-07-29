@@ -144,6 +144,11 @@ public class PlayerBullet : MonoBehaviour
             poisonEff.tickRate = poison.poisonTickRate;
             poisonEff.slowPercent = poison.poisonSlowPercent;
         }
+        else if (elementData is WindElementData wind)
+        {
+            // Wind element için özel efekt (knockback zaten strike'da uygulanıyor)
+            Debug.Log($"💨 Wind element effect applied to {target.name}");
+        }
     }
 
     /// <summary>

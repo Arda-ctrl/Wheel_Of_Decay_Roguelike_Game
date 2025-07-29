@@ -15,7 +15,7 @@ MonoBehaviour:
   abilityName: Elemantal Aura
   description: 
   icon: {fileID: 0}
-  abilityType: 9
+  abilityType: 8
   cooldownDuration: 0
   manaCost: 0
   elementType: 2
@@ -47,9 +47,6 @@ MonoBehaviour:
   areaDamage: 20
   areaRadius: 5
   areaDuration: 5
-  lanceCount: 5
-  lanceDamage: 25
-  lanceRange: 8
   overflowStackAmount: 5
   overflowDamage: 30
   requiredEnemyKills: 20

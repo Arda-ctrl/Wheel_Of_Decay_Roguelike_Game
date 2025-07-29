@@ -21,6 +21,9 @@ public class ElementalStrike : MonoBehaviour, IAbility
     [SerializeField] private float fireStackDamage = 5f; // Fire stack artışında verilen hasar
     [SerializeField] private float iceSlowPercent = 20f; // Ice stack aktifken yavaşlatma yüzdesi
     [SerializeField] private float poisonStackDamage = 5f; // Poison stack artışında verilen hasar
+    [SerializeField] private float windKnockbackForce = 8f; // Wind knockback kuvveti
+    [SerializeField] private int windKnockbackThreshold = 2; // Wind knockback için gerekli stack sayısı
+    [SerializeField] private float windKnockbackStunDuration = 0.5f; // Wind knockback stun süresi
     
     private bool isOnCooldown;
     private float cooldownTimeRemaining;
@@ -54,6 +57,9 @@ public class ElementalStrike : MonoBehaviour, IAbility
         if (data.fireStackDamage > 0) fireStackDamage = data.fireStackDamage;
         if (data.iceSlowPercent > 0) iceSlowPercent = data.iceSlowPercent;
         if (data.poisonStackDamage > 0) poisonStackDamage = data.poisonStackDamage;
+        if (data.windKnockbackForce > 0) windKnockbackForce = data.windKnockbackForce;
+        if (data.windKnockbackThreshold > 0) windKnockbackThreshold = data.windKnockbackThreshold;
+        if (data.windKnockbackStunDuration > 0) windKnockbackStunDuration = data.windKnockbackStunDuration;
     }
     
     private void Update()
@@ -156,9 +162,145 @@ public class ElementalStrike : MonoBehaviour, IAbility
                 }
                 return;
             }
+            else if (targetElementType == ElementType.Wind)
+            {
+                // Wind Strike için knockback kontrolü
+                ApplyWindStrikeEffect(target);
+                return;
+            }
             
             health.TakeDamage(finalDamage);
         }
+    }
+    
+    /// <summary>
+    /// Wind Strike efektini uygular - 2 stack'te knockback
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void ApplyWindStrikeEffect(GameObject target)
+    {
+        var elementStack = target.GetComponent<ElementStack>();
+        if (elementStack == null) return;
+        
+        int windStacks = elementStack.GetElementStack(ElementType.Wind);
+        
+        // Wind element data'sını al
+        var windElementData = GetWindElementData();
+        if (windElementData == null) return;
+        
+        // Stack threshold kontrolü (SO'dan alınan değer)
+        int threshold = windElementData.knockbackStackThreshold;
+        if (windStacks >= threshold)
+        {
+            ApplyKnockback(target, windElementData);
+            Debug.Log($"💨 Wind Strike: {windStacks} stack - KNOCKBACK applied to {target.name} (threshold: {threshold})");
+        }
+        else
+        {
+            Debug.Log($"💨 Wind Strike: {windStacks} stack - No knockback yet (threshold: {threshold})");
+        }
+    }
+    
+    /// <summary>
+    /// Knockback efektini uygular
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    /// <param name="windData">Wind element data</param>
+    private void ApplyKnockback(GameObject target, WindElementData windData)
+    {
+        // Player'dan uzaklaştırma yönünü hesapla
+        Vector3 playerPosition = PlayerController.Instance.transform.position;
+        Vector3 targetPosition = target.transform.position;
+        Vector3 knockbackDirection = (targetPosition - playerPosition).normalized;
+        
+        // Rigidbody2D ile knockback uygula
+        var rb = target.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            // Knockback kuvvetini uygula
+            Vector2 knockbackForce = knockbackDirection * windData.knockbackForce;
+            rb.AddForce(knockbackForce, ForceMode2D.Impulse);
+            
+            // Knockback süresi boyunca hareketi kısıtla
+            StartCoroutine(KnockbackStun(target, windData.knockbackStunDuration));
+        }
+        
+        // VFX ve SFX oynat
+        PlayWindKnockbackEffects(target);
+    }
+    
+    /// <summary>
+    /// Knockback sırasında stun uygular
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    /// <param name="stunDuration">Stun süresi</param>
+    private System.Collections.IEnumerator KnockbackStun(GameObject target, float stunDuration)
+    {
+        var moveable = target.GetComponent<IMoveable>();
+        if (moveable != null)
+        {
+            // Hareketi durdur
+            moveable.SetSpeedMultiplier(0f);
+            
+            yield return new WaitForSeconds(stunDuration);
+            
+            // Hareketi geri aç
+            moveable.SetSpeedMultiplier(1f);
+        }
+    }
+    
+    /// <summary>
+    /// Wind knockback efektlerini oynatır
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void PlayWindKnockbackEffects(GameObject target)
+    {
+        // Wind knockback VFX'i oynat
+        if (abilityData?.vfxPrefab != null)
+        {
+            GameObject vfxInstance = Object.Instantiate(abilityData.vfxPrefab, target.transform.position, Quaternion.identity);
+            
+            // Wind rengine göre VFX'i ayarla
+            var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
+            if (particleSystem != null)
+            {
+                var main = particleSystem.main;
+                main.startColor = Color.cyan; // Wind rengi
+            }
+        }
+        
+        // Wind knockback SFX'i oynat
+        if (abilityData?.sfxClip != null)
+        {
+            AudioManager.Instance?.PlaySFX(abilityData.sfxClip);
+        }
+    }
+    
+    /// <summary>
+    /// Wind element data'sını alır
+    /// </summary>
+    /// <returns>Wind element data</returns>
+    private WindElementData GetWindElementData()
+    {
+        // Player'dan WindElementData'yı al
+        var playerController = PlayerController.Instance;
+        if (playerController != null)
+        {
+            // ElementalAbilityManager'dan wind element data'sını al
+            var elementalManager = playerController.GetComponent<ElementalAbilityManager>();
+            if (elementalManager != null)
+            {
+                // Wind element data'sını bul
+                var windAbility = elementalManager.GetAbility(ElementType.Wind, AbilityType.ElementalStrike);
+                if (windAbility != null)
+                {
+                    // WindElementData'yı döndür (bu kısım implementasyona bağlı)
+                    return Resources.Load<WindElementData>("ElementData/Wind/WindElementData");
+                }
+            }
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -283,5 +425,32 @@ public class ElementalStrike : MonoBehaviour, IAbility
     public float GetPoisonStackDamage()
     {
         return poisonStackDamage;
+    }
+    
+    /// <summary>
+    /// Wind knockback force değerini döndürür
+    /// </summary>
+    /// <returns>Wind knockback force</returns>
+    public float GetWindKnockbackForce()
+    {
+        return windKnockbackForce;
+    }
+    
+    /// <summary>
+    /// Wind knockback threshold değerini döndürür
+    /// </summary>
+    /// <returns>Wind knockback threshold</returns>
+    public int GetWindKnockbackThreshold()
+    {
+        return windKnockbackThreshold;
+    }
+    
+    /// <summary>
+    /// Wind knockback stun duration değerini döndürür
+    /// </summary>
+    /// <returns>Wind knockback stun duration</returns>
+    public float GetWindKnockbackStunDuration()
+    {
+        return windKnockbackStunDuration;
     }
 } 

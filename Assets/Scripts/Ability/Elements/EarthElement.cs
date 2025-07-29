@@ -1,238 +1,322 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
 
 /// <summary>
-/// EarthElement - Toprak elementi
-/// Fiziksel hasar verir ve düşmanları yavaşlatır
+/// EarthElement - Toprak elementinin davranışlarını tanımlar
+/// Earth stack'leri 3 olduğunda hedefi yere sabitler (root efekti)
 /// </summary>
 public class EarthElement : IElement
 {
-    public ElementType ElementType => ElementType.Earth;
     public string ElementName => "Earth";
+    public ElementType ElementType => ElementType.Earth;
     public Color ElementColor => new Color(0.6f, 0.4f, 0.2f); // Brown color
     
     [Header("Earth Element Settings")]
-    private float crushDamagePerStack = 10f;
-    private float crushTickRate = 1.5f; // Her 1.5 saniye hasar
-    private float crushDuration = 5f;
+    private int rootStackThreshold = 3; // 3 stack'te root
+    private float rootDuration = 0.75f; // 0.5-1 saniye arası (0.75 ortalama)
+    private float earthDamage = 6f; // Stack başına hasar
     
-    /// <summary>
-    /// Element stack'ini hedefe uygular
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void ApplyElementStack(GameObject target, int amount)
+    public void ApplyElementStack(GameObject target, int stackAmount = 1)
     {
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack != null)
         {
-            elementStack.AddElementStack(ElementType, amount);
-            Debug.Log($"🌍 Applied {amount} Earth stack to {target.name}");
+            elementStack.AddElementStack(ElementType.Earth, stackAmount);
         }
     }
     
-    /// <summary>
-    /// Element stack'ini hedeften kaldırır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void RemoveElementStack(GameObject target, int amount)
+    public void RemoveElementStack(GameObject target, int stackAmount = 1)
     {
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack != null)
         {
-            elementStack.RemoveElementStack(ElementType, amount);
-            Debug.Log($"🌍 Removed {amount} Earth stack from {target.name}");
+            elementStack.RemoveElementStack(ElementType.Earth, stackAmount);
         }
     }
     
-    /// <summary>
-    /// Element efektini çalıştırır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="stackCount">Mevcut stack sayısı</param>
     public void TriggerElementEffect(GameObject target, int stackCount)
     {
-        // Toprak efekti uygula
-        StartCrushEffect(target, stackCount);
+        // Earth hasar ver
+        ApplyEarthDamage(target, stackCount);
+        
+        // 3 stack'te root efekti uygula
+        if (stackCount >= rootStackThreshold)
+        {
+            ApplyRootEffect(target);
+            
+            // Stack'leri sıfırla (root efekti kullanıldığı için)
+            var elementStack = target.GetComponent<ElementStack>();
+            if (elementStack != null)
+            {
+                elementStack.RemoveElementStack(ElementType.Earth, rootStackThreshold);
+            }
+        }
         
         // VFX ve SFX oynat
         PlayEarthEffects(target);
     }
     
     /// <summary>
-    /// Toprak efektini başlatır
+    /// Earth hasar verir
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     /// <param name="stackCount">Stack sayısı</param>
-    private void StartCrushEffect(GameObject target, int stackCount)
+    private void ApplyEarthDamage(GameObject target, int stackCount)
     {
-        // Mevcut toprak efektini kontrol et
-        var existingCrush = target.GetComponent<ElementalEarthCrushEffect>();
-        if (existingCrush != null)
+        float totalDamage = earthDamage * stackCount;
+        
+        var health = target.GetComponent<IHealth>();
+        if (health != null)
         {
-            // Mevcut efekti güncelle
-            existingCrush.UpdateCrushEffect(stackCount);
-        }
-        else
-        {
-            // Yeni toprak efekti ekle
-            var crushEffect = target.AddComponent<ElementalEarthCrushEffect>();
-            crushEffect.Initialize(stackCount, crushDamagePerStack, crushTickRate, crushDuration);
+            health.TakeDamage(totalDamage);
+            ShowDamageNumber(target, totalDamage);
         }
     }
     
     /// <summary>
-    /// Toprak efektlerini oynatır (VFX ve SFX)
+    /// Root efektini uygular (3 stack'te tetiklenir)
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void ApplyRootEffect(GameObject target)
+    {
+        // Mevcut root efektini kontrol et
+        var existingRoot = target.GetComponent<ElementalEarthRootEffect>();
+        if (existingRoot == null)
+        {
+            // Yeni root efekti ekle
+            var rootEffect = target.AddComponent<ElementalEarthRootEffect>();
+            rootEffect.Initialize(rootDuration);
+        }
+        else
+        {
+            // Mevcut efekti yenile
+            existingRoot.RefreshRoot();
+        }
+    }
+    
+    /// <summary>
+    /// Earth efektlerini oynatır (VFX ve SFX)
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     private void PlayEarthEffects(GameObject target)
     {
-        // VFX oynat
-        if (target.GetComponent<ElementalEarthCrushEffect>() != null)
+        if (target == null) return;
+        
+        try
         {
-            // Toprak particle effect'i oynat
-            var earthVFX = Resources.Load<GameObject>("Prefabs/Effects/EarthCrushVFX");
+            // VFX oynat
+            var earthVFX = Resources.Load<GameObject>("Prefabs/Effects/EarthVFX");
             if (earthVFX != null)
             {
                 GameObject vfxInstance = Object.Instantiate(earthVFX, target.transform.position, Quaternion.identity);
-                vfxInstance.transform.SetParent(target.transform);
+                if (vfxInstance != null)
+                {
+                    vfxInstance.transform.SetParent(target.transform);
+                }
+            }
+            
+            // SFX oynat
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(23); // Earth sound effect
             }
         }
-        
-        // SFX oynat
-        AudioManager.Instance?.PlaySFX(19);
-    }
-    
-    /// <summary>
-    /// Element kombinasyonunu kontrol eder
-    /// </summary>
-    /// <param name="otherElement">Diğer element</param>
-    /// <param name="target">Hedef GameObject</param>
-    public void CheckElementCombination(IElement otherElement, GameObject target)
-    {
-        if (otherElement.ElementType == ElementType.Fire)
+        catch (System.Exception e)
         {
-            // Toprak + Ateş = Lav patlaması
-            ApplyLavaExplosion(target);
-        }
-        else if (otherElement.ElementType == ElementType.Ice)
-        {
-            // Toprak + Buz = Çamur tuzağı
-            ApplyMudTrap(target);
+            Debug.LogWarning($"[EarthElement] PlayEarthEffects failed: {e.Message}");
         }
     }
     
     /// <summary>
-    /// Lav patlaması uygular
+    /// Hasar sayısını gösterir
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void ApplyLavaExplosion(GameObject target)
+    /// <param name="damage">Hasar miktarı</param>
+    private void ShowDamageNumber(GameObject target, float damage)
     {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
+        try
         {
-            health.TakeDamage(60f);
+            // Damage number UI'ı göster
+            var damageNumber = Resources.Load<GameObject>("Prefabs/UI/DamageNumber");
+            if (damageNumber != null)
+            {
+                GameObject numberInstance = Object.Instantiate(damageNumber, target.transform.position, Quaternion.identity);
+                if (numberInstance != null)
+                {
+                    var damageUI = numberInstance.GetComponent<DamageNumberUI>();
+                    if (damageUI != null)
+                    {
+                        damageUI.SetDamage(damage, new Color(0.6f, 0.4f, 0.2f)); // Brown color
+                    }
+                }
+            }
+            else
+            {
+                // Eğer prefab yoksa, runtime'da oluştur
+                CreateDamageNumber(target, damage, new Color(0.6f, 0.4f, 0.2f));
+            }
         }
-        
-        Debug.Log($"🌍 Lava explosion applied to {target.name}");
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[EarthElement] ShowDamageNumber failed: {e.Message}");
+        }
     }
     
     /// <summary>
-    /// Çamur tuzağı uygular
+    /// Runtime'da damage number oluşturur
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void ApplyMudTrap(GameObject target)
+    /// <param name="damage">Hasar miktarı</param>
+    /// <param name="color">Hasar rengi</param>
+    private void CreateDamageNumber(GameObject target, float damage, Color color)
     {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
+        try
         {
-            health.TakeDamage(30f);
+            // Canvas'ı bul
+            Canvas canvas = Object.FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                // Eğer canvas yoksa, yeni bir canvas oluştur
+                GameObject canvasObj = new GameObject("DamageCanvas");
+                canvas = canvasObj.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvasObj.AddComponent<CanvasScaler>();
+                canvasObj.AddComponent<GraphicRaycaster>();
+            }
+            
+            // Damage number GameObject'i oluştur
+            GameObject damageNumberObj = new GameObject("DamageNumber");
+            damageNumberObj.transform.SetParent(canvas.transform, false);
+            
+            // TMP_Text component'i ekle
+            var tmpText = damageNumberObj.AddComponent<TextMeshProUGUI>();
+            tmpText.text = damage.ToString("F0");
+            tmpText.color = color;
+            tmpText.fontSize = 24f;
+            tmpText.alignment = TextAlignmentOptions.Center;
+            
+            // DamageNumberUI component'i ekle
+            var damageNumberUI = damageNumberObj.AddComponent<DamageNumberUI>();
+            
+            // Pozisyonu ayarla
+            if (Camera.main != null)
+            {
+                Vector3 screenPos = Camera.main.WorldToScreenPoint(target.transform.position);
+                damageNumberObj.transform.position = screenPos;
+            }
+            
+            // Animasyonu başlat
+            if (damageNumberUI != null)
+            {
+                damageNumberUI.SetDamage(damage, color);
+            }
         }
-        
-        Debug.Log($"🌍 Mud trap applied to {target.name}");
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[EarthElement] CreateDamageNumber failed: {e.Message}");
+        }
     }
 }
 
 /// <summary>
-/// EarthCrushEffect - Toprak ezme efektini yönetir
+/// EarthRootEffect - Earth root efektini yönetir (Elemental sistem için)
 /// </summary>
-public class ElementalEarthCrushEffect : MonoBehaviour
+public class ElementalEarthRootEffect : MonoBehaviour
 {
-    private int stackCount;
-    private float damagePerStack;
-    private float tickRate;
     private float duration;
-    private float lastTickTime;
     private float elapsedTime;
+    private bool isRooted;
     
-    public void Initialize(int stacks, float damage, float tickRate, float duration)
+    public void Initialize(float rootDuration)
     {
-        this.stackCount = stacks;
-        this.damagePerStack = damage;
-        this.tickRate = tickRate;
-        this.duration = duration;
-        this.lastTickTime = 0f;
+        this.duration = rootDuration;
         this.elapsedTime = 0f;
+        this.isRooted = false;
+        
+        StartRoot();
     }
     
-    public void UpdateCrushEffect(int newStackCount)
+    public void RefreshRoot()
     {
-        this.stackCount = newStackCount;
-        this.elapsedTime = 0f; // Süreyi sıfırla
+        this.elapsedTime = 0f;
+        if (!isRooted)
+        {
+            StartRoot();
+        }
+    }
+    
+    private void StartRoot()
+    {
+        isRooted = true;
+        
+        // Hareketi durdur (ama animasyonu değil, sadece yer değiştirme)
+        var moveable = GetComponent<IMoveable>();
+        if (moveable != null)
+        {
+            moveable.SetSpeedMultiplier(0f);
+        }
+        
+        // Root VFX'i oynat
+        var rootVFX = Resources.Load<GameObject>("Prefabs/Effects/EarthRootVFX");
+        if (rootVFX != null)
+        {
+            GameObject vfxInstance = Object.Instantiate(rootVFX, transform.position, Quaternion.identity);
+            vfxInstance.transform.SetParent(transform);
+        }
+        
+        // Root SFX'i oynat
+        AudioManager.Instance?.PlaySFX(24);
     }
     
     private void Update()
     {
+        if (!isRooted) return;
+        
         elapsedTime += Time.deltaTime;
         
-        // Süre doldu mu kontrol et
         if (elapsedTime >= duration)
         {
-            Destroy(this);
-            return;
-        }
-        
-        // Tick zamanı geldi mi kontrol et
-        if (Time.time - lastTickTime >= tickRate)
-        {
-            ApplyCrushDamage();
-            lastTickTime = Time.time;
+            EndRoot();
         }
     }
     
-    private void ApplyCrushDamage()
+    private void EndRoot()
     {
-        float totalDamage = damagePerStack * stackCount;
+        isRooted = false;
         
-        // Hedefin health component'ine hasar ver
-        var health = GetComponent<IHealth>();
-        if (health != null)
+        // Hareketi geri yükle
+        var moveable = GetComponent<IMoveable>();
+        if (moveable != null)
         {
-            health.TakeDamage(totalDamage);
-            
-            // Hasar sayısını göster
-            ShowDamageNumber(totalDamage);
+            moveable.SetSpeedMultiplier(1f);
         }
-    }
-    
-    private void ShowDamageNumber(float damage)
-    {
-        // Damage number UI'ı göster
-        var damageNumber = Resources.Load<GameObject>("Prefabs/UI/DamageNumber");
-        if (damageNumber != null)
+        
+        // Root VFX'ini temizle
+        var rootVFX = transform.Find("EarthRootVFX(Clone)");
+        if (rootVFX != null)
         {
-            GameObject numberInstance = Object.Instantiate(damageNumber, transform.position, Quaternion.identity);
-            numberInstance.GetComponent<DamageNumberUI>()?.SetDamage(damage, new Color(0.6f, 0.4f, 0.2f));
+            Destroy(rootVFX.gameObject);
         }
+        
+        Destroy(this);
     }
     
     private void OnDestroy()
     {
-        // Toprak efekti bittiğinde VFX'i temizle
-        var earthVFX = transform.Find("EarthCrushVFX(Clone)");
-        if (earthVFX != null)
+        try
         {
-            Destroy(earthVFX.gameObject);
+            // Root efekti bittiğinde VFX'i temizle
+            var rootVFX = transform.Find("EarthRootVFX(Clone)");
+            if (rootVFX != null)
+            {
+                Destroy(rootVFX.gameObject);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[ElementalEarthRootEffect] OnDestroy failed: {e.Message}");
         }
     }
 } 

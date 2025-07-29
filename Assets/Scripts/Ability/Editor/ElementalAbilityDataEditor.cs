@@ -61,11 +61,6 @@ public class ElementalAbilityDataEditor : Editor
     private SerializedProperty areaRadiusProp;
     private SerializedProperty areaDurationProp;
     
-    // Elemental Lance Barrage Settings
-    private SerializedProperty lanceCountProp;
-    private SerializedProperty lanceDamageProp;
-    private SerializedProperty lanceRangeProp;
-    
     // Elemental Overflow Settings
     private SerializedProperty overflowStackAmountProp;
     private SerializedProperty overflowDamageProp;
@@ -81,10 +76,11 @@ public class ElementalAbilityDataEditor : Editor
     private SerializedProperty auraStackTimeProp;
     
     // Elemental Orb Settings
-    private SerializedProperty orbDamageProp;
     private SerializedProperty orbDurationProp;
     private SerializedProperty orbSpeedProp;
-    private SerializedProperty orbPrefabProp;
+    private SerializedProperty orbSpriteProp;
+    private SerializedProperty orbDetectionRadiusProp;
+    private SerializedProperty orbProjectilePrefabProp;
 
     private void OnEnable()
     {
@@ -145,11 +141,6 @@ public class ElementalAbilityDataEditor : Editor
         areaRadiusProp = serializedObject.FindProperty("areaRadius");
         areaDurationProp = serializedObject.FindProperty("areaDuration");
         
-        // Elemental Lance Barrage Settings
-        lanceCountProp = serializedObject.FindProperty("lanceCount");
-        lanceDamageProp = serializedObject.FindProperty("lanceDamage");
-        lanceRangeProp = serializedObject.FindProperty("lanceRange");
-        
         // Elemental Overflow Settings
         overflowStackAmountProp = serializedObject.FindProperty("overflowStackAmount");
         overflowDamageProp = serializedObject.FindProperty("overflowDamage");
@@ -165,10 +156,11 @@ public class ElementalAbilityDataEditor : Editor
         auraStackTimeProp = serializedObject.FindProperty("auraStackTime");
         
         // Elemental Orb Settings
-        orbDamageProp = serializedObject.FindProperty("orbDamage");
         orbDurationProp = serializedObject.FindProperty("orbDuration");
         orbSpeedProp = serializedObject.FindProperty("orbSpeed");
-        orbPrefabProp = serializedObject.FindProperty("orbPrefab");
+        orbSpriteProp = serializedObject.FindProperty("orbSprite");
+        orbDetectionRadiusProp = serializedObject.FindProperty("orbDetectionRadius");
+        orbProjectilePrefabProp = serializedObject.FindProperty("orbProjectilePrefab");
     }
 
     public override void OnInspectorGUI()
@@ -215,9 +207,6 @@ public class ElementalAbilityDataEditor : Editor
                 break;
             case AbilityType.ElementalArea:
                 ShowElementalAreaSettings();
-                break;
-            case AbilityType.ElementalLanceBarrage:
-                ShowElementalLanceBarrageSettings();
                 break;
             case AbilityType.ElementalOverflow:
                 ShowElementalOverflowSettings();
@@ -326,15 +315,6 @@ public class ElementalAbilityDataEditor : Editor
         EditorGUILayout.PropertyField(areaDurationProp);
     }
     
-    private void ShowElementalLanceBarrageSettings()
-    {
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Elemental Lance Barrage Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(lanceCountProp);
-        EditorGUILayout.PropertyField(lanceDamageProp);
-        EditorGUILayout.PropertyField(lanceRangeProp);
-    }
-    
     private void ShowElementalOverflowSettings()
     {
         EditorGUILayout.Space();
@@ -365,9 +345,17 @@ public class ElementalAbilityDataEditor : Editor
     {
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Elemental Orb Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(orbDamageProp);
+        EditorGUILayout.HelpBox("Damage is fixed at 15 and managed by code", MessageType.Info);
         EditorGUILayout.PropertyField(orbDurationProp);
         EditorGUILayout.PropertyField(orbSpeedProp);
-        EditorGUILayout.PropertyField(orbPrefabProp);
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Visual Settings", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(orbSpriteProp);
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Detection & Projectile Settings", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(orbDetectionRadiusProp);
+        EditorGUILayout.PropertyField(orbProjectilePrefabProp);
     }
 } 

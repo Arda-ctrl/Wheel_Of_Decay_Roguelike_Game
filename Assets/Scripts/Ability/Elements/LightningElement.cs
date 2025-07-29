@@ -1,238 +1,330 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
 
 /// <summary>
-/// LightningElement - Şimşek elementi
-/// Elektrik hasarı verir ve düşmanları sersemletir
+/// LightningElement - Yıldırım elementinin davranışlarını tanımlar
+/// Lightning stack'leri hedefe stun efekti uygular (%10 şans)
 /// </summary>
 public class LightningElement : IElement
 {
-    public ElementType ElementType => ElementType.Lightning;
     public string ElementName => "Lightning";
+    public ElementType ElementType => ElementType.Lightning;
     public Color ElementColor => Color.yellow;
     
     [Header("Lightning Element Settings")]
-    private float shockDamagePerStack = 8f;
-    private float shockTickRate = 0.5f; // Her 0.5 saniye hasar
-    private float shockDuration = 4f;
+    private float stunChance = 0.1f; // %10 stun şansı
+    private float stunDuration = 1f; // 1 saniye stun
+    private float lightningDamage = 8f; // Stack başına hasar
     
-    /// <summary>
-    /// Element stack'ini hedefe uygular
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void ApplyElementStack(GameObject target, int amount)
+    public void ApplyElementStack(GameObject target, int stackAmount = 1)
     {
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack != null)
         {
-            elementStack.AddElementStack(ElementType, amount);
-            Debug.Log($"⚡ Applied {amount} Lightning stack to {target.name}");
+            elementStack.AddElementStack(ElementType.Lightning, stackAmount);
         }
     }
     
-    /// <summary>
-    /// Element stack'ini hedeften kaldırır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void RemoveElementStack(GameObject target, int amount)
+    public void RemoveElementStack(GameObject target, int stackAmount = 1)
     {
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack != null)
         {
-            elementStack.RemoveElementStack(ElementType, amount);
-            Debug.Log($"⚡ Removed {amount} Lightning stack from {target.name}");
+            elementStack.RemoveElementStack(ElementType.Lightning, stackAmount);
         }
     }
     
-    /// <summary>
-    /// Element efektini çalıştırır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="stackCount">Mevcut stack sayısı</param>
     public void TriggerElementEffect(GameObject target, int stackCount)
     {
-        // Şimşek efekti uygula
-        StartShockEffect(target, stackCount);
+        // Lightning hasar ver
+        ApplyLightningDamage(target, stackCount);
+        
+        // Stun şansını kontrol et
+        float randomValue = Random.Range(0f, 1f);
+        if (randomValue <= stunChance)
+        {
+            ApplyStunEffect(target);
+        }
         
         // VFX ve SFX oynat
         PlayLightningEffects(target);
     }
     
     /// <summary>
-    /// Şimşek efektini başlatır
+    /// Lightning hasar verir
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     /// <param name="stackCount">Stack sayısı</param>
-    private void StartShockEffect(GameObject target, int stackCount)
+    private void ApplyLightningDamage(GameObject target, int stackCount)
     {
-        // Mevcut şimşek efektini kontrol et
-        var existingShock = target.GetComponent<ElementalLightningShockEffect>();
-        if (existingShock != null)
+        float totalDamage = lightningDamage * stackCount;
+        
+        var health = target.GetComponent<IHealth>();
+        if (health != null)
         {
-            // Mevcut efekti güncelle
-            existingShock.UpdateShockEffect(stackCount);
-        }
-        else
-        {
-            // Yeni şimşek efekti ekle
-            var shockEffect = target.AddComponent<ElementalLightningShockEffect>();
-            shockEffect.Initialize(stackCount, shockDamagePerStack, shockTickRate, shockDuration);
+            health.TakeDamage(totalDamage);
+            ShowDamageNumber(target, totalDamage);
         }
     }
     
     /// <summary>
-    /// Şimşek efektlerini oynatır (VFX ve SFX)
+    /// Stun efektini uygular
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void ApplyStunEffect(GameObject target)
+    {
+        // Mevcut stun efektini kontrol et
+        var existingStun = target.GetComponent<ElementalLightningStunEffect>();
+        if (existingStun == null)
+        {
+            // Yeni stun efekti ekle
+            var stunEffect = target.AddComponent<ElementalLightningStunEffect>();
+            stunEffect.Initialize(stunDuration);
+        }
+        else
+        {
+            // Mevcut efekti yenile
+            existingStun.RefreshStun();
+        }
+    }
+    
+    /// <summary>
+    /// Lightning efektlerini oynatır (VFX ve SFX)
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     private void PlayLightningEffects(GameObject target)
     {
-        // VFX oynat
-        if (target.GetComponent<ElementalLightningShockEffect>() != null)
+        if (target == null) return;
+        
+        try
         {
-            // Şimşek particle effect'i oynat
-            var lightningVFX = Resources.Load<GameObject>("Prefabs/Effects/LightningShockVFX");
+            // VFX oynat
+            var lightningVFX = Resources.Load<GameObject>("Prefabs/Effects/LightningVFX");
             if (lightningVFX != null)
             {
                 GameObject vfxInstance = Object.Instantiate(lightningVFX, target.transform.position, Quaternion.identity);
-                vfxInstance.transform.SetParent(target.transform);
+                if (vfxInstance != null)
+                {
+                    vfxInstance.transform.SetParent(target.transform);
+                }
+            }
+            
+            // SFX oynat
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(21); // Lightning sound effect
             }
         }
-        
-        // SFX oynat
-        AudioManager.Instance?.PlaySFX(18);
-    }
-    
-    /// <summary>
-    /// Element kombinasyonunu kontrol eder
-    /// </summary>
-    /// <param name="otherElement">Diğer element</param>
-    /// <param name="target">Hedef GameObject</param>
-    public void CheckElementCombination(IElement otherElement, GameObject target)
-    {
-        if (otherElement.ElementType == ElementType.Ice)
+        catch (System.Exception e)
         {
-            // Şimşek + Buz = Elektrik şoku
-            ApplyElectricShock(target);
-        }
-        else if (otherElement.ElementType == ElementType.Fire)
-        {
-            // Şimşek + Ateş = Plazma patlaması
-            ApplyPlasmaExplosion(target);
+            Debug.LogWarning($"[LightningElement] PlayLightningEffects failed: {e.Message}");
         }
     }
     
     /// <summary>
-    /// Elektrik şoku uygular
+    /// Hasar sayısını gösterir
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void ApplyElectricShock(GameObject target)
+    /// <param name="damage">Hasar miktarı</param>
+    private void ShowDamageNumber(GameObject target, float damage)
     {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
+        try
         {
-            health.TakeDamage(50f);
+            // Damage number UI'ı göster
+            var damageNumber = Resources.Load<GameObject>("Prefabs/UI/DamageNumber");
+            if (damageNumber != null)
+            {
+                GameObject numberInstance = Object.Instantiate(damageNumber, target.transform.position, Quaternion.identity);
+                if (numberInstance != null)
+                {
+                    var damageUI = numberInstance.GetComponent<DamageNumberUI>();
+                    if (damageUI != null)
+                    {
+                        damageUI.SetDamage(damage, Color.yellow);
+                    }
+                }
+            }
+            else
+            {
+                // Eğer prefab yoksa, runtime'da oluştur
+                CreateDamageNumber(target, damage, Color.yellow);
+            }
         }
-        
-        Debug.Log($"⚡ Electric shock applied to {target.name}");
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[LightningElement] ShowDamageNumber failed: {e.Message}");
+        }
     }
     
     /// <summary>
-    /// Plazma patlaması uygular
+    /// Runtime'da damage number oluşturur
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void ApplyPlasmaExplosion(GameObject target)
+    /// <param name="damage">Hasar miktarı</param>
+    /// <param name="color">Hasar rengi</param>
+    private void CreateDamageNumber(GameObject target, float damage, Color color)
     {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
+        try
         {
-            health.TakeDamage(75f);
+            // Canvas'ı bul
+            Canvas canvas = Object.FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                // Eğer canvas yoksa, yeni bir canvas oluştur
+                GameObject canvasObj = new GameObject("DamageCanvas");
+                canvas = canvasObj.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvasObj.AddComponent<CanvasScaler>();
+                canvasObj.AddComponent<GraphicRaycaster>();
+            }
+            
+            // Damage number GameObject'i oluştur
+            GameObject damageNumberObj = new GameObject("DamageNumber");
+            damageNumberObj.transform.SetParent(canvas.transform, false);
+            
+            // TMP_Text component'i ekle
+            var tmpText = damageNumberObj.AddComponent<TextMeshProUGUI>();
+            tmpText.text = damage.ToString("F0");
+            tmpText.color = color;
+            tmpText.fontSize = 24f;
+            tmpText.alignment = TextAlignmentOptions.Center;
+            
+            // DamageNumberUI component'i ekle
+            var damageNumberUI = damageNumberObj.AddComponent<DamageNumberUI>();
+            
+            // Pozisyonu ayarla
+            if (Camera.main != null)
+            {
+                Vector3 screenPos = Camera.main.WorldToScreenPoint(target.transform.position);
+                damageNumberObj.transform.position = screenPos;
+            }
+            
+            // Animasyonu başlat
+            if (damageNumberUI != null)
+            {
+                damageNumberUI.SetDamage(damage, color);
+            }
         }
-        
-        Debug.Log($"⚡ Plasma explosion applied to {target.name}");
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[LightningElement] CreateDamageNumber failed: {e.Message}");
+        }
     }
 }
 
 /// <summary>
-/// LightningShockEffect - Şimşek şok efektini yönetir
+/// LightningStunEffect - Lightning stun efektini yönetir (Elemental sistem için)
 /// </summary>
-public class ElementalLightningShockEffect : MonoBehaviour
+public class ElementalLightningStunEffect : MonoBehaviour
 {
-    private int stackCount;
-    private float damagePerStack;
-    private float tickRate;
     private float duration;
-    private float lastTickTime;
     private float elapsedTime;
+    private bool isStunned;
     
-    public void Initialize(int stacks, float damage, float tickRate, float duration)
+    public void Initialize(float stunDuration)
     {
-        this.stackCount = stacks;
-        this.damagePerStack = damage;
-        this.tickRate = tickRate;
-        this.duration = duration;
-        this.lastTickTime = 0f;
+        this.duration = stunDuration;
         this.elapsedTime = 0f;
+        this.isStunned = false;
+        
+        StartStun();
     }
     
-    public void UpdateShockEffect(int newStackCount)
+    public void RefreshStun()
     {
-        this.stackCount = newStackCount;
-        this.elapsedTime = 0f; // Süreyi sıfırla
+        this.elapsedTime = 0f;
+        if (!isStunned)
+        {
+            StartStun();
+        }
+    }
+    
+    private void StartStun()
+    {
+        isStunned = true;
+        
+        // Hareketi durdur
+        var moveable = GetComponent<IMoveable>();
+        if (moveable != null)
+        {
+            moveable.SetSpeedMultiplier(0f);
+        }
+        
+        // Animasyonu durdur
+        var animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.speed = 0f;
+        }
+        
+        // Stun VFX'i oynat
+        var stunVFX = Resources.Load<GameObject>("Prefabs/Effects/LightningStunVFX");
+        if (stunVFX != null)
+        {
+            GameObject vfxInstance = Object.Instantiate(stunVFX, transform.position, Quaternion.identity);
+            vfxInstance.transform.SetParent(transform);
+        }
+        
+        // Stun SFX'i oynat
+        AudioManager.Instance?.PlaySFX(22);
     }
     
     private void Update()
     {
+        if (!isStunned) return;
+        
         elapsedTime += Time.deltaTime;
         
-        // Süre doldu mu kontrol et
         if (elapsedTime >= duration)
         {
-            Destroy(this);
-            return;
-        }
-        
-        // Tick zamanı geldi mi kontrol et
-        if (Time.time - lastTickTime >= tickRate)
-        {
-            ApplyShockDamage();
-            lastTickTime = Time.time;
+            EndStun();
         }
     }
     
-    private void ApplyShockDamage()
+    private void EndStun()
     {
-        float totalDamage = damagePerStack * stackCount;
+        isStunned = false;
         
-        // Hedefin health component'ine hasar ver
-        var health = GetComponent<IHealth>();
-        if (health != null)
+        // Hareketi geri yükle
+        var moveable = GetComponent<IMoveable>();
+        if (moveable != null)
         {
-            health.TakeDamage(totalDamage);
-            
-            // Hasar sayısını göster
-            ShowDamageNumber(totalDamage);
+            moveable.SetSpeedMultiplier(1f);
         }
-    }
-    
-    private void ShowDamageNumber(float damage)
-    {
-        // Damage number UI'ı göster
-        var damageNumber = Resources.Load<GameObject>("Prefabs/UI/DamageNumber");
-        if (damageNumber != null)
+        
+        // Animasyonu geri yükle
+        var animator = GetComponent<Animator>();
+        if (animator != null)
         {
-            GameObject numberInstance = Object.Instantiate(damageNumber, transform.position, Quaternion.identity);
-            numberInstance.GetComponent<DamageNumberUI>()?.SetDamage(damage, Color.yellow);
+            animator.speed = 1f;
         }
+        
+        // Stun VFX'ini temizle
+        var stunVFX = transform.Find("LightningStunVFX(Clone)");
+        if (stunVFX != null)
+        {
+            Destroy(stunVFX.gameObject);
+        }
+        
+        Destroy(this);
     }
     
     private void OnDestroy()
     {
-        // Şimşek efekti bittiğinde VFX'i temizle
-        var lightningVFX = transform.Find("LightningShockVFX(Clone)");
-        if (lightningVFX != null)
+        try
         {
-            Destroy(lightningVFX.gameObject);
+            // Stun efekti bittiğinde VFX'i temizle
+            var stunVFX = transform.Find("LightningStunVFX(Clone)");
+            if (stunVFX != null)
+            {
+                Destroy(stunVFX.gameObject);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[ElementalLightningStunEffect] OnDestroy failed: {e.Message}");
         }
     }
 } 

@@ -91,7 +91,28 @@ public class PlayerController : MonoBehaviour
             elementalAbilityManager = GetComponent<ElementalAbilityManager>();
         }
         
+        // OrbStackManager'ı initialize et
+        InitializeOrbStackManager();
+        
         Debug.Log("🎮 PlayerController initialized with Elemental Ability System");
+    }
+    
+    /// <summary>
+    /// OrbStackManager'ı initialize eder
+    /// </summary>
+    private void InitializeOrbStackManager()
+    {
+        // OrbStackManager yoksa oluştur
+        if (OrbStackManager.Instance == null)
+        {
+            GameObject orbManagerGO = new GameObject("OrbStackManager");
+            orbManagerGO.AddComponent<OrbStackManager>();
+            Debug.Log("🔮 OrbStackManager created and initialized");
+        }
+        else
+        {
+            Debug.Log("🔮 OrbStackManager already exists");
+        }
     }
 
     void Update()
@@ -150,6 +171,12 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.M))
         {
             TestManaSystem();
+        }
+        
+        // Orb sistem test için O tuşu kontrolü
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            TestOrbSystem();
         }
     }
 
@@ -315,5 +342,21 @@ public class PlayerController : MonoBehaviour
     public float GetPoisonDamage()
     {
         return poisonDamage;
+    }
+    
+    private void TestOrbSystem()
+    {
+        var orbManager = OrbStackManager.Instance;
+        if (orbManager != null)
+        {
+            Debug.Log($"🔮 Active Orbs: {orbManager.GetActiveOrbCount()}/4");
+            Debug.Log($"🔮 Fire Stacks: {orbManager.GetCollectedStacks(ElementType.Fire)}");
+            Debug.Log($"🔮 Ice Stacks: {orbManager.GetCollectedStacks(ElementType.Ice)}");
+            Debug.Log($"🔮 Poison Stacks: {orbManager.GetCollectedStacks(ElementType.Poison)}");
+        }
+        else
+        {
+            Debug.Log("❌ OrbStackManager not found");
+        }
     }
 }

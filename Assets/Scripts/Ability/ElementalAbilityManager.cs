@@ -156,6 +156,9 @@ public class ElementalAbilityManager : MonoBehaviour
                         case ElementType.Poison:
                             element = new PoisonElement();
                             break;
+                        case ElementType.Wind:
+                            element = new WindElement();
+                            break;
                         // Diğer elementler eklenebilir
                         default:
                             continue;

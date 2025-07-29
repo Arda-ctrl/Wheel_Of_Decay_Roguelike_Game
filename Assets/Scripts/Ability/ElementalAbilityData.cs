@@ -28,6 +28,9 @@ public class ElementalAbilityData : ScriptableObject
     public float fireStackDamage = 5f; // Fire stack artışında verilen hasar
     public float iceSlowPercent = 20f; // Ice stack aktifken yavaşlatma yüzdesi
     public float poisonStackDamage = 5f; // Poison stack artışında verilen hasar
+    public float windKnockbackForce = 8f; // Wind knockback kuvveti
+    public int windKnockbackThreshold = 2; // Wind knockback için gerekli stack sayısı
+    public float windKnockbackStunDuration = 0.5f; // Wind knockback stun süresi
     
     [Header("Elemental Buff Settings")]
     public float damageMultiplier = 1.5f;
@@ -57,6 +60,11 @@ public class ElementalAbilityData : ScriptableObject
     public float poisonDurationProjectile = 5f;
     public float poisonTickRateProjectile = 1f;
     
+    // Wind Projectile Settings
+    public float windForceProjectile = 8f;
+    public float windDurationProjectile = 3f;
+    public float windSpeedBoostPercent = 25f;
+    
     [Header("Elemental Armor Settings")]
     public float damageReductionPercent = 30f;
     public float armorDuration = 10f;
@@ -67,11 +75,6 @@ public class ElementalAbilityData : ScriptableObject
     public float areaDamage = 20f;
     public float areaRadius = 5f;
     public float areaDuration = 5f;
-    
-    [Header("Elemental Lance Barrage Settings")]
-    public int lanceCount = 5;
-    public float lanceDamage = 25f;
-    public float lanceRange = 8f;
     
     [Header("Elemental Overflow Settings")]
     public int overflowStackAmount = 5;
@@ -88,10 +91,11 @@ public class ElementalAbilityData : ScriptableObject
     public float auraStackTime = 2f;
     
     [Header("Elemental Orb Settings")]
-    public float orbDamage = 15f;
     public float orbDuration = 10f;
     public float orbSpeed = 5f;
-    public GameObject orbPrefab;
+    public Sprite orbSprite; // Orb'un görüntüsü
+    public float orbDetectionRadius = 8f; // Düşman algılama alanı
+    public GameObject orbProjectilePrefab; // Orb'un fırlattığı mermi
     
     [Header("Visual and Audio")]
     public GameObject vfxPrefab;
@@ -122,9 +126,6 @@ public class ElementalAbilityData : ScriptableObject
                 break;
             case AbilityType.ElementalArea:
                 ability = CreateElementalArea(caster);
-                break;
-            case AbilityType.ElementalLanceBarrage:
-                ability = CreateElementalLanceBarrage(caster);
                 break;
             case AbilityType.ElementalOverflow:
                 ability = CreateElementalOverflow(caster);
@@ -171,6 +172,9 @@ public class ElementalAbilityData : ScriptableObject
             case ElementType.Wind:
                 element = new WindElement();
                 break;
+            case ElementType.Void:
+                element = new VoidElement();
+                break;
         }
         
         return element;
@@ -210,13 +214,6 @@ public class ElementalAbilityData : ScriptableObject
         var area = caster.AddComponent<ElementalArea>();
         area.Initialize(this);
         return area;
-    }
-    
-    private ElementalLanceBarrage CreateElementalLanceBarrage(GameObject caster)
-    {
-        var lance = caster.AddComponent<ElementalLanceBarrage>();
-        lance.Initialize(this);
-        return lance;
     }
     
     private ElementalOverflow CreateElementalOverflow(GameObject caster)

@@ -773,6 +773,9 @@ public class ElementalProjectileObject : MonoBehaviour
             case ElementType.Poison:
                 ApplyPoisonEffect(target);
                 break;
+            case ElementType.Wind:
+                ApplyWindEffect(target);
+                break;
         }
     }
     
@@ -832,6 +835,19 @@ public class ElementalProjectileObject : MonoBehaviour
         poisonEffect.duration = abilityData.poisonDurationProjectile;
         poisonEffect.tickRate = abilityData.poisonTickRateProjectile;
         poisonEffect.slowPercent = 0.2f;
+    }
+    
+    private void ApplyWindEffect(GameObject target)
+    {
+        var existingWind = target.GetComponent<TempWindEffect>();
+        if (existingWind != null)
+        {
+            Object.Destroy(existingWind);
+        }
+        
+        var windEffect = target.AddComponent<TempWindEffect>();
+        windEffect.windForce = abilityData.windForceProjectile;
+        windEffect.duration = abilityData.windDurationProjectile;
     }
     
     private void PlayHitEffects(Vector3 hitPosition)

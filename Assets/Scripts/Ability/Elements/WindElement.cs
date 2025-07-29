@@ -1,238 +1,182 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
 
 /// <summary>
-/// WindElement - Rüzgar elementi
-/// Hızlı hasar verir ve düşmanları itebilir
+/// Wind Element - Rüzgar element'i için temel sınıf
+/// Knockback ve hız artışı efektleri sağlar
 /// </summary>
 public class WindElement : IElement
 {
-    public ElementType ElementType => ElementType.Wind;
     public string ElementName => "Wind";
     public Color ElementColor => Color.cyan;
-    
-    [Header("Wind Element Settings")]
-    private float windDamagePerStack = 6f;
-    private float windTickRate = 0.8f; // Her 0.8 saniye hasar
-    private float windDuration = 3f;
+    public ElementType ElementType => ElementType.Wind;
     
     /// <summary>
-    /// Element stack'ini hedefe uygular
+    /// Wind element stack'ini hedefe uygular
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void ApplyElementStack(GameObject target, int amount)
+    /// <param name="stackAmount">Stack miktarı</param>
+    public void ApplyElementStack(GameObject target, int stackAmount)
+    {
+        var elementStack = target.GetComponent<ElementStack>();
+        if (elementStack == null)
+        {
+            elementStack = target.AddComponent<ElementStack>();
+        }
+        
+        elementStack.AddElementStack(ElementType.Wind, stackAmount);
+        Debug.Log($"💨 Wind element stack applied to {target.name}: +{stackAmount}");
+    }
+    
+    /// <summary>
+    /// Wind element efektini uygular
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    public void ApplyElementEffect(GameObject target)
+    {
+        // Wind element efektleri burada uygulanabilir
+        // Örneğin: Hız artışı, knockback, vb.
+        Debug.Log($"💨 Wind element effect applied to {target.name}");
+    }
+    
+    /// <summary>
+    /// Wind element stack'ini kaldırır
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    /// <param name="stackAmount">Kaldırılacak stack miktarı</param>
+    public void RemoveElementStack(GameObject target, int stackAmount)
     {
         var elementStack = target.GetComponent<ElementStack>();
         if (elementStack != null)
         {
-            elementStack.AddElementStack(ElementType, amount);
-            Debug.Log($"💨 Applied {amount} Wind stack to {target.name}");
+            elementStack.RemoveElementStack(ElementType.Wind, stackAmount);
+            Debug.Log($"💨 Wind element stack removed from {target.name}: -{stackAmount}");
         }
     }
     
     /// <summary>
-    /// Element stack'ini hedeften kaldırır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="amount">Stack miktarı</param>
-    public void RemoveElementStack(GameObject target, int amount)
-    {
-        var elementStack = target.GetComponent<ElementStack>();
-        if (elementStack != null)
-        {
-            elementStack.RemoveElementStack(ElementType, amount);
-            Debug.Log($"💨 Removed {amount} Wind stack from {target.name}");
-        }
-    }
-    
-    /// <summary>
-    /// Element efektini çalıştırır
+    /// Wind element efektini çalıştırır
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
     /// <param name="stackCount">Mevcut stack sayısı</param>
     public void TriggerElementEffect(GameObject target, int stackCount)
     {
-        // Rüzgar efekti uygula
-        StartWindEffect(target, stackCount);
+        // Wind element data'sını al
+        var windElementData = GetWindElementData();
+        if (windElementData == null) return;
         
-        // VFX ve SFX oynat
-        PlayWindEffects(target);
-    }
-    
-    /// <summary>
-    /// Rüzgar efektini başlatır
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    /// <param name="stackCount">Stack sayısı</param>
-    private void StartWindEffect(GameObject target, int stackCount)
-    {
-        // Mevcut rüzgar efektini kontrol et
-        var existingWind = target.GetComponent<ElementalWindEffect>();
-        if (existingWind != null)
+        // 2 stack'te knockback uygula
+        if (stackCount >= windElementData.knockbackStackThreshold)
         {
-            // Mevcut efekti güncelle
-            existingWind.UpdateWindEffect(stackCount);
+            ApplyKnockbackEffect(target, windElementData);
+            Debug.Log($"💨 Wind TriggerElementEffect: {stackCount} stack - KNOCKBACK applied to {target.name}");
         }
         else
         {
-            // Yeni rüzgar efekti ekle
-            var windEffect = target.AddComponent<ElementalWindEffect>();
-            windEffect.Initialize(stackCount, windDamagePerStack, windTickRate, windDuration);
+            Debug.Log($"💨 Wind TriggerElementEffect: {stackCount} stack - No knockback yet");
         }
     }
     
     /// <summary>
-    /// Rüzgar efektlerini oynatır (VFX ve SFX)
+    /// Knockback efektini uygular
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void PlayWindEffects(GameObject target)
+    /// <param name="windData">Wind element data</param>
+    private void ApplyKnockbackEffect(GameObject target, WindElementData windData)
     {
-        // VFX oynat
-        if (target.GetComponent<ElementalWindEffect>() != null)
+        // Player'dan uzaklaştırma yönünü hesapla
+        Vector3 playerPosition = PlayerController.Instance.transform.position;
+        Vector3 targetPosition = target.transform.position;
+        Vector3 knockbackDirection = (targetPosition - playerPosition).normalized;
+        
+        // Rigidbody2D ile knockback uygula
+        var rb = target.GetComponent<Rigidbody2D>();
+        if (rb != null)
         {
-            // Rüzgar particle effect'i oynat
-            var windVFX = Resources.Load<GameObject>("Prefabs/Effects/WindVFX");
-            if (windVFX != null)
+            // Knockback kuvvetini uygula
+            Vector2 knockbackForce = knockbackDirection * windData.knockbackForce;
+            rb.AddForce(knockbackForce, ForceMode2D.Impulse);
+            
+            // Knockback süresi boyunca hareketi kısıtla
+            // Target'ta zaten bir MonoBehaviour component'i olmalı (EnemyController gibi)
+            var targetMonoBehaviour = target.GetComponent<MonoBehaviour>();
+            if (targetMonoBehaviour != null)
             {
-                GameObject vfxInstance = Object.Instantiate(windVFX, target.transform.position, Quaternion.identity);
-                vfxInstance.transform.SetParent(target.transform);
+                targetMonoBehaviour.StartCoroutine(KnockbackStun(target, windData.knockbackStunDuration));
             }
         }
         
-        // SFX oynat
-        AudioManager.Instance?.PlaySFX(20);
+        // VFX ve SFX oynat
+        PlayWindKnockbackEffects(target);
     }
     
     /// <summary>
-    /// Element kombinasyonunu kontrol eder
-    /// </summary>
-    /// <param name="otherElement">Diğer element</param>
-    /// <param name="target">Hedef GameObject</param>
-    public void CheckElementCombination(IElement otherElement, GameObject target)
-    {
-        if (otherElement.ElementType == ElementType.Fire)
-        {
-            // Rüzgar + Ateş = Alev fırtınası
-            ApplyFlameStorm(target);
-        }
-        else if (otherElement.ElementType == ElementType.Ice)
-        {
-            // Rüzgar + Buz = Buz fırtınası
-            ApplyIceStorm(target);
-        }
-    }
-    
-    /// <summary>
-    /// Alev fırtınası uygular
+    /// Knockback sırasında stun uygular
     /// </summary>
     /// <param name="target">Hedef GameObject</param>
-    private void ApplyFlameStorm(GameObject target)
+    /// <param name="stunDuration">Stun süresi</param>
+    private System.Collections.IEnumerator KnockbackStun(GameObject target, float stunDuration)
     {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
+        var moveable = target.GetComponent<IMoveable>();
+        if (moveable != null)
         {
-            health.TakeDamage(45f);
-        }
-        
-        Debug.Log($"💨 Flame storm applied to {target.name}");
-    }
-    
-    /// <summary>
-    /// Buz fırtınası uygular
-    /// </summary>
-    /// <param name="target">Hedef GameObject</param>
-    private void ApplyIceStorm(GameObject target)
-    {
-        var health = target.GetComponent<IHealth>();
-        if (health != null)
-        {
-            health.TakeDamage(35f);
-        }
-        
-        Debug.Log($"💨 Ice storm applied to {target.name}");
-    }
-}
-
-/// <summary>
-/// WindEffect - Rüzgar efektini yönetir
-/// </summary>
-public class ElementalWindEffect : MonoBehaviour
-{
-    private int stackCount;
-    private float damagePerStack;
-    private float tickRate;
-    private float duration;
-    private float lastTickTime;
-    private float elapsedTime;
-    
-    public void Initialize(int stacks, float damage, float tickRate, float duration)
-    {
-        this.stackCount = stacks;
-        this.damagePerStack = damage;
-        this.tickRate = tickRate;
-        this.duration = duration;
-        this.lastTickTime = 0f;
-        this.elapsedTime = 0f;
-    }
-    
-    public void UpdateWindEffect(int newStackCount)
-    {
-        this.stackCount = newStackCount;
-        this.elapsedTime = 0f; // Süreyi sıfırla
-    }
-    
-    private void Update()
-    {
-        elapsedTime += Time.deltaTime;
-        
-        // Süre doldu mu kontrol et
-        if (elapsedTime >= duration)
-        {
-            Destroy(this);
-            return;
-        }
-        
-        // Tick zamanı geldi mi kontrol et
-        if (Time.time - lastTickTime >= tickRate)
-        {
-            ApplyWindDamage();
-            lastTickTime = Time.time;
-        }
-    }
-    
-    private void ApplyWindDamage()
-    {
-        float totalDamage = damagePerStack * stackCount;
-        
-        // Hedefin health component'ine hasar ver
-        var health = GetComponent<IHealth>();
-        if (health != null)
-        {
-            health.TakeDamage(totalDamage);
+            // Hareketi durdur
+            moveable.SetSpeedMultiplier(0f);
             
-            // Hasar sayısını göster
-            ShowDamageNumber(totalDamage);
+            yield return new WaitForSeconds(stunDuration);
+            
+            // Hareketi geri aç
+            moveable.SetSpeedMultiplier(1f);
         }
     }
     
-    private void ShowDamageNumber(float damage)
+    /// <summary>
+    /// Wind knockback efektlerini oynatır
+    /// </summary>
+    /// <param name="target">Hedef GameObject</param>
+    private void PlayWindKnockbackEffects(GameObject target)
     {
-        // Damage number UI'ı göster
-        var damageNumber = Resources.Load<GameObject>("Prefabs/UI/DamageNumber");
-        if (damageNumber != null)
-        {
-            GameObject numberInstance = Object.Instantiate(damageNumber, transform.position, Quaternion.identity);
-            numberInstance.GetComponent<DamageNumberUI>()?.SetDamage(damage, Color.cyan);
-        }
-    }
-    
-    private void OnDestroy()
-    {
-        // Rüzgar efekti bittiğinde VFX'i temizle
-        var windVFX = transform.Find("WindVFX(Clone)");
+        // Wind knockback VFX'i oynat
+        var windVFX = Resources.Load<GameObject>("Prefabs/Effects/WindVFX");
         if (windVFX != null)
         {
-            Destroy(windVFX.gameObject);
+            GameObject vfxInstance = Object.Instantiate(windVFX, target.transform.position, Quaternion.identity);
+            vfxInstance.transform.SetParent(target.transform);
         }
+        
+        // Wind knockback SFX'i oynat
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(25); // Wind sound effect
+        }
+    }
+    
+    /// <summary>
+    /// Wind element data'sını alır
+    /// </summary>
+    /// <returns>Wind element data</returns>
+    private WindElementData GetWindElementData()
+    {
+        // Player'dan WindElementData'yı al
+        var playerController = PlayerController.Instance;
+        if (playerController != null)
+        {
+            // ElementalAbilityManager'dan wind element data'sını al
+            var elementalManager = playerController.GetComponent<ElementalAbilityManager>();
+            if (elementalManager != null)
+            {
+                // Wind element data'sını bul
+                var windAbility = elementalManager.GetAbility(ElementType.Wind, AbilityType.ElementalStrike);
+                if (windAbility != null)
+                {
+                    // WindElementData'yı döndür (bu kısım implementasyona bağlı)
+                    return Resources.Load<WindElementData>("ElementData/Wind/WindElementData");
+                }
+            }
+        }
+        
+        return null;
     }
 } 

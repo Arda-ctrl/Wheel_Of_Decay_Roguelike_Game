@@ -458,6 +458,54 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.0959935, y: 1}
   m_EdgeRadius: 0
+--- !u!1 &584100357
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 584100359}
+  - component: {fileID: 584100358}
+  m_Layer: 0
+  m_Name: Orb Stack Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &584100358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584100357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3bde78fa850cb7448acfedd06449c27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requiredStacksForOrb: 10
+  maxOrbs: 4
+  orbSize: 0.5
+  orbAbilityData: []
+--- !u!4 &584100359
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584100357}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &645836464
 GameObject:
   m_ObjectHideFlags: 0
@@ -880,7 +928,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2432277693115406376, guid: 35f385fd81ffe5b4db337a6622a3955c, type: 3}
       propertyPath: detectionRange
-      value: 3
+      value: 7.52
       objectReference: {fileID: 0}
     - target: {fileID: 2432277693115406376, guid: 35f385fd81ffe5b4db337a6622a3955c, type: 3}
       propertyPath: spriteRenderer
@@ -988,8 +1036,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   availableAbilities:
   - {fileID: 11400000, guid: 5815102afa8fe7f479835f73dc695a7c, type: 2}
-  - {fileID: 11400000, guid: 8d94464c866aec949912024d1d644e0e, type: 2}
-  - {fileID: 11400000, guid: 99dca5eadcdad864181a3b43ee2c2be8, type: 2}
+  - {fileID: 11400000, guid: 47b6d653b2f92b9448b74343b72a0563, type: 2}
+  - {fileID: 11400000, guid: b718ca985ac902a4792075ea136829a6, type: 2}
+  - {fileID: 11400000, guid: 1ebde8b620c44f349893adc61c13fdcd, type: 2}
+  - {fileID: 11400000, guid: 563c46dda92f51348bf7f38ed9117e64, type: 2}
+  - {fileID: 11400000, guid: 9e931be181900c246aa1f9c5f68eb154, type: 2}
 --- !u!114 &1245168964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2113,7 +2164,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2432277693115406376, guid: 35f385fd81ffe5b4db337a6622a3955c, type: 3}
       propertyPath: maxHealth
-      value: 1000
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 2432277693115406376, guid: 35f385fd81ffe5b4db337a6622a3955c, type: 3}
       propertyPath: moveSpeed
@@ -3001,7 +3052,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
   firePoint: {fileID: 2226368523323116583}
   fireRate: 0.5
-  weaponData: {fileID: 11400000, guid: ad3ce7bf40e81e14289fb8fc6e568aa6, type: 2}
+  weaponData: {fileID: 11400000, guid: 71c0c741ba9277344ba78550e62495f7, type: 2}
   meleeHitboxPrefab: {fileID: 540043543}
   weaponSpriteRenderer: {fileID: 8495274878920736208}
   weaponShowTime: 0.3
@@ -4193,3 +4244,4 @@ SceneRoots:
   - {fileID: 1480971319}
   - {fileID: 2060172708}
   - {fileID: 1755983045}
+  - {fileID: 584100359}
