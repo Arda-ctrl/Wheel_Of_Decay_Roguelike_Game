@@ -136,36 +136,33 @@ public class SegmentDataEditor : Editor
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("wheelManipulationType"));
             var wheelType = (WheelManipulationType)serializedObject.FindProperty("wheelManipulationType").enumValueIndex;
-            if (wheelType == WheelManipulationType.Redirector)
+            
+            // Wheel manipulation parametreleri
+            switch (wheelType)
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
-            }
-            else if (wheelType == WheelManipulationType.BlackHole)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
-            }
-            else if (wheelType == WheelManipulationType.Repulsor)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
-            }
-            // MirrorRedirect için özel parametre yok
-            else if (wheelType == WheelManipulationType.CommonRedirector)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMaxRarity"));
-            }
-            else if (wheelType == WheelManipulationType.SafeEscape)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("safeEscapeRange"));
-            }
-            else if (wheelType == WheelManipulationType.ExplosiveEscape)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
-            }
-            else if (wheelType == WheelManipulationType.SegmentSwapper)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
+                case WheelManipulationType.Redirector:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
+                    break;
+                case WheelManipulationType.BlackHole:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
+                    break;
+                case WheelManipulationType.Repulsor:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
+                    break;
+                case WheelManipulationType.CommonRedirector:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMaxRarity"));
+                    break;
+                case WheelManipulationType.SafeEscape:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("safeEscapeRange"));
+                    break;
+                case WheelManipulationType.ExplosiveEscape:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
+                    break;
+                case WheelManipulationType.SegmentSwapper:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
+                    break;
             }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
