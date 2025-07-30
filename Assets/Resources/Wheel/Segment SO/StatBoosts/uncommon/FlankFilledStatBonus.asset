@@ -10,23 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: Isolated Segment Boost
+  m_Name: FlankFilledStatBonus
   m_EditorClassIdentifier: 
-  segmentID: isolatedsegmentboost
+  segmentID: flankguard
   size: 1
   type: 0
   rarity: 1
-  description: 
+  description: "etarf\u0131 dolu ise daha \xE7ok stat verir"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.3721965, g: 0.48183578, b: 0.6415094, a: 1}
+  segmentColor: {r: 0.3231132, g: 0.38855308, b: 0.5, a: 1}
   effectType: 0
   statType: 0
   statAmount: 2
-  statBonusMode: 7
-  isolatedBonusAmount: 4
+  statBonusMode: 11
+  isolatedBonusAmount: 0
+  adjacentBonusAmount: 0
   targetRarity: 0
   rarityBonusAmount: 0
-  flankGuardBonusAmount: 0
+  flankGuardBonusAmount: 4
   decayStartValue: 0
   decayAmountPerSpin: 1
   decayRemoveAtZero: 1

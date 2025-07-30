@@ -7,7 +7,7 @@ public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
-public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, Isolated, DecayOverTime, GrowthOverTime }
+public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, Isolated, DecayOverTime, GrowthOverTime, RarityAdjacency, FlankGuard }
 
 [CreateAssetMenu(fileName = "NewSegment", menuName = "Segment")]
 public class SegmentData : ScriptableObject
@@ -31,7 +31,15 @@ public class SegmentData : ScriptableObject
     // Isolated Segment Boost için
     [Header("Isolated Segment Boost Ayarları")]
     public float isolatedBonusAmount = 0f; // Yanı boşken
-    public float adjacentBonusAmount = 0f; // Yanı doluyken
+
+    // Rarity Adjacency için
+    [Header("Rarity Adjacency Ayarları")]
+    public Rarity targetRarity = Rarity.Common; // Hangi nadirlikte segment aranacak
+    public float rarityBonusAmount = 0f; // Yanında targetRarity varsa bonus
+
+    // FlankGuard için
+    [Header("FlankGuard Ayarları")]
+    public float flankGuardBonusAmount = 0f; // Her iki yanı da doluysa bonus
 
     // Decay Over Time
     [Header("Decay Over Time Ayarları")]

@@ -308,6 +308,22 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 case StatBonusMode.Isolated:
                     count = 1;
                     break;
+                case StatBonusMode.RarityAdjacency:
+                    // Yanında targetRarity varsa 1, yoksa 0
+                    int leftRarity = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+                    int rightRarity = (inst.startSlotIndex + inst.data.size) % slotCount;
+                    bool hasTargetRarity = HasSegmentWithRarityInSlot(wheelManager, leftRarity, data.targetRarity, inst) || 
+                                          HasSegmentWithRarityInSlot(wheelManager, rightRarity, data.targetRarity, inst);
+                    count = hasTargetRarity ? 1 : 0;
+                    break;
+                case StatBonusMode.FlankGuard:
+                    // Her iki yanı da doluysa 1, değilse 0
+                    int leftFlank = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+                    int rightFlank = (inst.startSlotIndex + inst.data.size) % slotCount;
+                    bool leftFilled = IsSlotOccupiedByOtherSegment(wheelManager, leftFlank, inst);
+                    bool rightFilled = IsSlotOccupiedByOtherSegment(wheelManager, rightFlank, inst);
+                    count = (leftFilled && rightFilled) ? 1 : 0;
+                    break;
                 default:
                     count = 1;
                     break;
@@ -321,23 +337,15 @@ public class SegmentStatBoostHandler : MonoBehaviour
         switch (data.statBonusMode)
         {
             case StatBonusMode.Isolated:
-                // Yanındaki slotlar boşsa isolatedBonusAmount, değilse adjacentBonusAmount
+                // Yanındaki slotlar boşsa isolatedBonusAmount ekle
                 int left = (inst.startSlotIndex - 1 + slotCount) % slotCount;
                 int right = (inst.startSlotIndex + inst.data.size) % slotCount;
-                bool leftEmpty = true, rightEmpty = true;
-                foreach (Transform child in wheelManager.slots[left])
-                {
-                    var seg = child.GetComponent<SegmentInstance>();
-                    if (seg != null && seg != inst)
-                        leftEmpty = false;
-                }
-                foreach (Transform child in wheelManager.slots[right])
-                {
-                    var seg = child.GetComponent<SegmentInstance>();
-                    if (seg != null && seg != inst)
-                        rightEmpty = false;
-                }
-                return (leftEmpty && rightEmpty) ? data.isolatedBonusAmount : data.adjacentBonusAmount;
+                bool leftEmpty = !IsSlotOccupiedByOtherSegment(wheelManager, left, inst);
+                bool rightEmpty = !IsSlotOccupiedByOtherSegment(wheelManager, right, inst);
+                
+                // Temel bonus + isolated bonus (sadece yanı boşsa)
+                float isolatedBonus = (leftEmpty && rightEmpty) ? data.isolatedBonusAmount : 0f;
+                return baseAmount + isolatedBonus;
             case StatBonusMode.Fixed:
                 return baseAmount;
             case StatBonusMode.EmptySlotCount:
@@ -360,22 +368,31 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 if (inst.data.size != 1) return baseAmount;
                 int left1 = (inst.startSlotIndex - 1 + slotCount) % slotCount;
                 int right1 = (inst.startSlotIndex + 1) % slotCount;
-                bool hasSibling1 = false;
-                foreach (Transform child in wheelManager.slots[left1])
-                {
-                    var seg = child.GetComponent<SegmentInstance>();
-                    if (seg != null && seg != inst && seg.data.segmentID == inst.data.segmentID)
-                        hasSibling1 = true;
-                }
-                foreach (Transform child in wheelManager.slots[right1])
-                {
-                    var seg = child.GetComponent<SegmentInstance>();
-                    if (seg != null && seg != inst && seg.data.segmentID == inst.data.segmentID)
-                        hasSibling1 = true;
-                }
+                bool hasSibling1 = HasSegmentWithSameIDInSlot(wheelManager, left1, inst.data.segmentID, inst) || 
+                                   HasSegmentWithSameIDInSlot(wheelManager, right1, inst.data.segmentID, inst);
                 return hasSibling1 ? baseAmount * 2f : baseAmount;
             case StatBonusMode.Persistent:
                 return inst._currentStatAmount;
+            case StatBonusMode.RarityAdjacency:
+                // Yanında targetRarity varsa bonus ver
+                int leftRarity = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+                int rightRarity = (inst.startSlotIndex + inst.data.size) % slotCount;
+                bool hasTargetRarity = HasSegmentWithRarityInSlot(wheelManager, leftRarity, data.targetRarity, inst) || 
+                                      HasSegmentWithRarityInSlot(wheelManager, rightRarity, data.targetRarity, inst);
+                
+                // Temel bonus + rarity bonus
+                float rarityBonus = hasTargetRarity ? data.rarityBonusAmount : 0f;
+                return baseAmount + rarityBonus;
+            case StatBonusMode.FlankGuard:
+                // Her iki yanı da doluysa bonus ver
+                int leftFlank = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+                int rightFlank = (inst.startSlotIndex + inst.data.size) % slotCount;
+                bool leftFilled = IsSlotOccupiedByOtherSegment(wheelManager, leftFlank, inst);
+                bool rightFilled = IsSlotOccupiedByOtherSegment(wheelManager, rightFlank, inst);
+                
+                // Temel bonus + flank bonus
+                float flankBonus = (leftFilled && rightFilled) ? data.flankGuardBonusAmount : 0f;
+                return baseAmount + flankBonus;
             default:
                 return baseAmount;
         }
@@ -436,6 +453,87 @@ public class SegmentStatBoostHandler : MonoBehaviour
             if (seg != null && seg != inst && seg.data.segmentID == inst.data.segmentID) rightInst = seg;
         }
         return leftInst != null || rightInst != null;
+    }
+
+    // Büyük segmentler için komşuluk kontrolü yapan yardımcı method
+    private bool IsSlotOccupiedByOtherSegment(WheelManager wheelManager, int targetSlot, SegmentInstance excludeSegment)
+    {
+        int slotCount = wheelManager.slots.Length;
+        for (int i = 0; i < slotCount; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != excludeSegment)
+                {
+                    int segStart = seg.startSlotIndex;
+                    int segSize = seg.data.size;
+                    for (int s = 0; s < segSize; s++)
+                    {
+                        int coveredSlot = (segStart + s) % slotCount;
+                        if (coveredSlot == targetSlot)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Büyük segmentler için belirli nadirlikte segment kontrolü yapan yardımcı method
+    private bool HasSegmentWithRarityInSlot(WheelManager wheelManager, int targetSlot, Rarity targetRarity, SegmentInstance excludeSegment)
+    {
+        int slotCount = wheelManager.slots.Length;
+        for (int i = 0; i < slotCount; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != excludeSegment && seg.data.rarity == targetRarity)
+                {
+                    int segStart = seg.startSlotIndex;
+                    int segSize = seg.data.size;
+                    for (int s = 0; s < segSize; s++)
+                    {
+                        int coveredSlot = (segStart + s) % slotCount;
+                        if (coveredSlot == targetSlot)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Büyük segmentler için aynı ID'li segment kontrolü yapan yardımcı method
+    private bool HasSegmentWithSameIDInSlot(WheelManager wheelManager, int targetSlot, string segmentID, SegmentInstance excludeSegment)
+    {
+        int slotCount = wheelManager.slots.Length;
+        for (int i = 0; i < slotCount; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != excludeSegment && seg.data.segmentID == segmentID)
+                {
+                    int segStart = seg.startSlotIndex;
+                    int segSize = seg.data.size;
+                    for (int s = 0; s < segSize; s++)
+                    {
+                        int coveredSlot = (segStart + s) % slotCount;
+                        if (coveredSlot == targetSlot)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     // Eski Activate/Deactivate fonksiyonları backward compatibility için bırakıldı

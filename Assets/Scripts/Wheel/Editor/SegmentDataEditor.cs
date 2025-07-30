@@ -90,9 +90,8 @@ public class SegmentDataEditor : Editor
             }
             else if (statBonusMode == StatBonusMode.Isolated)
             {
-                EditorGUILayout.HelpBox("Yanında hiç segment olmayan (boş slotlarla çevrili) segmentler isolatedBonusAmount kadar bonus alır. Yanı doluysa adjacentBonusAmount kadar bonus alır.", MessageType.Info);
+                EditorGUILayout.HelpBox("Yanında hiç segment olmayan (boş slotlarla çevrili) segmentler ekstra bonus alır. Temel bonus (statAmount) + isolated bonus (isolatedBonusAmount).", MessageType.Info);
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("isolatedBonusAmount"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("adjacentBonusAmount"));
             }
             else if (statBonusMode == StatBonusMode.DecayOverTime)
             {
@@ -106,6 +105,17 @@ public class SegmentDataEditor : Editor
                 EditorGUILayout.HelpBox("Segment her spin sonrası bonusunu artırır (her spin sonrası +X stat).", MessageType.Info);
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("growthStartValue"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("growthAmountPerSpin"));
+            }
+            else if (statBonusMode == StatBonusMode.RarityAdjacency)
+            {
+                EditorGUILayout.HelpBox("Yanında belirli nadirlikte segment varsa ekstra bonus verir. Temel bonus (statAmount) + rarity bonus (rarityBonusAmount).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("targetRarity"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("rarityBonusAmount"));
+            }
+            else if (statBonusMode == StatBonusMode.FlankGuard)
+            {
+                EditorGUILayout.HelpBox("Her iki yanı da dolu segmentler varsa ekstra bonus verir. Temel bonus (statAmount) + flank bonus (flankGuardBonusAmount).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("flankGuardBonusAmount"));
             }
             
             // Random stat ayarları (sadece statType Random seçiliyse göster)
