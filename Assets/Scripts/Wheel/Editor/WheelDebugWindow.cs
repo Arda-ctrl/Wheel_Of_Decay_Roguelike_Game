@@ -74,35 +74,49 @@ public class WheelDebugWindow : EditorWindow
             return;
         }
 
+        // Window boyutunu al
+        float windowWidth = position.width;
+        float windowHeight = position.height;
+        
+        // Responsive boyutlar hesapla
+        float leftPanelWidth = Mathf.Max(250, windowWidth * 0.25f);
+        float middlePanelWidth = Mathf.Max(300, windowWidth * 0.4f);
+        float rightPanelWidth = windowWidth - leftPanelWidth - middlePanelWidth - 20; // 20 padding
+        
         // Üst kısım - Kategori seçimi ve segment listesi
         EditorGUILayout.BeginHorizontal();
         
         // Sol panel - Kategori ve Rarity seçimi
-        EditorGUILayout.BeginVertical(GUILayout.Width(300));
+        EditorGUILayout.BeginVertical(GUILayout.Width(leftPanelWidth));
         DrawCategorySelection();
         EditorGUILayout.EndVertical();
         
         // Orta panel - Segment listesi
-        EditorGUILayout.BeginVertical(GUILayout.Width(400));
+        EditorGUILayout.BeginVertical(GUILayout.Width(middlePanelWidth));
         DrawSegmentList();
         EditorGUILayout.EndVertical();
         
         EditorGUILayout.EndHorizontal();
         
-        // Alt kısım - Kontroller (tam genişlik, dikey)
+        // Alt kısım - Kontroller (responsive)
         EditorGUILayout.Space(10);
         EditorGUILayout.BeginVertical();
+        
+        // Kontroller için responsive layout
+        float controlPanelWidth = (windowWidth - 20) / 2f; // 2 kolon, 20 padding
+        
         EditorGUILayout.BeginHorizontal();
         // Sol kolon - Segment ekleme
-        EditorGUILayout.BeginVertical(GUILayout.Width(300));
+        EditorGUILayout.BeginVertical(GUILayout.Width(controlPanelWidth));
         DrawSegmentControls();
         EditorGUILayout.EndVertical();
-        // Orta kolon - Segment silme ve çark döndürme
-        EditorGUILayout.BeginVertical(GUILayout.Width(300));
+        // Sağ kolon - Segment silme ve çark döndürme
+        EditorGUILayout.BeginVertical(GUILayout.Width(controlPanelWidth));
         DrawWheelControls();
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
-        // En altta genel kontroller
+        
+        // En altta genel kontroller (tam genişlik)
         EditorGUILayout.Space(10);
         DrawGeneralControls();
         EditorGUILayout.EndVertical();
@@ -206,7 +220,9 @@ public class WheelDebugWindow : EditorWindow
             return;
         }
         
-        segmentScroll = EditorGUILayout.BeginScrollView(segmentScroll, GUILayout.Height(400));
+        // Responsive yükseklik hesapla
+        float listHeight = Mathf.Max(200, position.height * 0.4f);
+        segmentScroll = EditorGUILayout.BeginScrollView(segmentScroll, GUILayout.Height(listHeight));
         
         foreach (var segment in segments)
         {
