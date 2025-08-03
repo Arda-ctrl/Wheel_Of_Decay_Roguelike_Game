@@ -23,7 +23,6 @@ public class WheelManager : MonoBehaviour
     private int selectedSlotForPlacement = -1;
     private GameObject tempSegmentInstance = null;
     public bool isSpinning = false;
-    public Dictionary<string, int> activeEffectCounts = new Dictionary<string, int>();
     private bool wheelEffectInProgress = false;
     public float lastWheelAngle = 0f;
     
