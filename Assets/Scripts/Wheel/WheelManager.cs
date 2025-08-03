@@ -7,10 +7,9 @@ public class WheelManager : MonoBehaviour
     [Header("Slot Ayarları")]
     [SerializeField] private GameObject wheelSlotPrefab;
     [SerializeField] private Transform slotParent;
-    [SerializeField] private int slotCount = 36;
+    [SerializeField] public int slotCount = 36;
     [Header("Çark Döndürme Ayarları")]
-    [SerializeField] private float spinDuration = 3f;
-    public float SpinDuration => spinDuration;
+    [SerializeField] public float spinDuration = 3f;
     [SerializeField] private float minSpinRounds = 3f;
     [SerializeField] private float maxSpinRounds = 6f;
     [SerializeField] private AnimationCurve spinCurve = AnimationCurve.EaseInOut(0,0,1,1);
@@ -142,8 +141,8 @@ public class WheelManager : MonoBehaviour
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null)
             sr.color = data.segmentColor;
-        // Segment yerleştirildikten sonra stat boostları güncelle
-        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
+        // Segment yerleştirildikten sonra stat boostları güncelle (RandomEscapeCurse için kaldırıldı)
+        // SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
     private bool AreSlotsAvailable(int startIndex, int size)
     {
@@ -587,4 +586,6 @@ public class WheelManager : MonoBehaviour
     {
         lastWheelAngle = slotParent.localEulerAngles.z;
     }
+
+
 }

@@ -29,12 +29,15 @@ public class RandomStatStack
         ownerSegment = segment;
         this.data = data;
         this.statAmount = statAmount;
+        // Seed'i kaldırdık, gerçek random için
     }
 
     // Dağıtımı bir kere yap, slot sayısı değişirse sadece ekle/çıkar
     public void SetStackCount(int newCount)
     {
         int currentCount = statStack.Count;
+        Debug.Log($"[RandomStat] SetStackCount - Eski: {currentCount}, Yeni: {newCount}");
+        
         if (newCount > currentCount)
         {
             // Yeni slotlar eklendi, yeni statlar ekle
@@ -42,7 +45,7 @@ public class RandomStatStack
             {
                 StatType randomStat = GetRandomStatType(data);
                 statStack.Add(new RandomStatEntry(randomStat, statAmount, i));
-                SegmentStatBoostHandler.Instance.ApplyStat(ownerSegment, statAmount, randomStat);
+                Debug.Log($"[RandomStat] Yeni stat eklendi: {randomStat} +{statAmount}");
             }
         }
         else if (newCount < currentCount)
@@ -50,8 +53,8 @@ public class RandomStatStack
             // Slotlar azaldı, en son eklenen statları kaldır
             for (int i = 0; i < currentCount - newCount; i++)
             {
-                var last = statStack[statStack.Count - 1];
-                SegmentStatBoostHandler.Instance.RemoveStat(ownerSegment, last.amount, last.statType);
+                var removed = statStack[statStack.Count - 1];
+                Debug.Log($"[RandomStat] Stat kaldırıldı: {removed.statType} +{removed.amount}");
                 statStack.RemoveAt(statStack.Count - 1);
             }
         }
@@ -59,14 +62,53 @@ public class RandomStatStack
 
     public void ClearAllStats()
     {
-        foreach (var entry in statStack)
-        {
-            SegmentStatBoostHandler.Instance.RemoveStat(ownerSegment, entry.amount, entry.statType);
-        }
+        // Sadece stack'i temizle, RemoveStat çağırma (RecalculateAllStatBoosts'ta zaten temizleniyor)
         statStack.Clear();
     }
 
-    private StatType GetRandomStatType(SegmentData data)
+    // Yeni slot'a göre slot index'lerini güncelle
+    public void UpdateSlotIndices(int newStartSlot)
+    {
+        for (int i = 0; i < statStack.Count; i++)
+        {
+            var entry = statStack[i];
+            entry.slotIndex = newStartSlot + i; // Yeni slot'a göre güncelle
+            statStack[i] = entry;
+        }
+    }
+
+    // Stack'in dolu olup olmadığını kontrol et
+    public bool HasStats()
+    {
+        return statStack.Count > 0;
+    }
+
+    // Tüm stat'ları al (kopya olarak)
+    public List<RandomStatEntry> GetAllStats()
+    {
+        List<RandomStatEntry> copy = new List<RandomStatEntry>();
+        foreach (var entry in statStack)
+        {
+            copy.Add(new RandomStatEntry(entry.statType, entry.amount, entry.slotIndex));
+        }
+        return copy;
+    }
+
+    // Saklanan stat'ları geri yükle
+    public void RestoreStats(List<RandomStatEntry> savedStats)
+    {
+        // Mevcut stat'ları temizle
+        ClearAllStats();
+        
+        // Saklanan stat'ları geri yükle
+        foreach (var entry in savedStats)
+        {
+            statStack.Add(entry);
+            SegmentStatBoostHandler.Instance.ApplyStat(ownerSegment, entry.amount, entry.statType);
+        }
+    }
+
+    public StatType GetRandomStatType(SegmentData data)
     {
         List<StatType> availableStats = new List<StatType>();
         if (data.includeAttack) availableStats.Add(StatType.Attack);
@@ -75,7 +117,23 @@ public class RandomStatStack
         if (data.includeMovementSpeed) availableStats.Add(StatType.MovementSpeed);
         if (data.includeCriticalChance) availableStats.Add(StatType.CriticalChance);
         if (availableStats.Count == 0) return StatType.Attack;
+        
+        // Gerçek random seçim yap
         return availableStats[Random.Range(0, availableStats.Count)];
+    }
+
+    // LIFO stack metodları
+    public void AddStatToTop(StatType statType, float amount)
+    {
+        statStack.Add(new RandomStatEntry(statType, amount, statStack.Count));
+    }
+
+    public RandomStatEntry RemoveStatFromTop()
+    {
+        if (statStack.Count == 0) return new RandomStatEntry(StatType.Attack, 0, 0);
+        var lastEntry = statStack[statStack.Count - 1];
+        statStack.RemoveAt(statStack.Count - 1);
+        return lastEntry;
     }
 }
 
@@ -83,6 +141,8 @@ public class SegmentStatBoostHandler : MonoBehaviour
 {
     public static SegmentStatBoostHandler Instance { get; private set; }
     private Dictionary<SegmentInstance, RandomStatStack> randomStatStacks = new Dictionary<SegmentInstance, RandomStatStack>();
+    // Segment ID'sine göre stack'leri sakla (segment silinip geri eklendiğinde korumak için)
+    private Dictionary<string, RandomStatStack> persistentRandomStatStacks = new Dictionary<string, RandomStatStack>();
     // Decay/Growth segmentlerinin runtime değerleri
     private Dictionary<SegmentInstance, float> decayGrowthValues = new Dictionary<SegmentInstance, float>();
 
@@ -228,7 +288,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
             siblingMap[inst] = hasSibling;
         }
 
-        // 3. Tüm statları sıfırla
+        // 3. Tüm statları sıfırla (random stat'lar hariç)
         foreach (var inst in allSegments)
         {
             StatType statType = inst.data.statType;
@@ -237,7 +297,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 RemoveStat(inst, inst._appliedStatBoost, statType);
                 inst._appliedStatBoost = 0f;
             }
-            // Random stat stack'leri burada temizlemiyoruz! (ClearAllStats kaldırıldı)
+            // Random stat'ları temizleme - onlar dinamik olarak güncelleniyor
         }
 
         // 4. Tüm statları tekrar ekle
@@ -249,10 +309,94 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 : CalculateStatBoost(inst, wheelManager);
             inst._appliedStatBoost = boost;
             
-            // Random stat değilse normal uygula (Random stat'lar stack'te yönetiliyor)
+            // Random stat değilse normal uygula
             if (statType != StatType.Random)
             {
                 ApplyStat(inst, boost, statType);
+            }
+            else
+            {
+                // Random stat'ları dinamik olarak güncelle (LIFO stack sistemi)
+                Debug.Log($"[RandomStat] Segment: {inst.data.segmentID}, Boost: {boost}");
+                if (randomStatStacks.ContainsKey(inst))
+                {
+                    var stack = randomStatStacks[inst];
+                    int currentCount = stack.GetAllStats().Count;
+                    int newCount = (int)boost;
+                    Debug.Log($"[RandomStat] Stack bulundu, mevcut: {currentCount}, yeni: {newCount}");
+                    
+                    if (newCount > currentCount)
+                    {
+                        // Yeni stat'lar ekle (LIFO - en üste ekle)
+                        for (int i = currentCount; i < newCount; i++)
+                        {
+                            StatType randomStat = GetRandomStatType(inst.data);
+                            float statAmount = inst.data.statAmount;
+                            stack.AddStatToTop(randomStat, statAmount);
+                            Debug.Log($"[RandomStat] Yeni stat eklendi: {randomStat} +{statAmount}");
+                            ApplyStat(inst, statAmount, randomStat);
+                        }
+                    }
+                    else if (newCount < currentCount)
+                    {
+                        // En üstten stat'ları çıkar (LIFO - en üstten çıkar)
+                        for (int i = 0; i < currentCount - newCount; i++)
+                        {
+                            var removedStat = stack.RemoveStatFromTop();
+                            Debug.Log($"[RandomStat] Stat kaldırıldı: {removedStat.statType} +{removedStat.amount}");
+                            RemoveStat(inst, removedStat.amount, removedStat.statType);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[RandomStat] Count aynı, hiçbir şey yapılmıyor");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[RandomStat] Stack bulunamadı! Yeni stack oluşturuluyor...");
+                    // Yeni stack oluştur
+                    persistentRandomStatStacks[inst.data.segmentID] = new RandomStatStack(inst, inst.data, inst.data.statAmount);
+                    randomStatStacks[inst] = persistentRandomStatStacks[inst.data.segmentID];
+                    var newStack = randomStatStacks[inst];
+                    newStack.SetStackCount((int)boost);
+                    foreach (var entry in newStack.GetAllStats())
+                    {
+                        Debug.Log($"[RandomStat] Yeni stack'ten stat uygulanıyor: {entry.statType} +{entry.amount}");
+                        ApplyStat(inst, entry.amount, entry.statType);
+                    }
+                }
+            }
+        }
+    }
+
+    // Tüm stat boostları temizle (random stat stack'leri koru)
+    public void ClearAllStatBoosts()
+    {
+        var wheelManager = FindAnyObjectByType<WheelManager>();
+        if (wheelManager == null) return;
+        int slotCount = wheelManager.slots.Length;
+
+        // Tüm stat boost segmentlerini bul
+        List<SegmentInstance> allSegments = new List<SegmentInstance>();
+        for (int i = 0; i < slotCount; i++)
+        {
+            foreach (Transform child in wheelManager.slots[i])
+            {
+                var inst = child.GetComponent<SegmentInstance>();
+                if (inst != null && inst.data != null && inst.data.effectType == SegmentEffectType.StatBoost && !allSegments.Contains(inst) && child.gameObject.activeInHierarchy)
+                    allSegments.Add(inst);
+            }
+        }
+
+        // Tüm stat boostları sıfırla
+        foreach (var inst in allSegments)
+        {
+            StatType statType = inst.data.statType;
+            if (inst._appliedStatBoost != 0f)
+            {
+                RemoveStat(inst, inst._appliedStatBoost, statType);
+                inst._appliedStatBoost = 0f;
             }
         }
     }
@@ -281,6 +425,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
         // Eğer random stat ise stack sistemiyle yönet
         if (data.statType == StatType.Random)
         {
+            Debug.Log($"[RandomStat] CalculateStatBoost - Segment: {inst.data.segmentID}, Mode: {data.statBonusMode}");
             int count = 0;
             switch (data.statBonusMode)
             {
@@ -328,10 +473,22 @@ public class SegmentStatBoostHandler : MonoBehaviour
                     count = 1;
                     break;
             }
-            if (!randomStatStacks.ContainsKey(inst))
-                randomStatStacks[inst] = new RandomStatStack(inst, data, baseAmount);
-            randomStatStacks[inst].SetStackCount(count);
-            return 0f; // Boost stack'te yönetiliyor
+            Debug.Log($"[RandomStat] Hesaplanan count: {count}");
+            
+            // Persistent stack'te var mı kontrol et
+            if (!persistentRandomStatStacks.ContainsKey(inst.data.segmentID))
+            {
+                Debug.Log($"[RandomStat] Yeni persistent stack oluşturuluyor");
+                // Yeni stack oluştur
+                persistentRandomStatStacks[inst.data.segmentID] = new RandomStatStack(inst, data, baseAmount);
+            }
+            
+            // Runtime stack'e bağla
+            randomStatStacks[inst] = persistentRandomStatStacks[inst.data.segmentID];
+            
+            // Random stat'lar için count değerini döndür (boost olarak kullanılacak)
+            Debug.Log($"[RandomStat] Random stat için count döndürülüyor: {count}");
+            return count;
         }
 
         switch (data.statBonusMode)
@@ -554,8 +711,41 @@ public class SegmentStatBoostHandler : MonoBehaviour
         if (Instance == null) return;
         if (Instance.randomStatStacks.ContainsKey(inst))
         {
-            Instance.randomStatStacks[inst].ClearAllStats();
+            // Stack'teki stat'ları manuel olarak temizle
+            var stack = Instance.randomStatStacks[inst];
+            foreach (var entry in stack.GetAllStats())
+            {
+                Instance.RemoveStat(inst, entry.amount, entry.statType);
+            }
+            stack.ClearAllStats();
             Instance.randomStatStacks.Remove(inst);
+        }
+        // Persistent stack'i silme, segment geri eklendiğinde kullanılabilir
+    }
+
+    // Random stat stack'ini al
+    public RandomStatStack GetRandomStatStack(SegmentInstance segment)
+    {
+        if (randomStatStacks.ContainsKey(segment))
+            return randomStatStacks[segment];
+        return null;
+    }
+
+    // RandomEscapeCurse sonrası random stat stack'lerini yeni slot'lara göre güncelle
+    public void UpdateRandomStatStacksAfterRelocation(Dictionary<SegmentInstance, int> segmentNewSlots)
+    {
+        foreach (var kvp in segmentNewSlots)
+        {
+            var segment = kvp.Key;
+            var newSlot = kvp.Value;
+            
+            // Persistent stack'te var mı kontrol et
+            if (persistentRandomStatStacks.ContainsKey(segment.data.segmentID))
+            {
+                var stack = persistentRandomStatStacks[segment.data.segmentID];
+                // Random stat stack'ini yeni slot'a göre güncelle
+                stack.UpdateSlotIndices(newSlot);
+            }
         }
     }
 } 

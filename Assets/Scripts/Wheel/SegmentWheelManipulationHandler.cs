@@ -40,6 +40,8 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
                 return new ExplosiveEscapeEffect(data.explosiveEscapeRange);
             case WheelManipulationType.SegmentSwapper:
                 return new SegmentSwapperEffect(data.swapperRange);
+            case WheelManipulationType.RandomEscapeCurse:
+                return new RandomEscapeCurseEffect(0); // Range kullanılmıyor
             default:
                 return null;
         }
@@ -415,19 +417,7 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
                 {
                     int randomIndex = UnityEngine.Random.Range(0, validSlots.Count);
                     int targetSlot = validSlots[randomIndex];
-                    targetInstance.transform.SetParent(wheelManager.slots[targetSlot], false);
-                    targetInstance.transform.localPosition = Vector3.zero;
-                    targetInstance.startSlotIndex = targetSlot;
-                    for (int s = 0; s < segSize; s++)
-                    {
-                        int idx = (targetSlot + s) % slotCount;
-                        wheelManager.slotOccupied[idx] = true;
-                    }
-                    for (int s = 0; s < segSize; s++)
-                    {
-                        int idx = (segStart + s) % slotCount;
-                        wheelManager.slotOccupied[idx] = false;
-                    }
+                    SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, targetInstance, targetSlot);
                 }
                 else
                 {
@@ -505,6 +495,76 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             // 5. targetInstance ve swapInstance’in yerlerini değiştir (utility ile)
             SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, targetInstance, swapStart);
             SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, swapInstance, targetStart);
+        }
+    }
+
+    public class RandomEscapeCurseEffect : IWheelEffect
+    {
+        public RandomEscapeCurseEffect(int range)
+        {
+            // Range kullanılmıyor, sadece interface uyumluluğu için
+        }
+        public void OnNeedleLanded(int landedSlot, int mySlot, int slotCount, System.Action<int> moveNeedleToSlot, System.Action destroySelf)
+        {
+            // 1. İğne kendi slotuna geldi mi? (alan kontrolü yok)
+            if (landedSlot != mySlot) return;
+
+            var wheelManager = Object.FindAnyObjectByType<WheelManager>();
+            if (wheelManager == null) return;
+
+            // 2. Tüm segmentleri topla (kendisi hariç)
+            var allSegments = new System.Collections.Generic.List<SegmentInstance>();
+            for (int i = 0; i < slotCount; i++)
+            {
+                foreach (Transform child in wheelManager.slots[i])
+                {
+                    var inst = child.GetComponent<SegmentInstance>();
+                    if (inst != null && inst.data != null && inst.startSlotIndex != mySlot)
+                    {
+                        allSegments.Add(inst);
+                    }
+                }
+            }
+
+            // 3. Her segmenti rastgele yeni bir yere yerleştir
+            foreach (var segment in allSegments)
+            {
+                int segSize = segment.data.size;
+                
+                // Yeni yer bul
+                var validSlots = new System.Collections.Generic.List<int>();
+                for (int j = 0; j < wheelManager.slots.Length; j++)
+                {
+                    bool canPlace = true;
+                    for (int s = 0; s < segSize; s++)
+                    {
+                        int idx = (j + s) % slotCount;
+                        if (wheelManager.slotOccupied[idx])
+                        {
+                            canPlace = false;
+                            break;
+                        }
+                    }
+                    if (canPlace) validSlots.Add(j);
+                }
+
+                if (validSlots.Count > 0)
+                {
+                    int randomIndex = UnityEngine.Random.Range(0, validSlots.Count);
+                    int targetSlot = validSlots[randomIndex];
+                    
+                    // Segmenti yeni yere taşı
+                    SegmentWheelManipulationHandler.MoveSegmentToSlot(wheelManager, segment, targetSlot);
+                }
+                else
+                {
+                    // Hiç uygun yer yoksa segmenti yok et
+                    wheelManager.RemoveSegmentAtSlot(segment.startSlotIndex);
+                }
+            }
+
+            // 4. Kendi segmentini yok et
+            wheelManager.RemoveSegmentAtSlot(mySlot);
         }
     }
 } 

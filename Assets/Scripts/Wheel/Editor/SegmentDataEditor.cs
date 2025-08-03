@@ -167,6 +167,9 @@ public class SegmentDataEditor : Editor
                 case WheelManipulationType.SegmentSwapper:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
                     break;
+                case WheelManipulationType.RandomEscapeCurse:
+                    EditorGUILayout.HelpBox("Segment silinirken tüm segmentleri rastgele farklı yerlere yerleştirir.", MessageType.Warning);
+                    break;
             }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
@@ -185,6 +188,9 @@ public class SegmentDataEditor : Editor
                 case CurseEffectType.ReSpinCurse:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("curseReSpinCount"));
                     EditorGUILayout.HelpBox("Segment silinince çarkı belirtilen sayıda tekrar döndürür.", MessageType.Warning);
+                    break;
+                case CurseEffectType.RandomEscapeCurse:
+                    EditorGUILayout.HelpBox("Segment silinince tüm segmentleri rastgele farklı yerlere yerleştirir.", MessageType.Warning);
                     break;
                 default:
                     EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);
