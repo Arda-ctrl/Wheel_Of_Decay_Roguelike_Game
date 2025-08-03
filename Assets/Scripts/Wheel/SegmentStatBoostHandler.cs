@@ -420,7 +420,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
         return availableStats[Random.Range(0, availableStats.Count)];
     }
 
-    // Tüm segmentleri döndür (StatBoost, WheelManipulation, OnRemoveEffect fark etmez)
+    // Tüm segmentleri döndür (StatBoost, WheelManipulation, OnRemoveEffect, CurseEffect fark etmez)
     private List<SegmentInstance> GetAllSegments(WheelManager wheelManager)
     {
         List<SegmentInstance> list = new List<SegmentInstance>();

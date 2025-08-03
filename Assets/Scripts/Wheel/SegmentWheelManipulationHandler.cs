@@ -30,6 +30,8 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
                 return new RepulsorEffect(data.repulsorRange);
             case WheelManipulationType.MirrorRedirect:
                 return new MirrorRedirectEffect();
+            case WheelManipulationType.ReverseMirrorRedirect:
+                return new ReverseMirrorRedirectEffect(data.reverseMirrorRedirectRange);
             case WheelManipulationType.CommonRedirector:
                 return new CommonRedirectorEffect(data.commonRedirectorRange, data.commonRedirectorMinRarity, data.commonRedirectorMaxRarity);
             case WheelManipulationType.SafeEscape:
@@ -186,6 +188,35 @@ public class SegmentWheelManipulationHandler : MonoBehaviour
             if (landedSlot == mirrorSlot)
             {
                 moveNeedleToSlot?.Invoke(mySlot);
+            }
+        }
+    }
+
+    // ReverseMirrorRedirect: Yanındaki slotlara iğne gelirse, iğneyi karşısındaki slota yönlendirir
+    public class ReverseMirrorRedirectEffect : IWheelEffect
+    {
+        private int range;
+        public ReverseMirrorRedirectEffect(int range)
+        {
+            this.range = Mathf.Max(1, range);
+        }
+        public void OnNeedleLanded(int landedSlot, int mySlot, int slotCount, System.Action<int> moveNeedleToSlot, System.Action destroySelf)
+        {
+            // Kendi slotuna gelirse hiçbir şey yapma
+            if (landedSlot == mySlot) return;
+            
+            // Belirtilen menzildeki slotlara bak
+            for (int i = 1; i <= range; i++)
+            {
+                int left = (mySlot - i + slotCount) % slotCount;
+                int right = (mySlot + i) % slotCount;
+                if (landedSlot == left || landedSlot == right)
+                {
+                    // Karşısındaki slota yönlendir
+                    int oppositeSlot = (mySlot + slotCount / 2) % slotCount;
+                    moveNeedleToSlot?.Invoke(oppositeSlot);
+                    return;
+                }
             }
         }
     }

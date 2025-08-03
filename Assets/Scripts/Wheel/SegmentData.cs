@@ -1,10 +1,11 @@
 using UnityEngine;
 
 public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
-public enum Type { StatBoost, WheelManipulation, OnRemoveEffect }
+public enum Type { StatBoost, WheelManipulation, OnRemoveEffect, CurseEffect }
 public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance, Random }
-public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect }
-public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
+public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect, CurseEffect }
+public enum CurseEffectType { ReSpinCurse }
+public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, ReverseMirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
 public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegmentCount, LargeSegmentCount, SiblingAdjacency, Persistent, Isolated, DecayOverTime, GrowthOverTime, RarityAdjacency, FlankGuard }
@@ -66,6 +67,8 @@ public class SegmentData : ScriptableObject
     public RedirectDirection redirectDirection;
     [Range(1, 5)] public int blackHoleRange = 1;
     [Range(1, 5)] public int repulsorRange = 1;
+    // ReverseMirrorRedirect için
+    [Range(1, 5)] public int reverseMirrorRedirectRange = 1;
     // CommonRedirector için
     [Range(1, 5)] public int commonRedirectorRange = 1;
     public Rarity commonRedirectorMinRarity = Rarity.Common;
@@ -80,4 +83,10 @@ public class SegmentData : ScriptableObject
     public Type rewardType;
     public RewardFillMode rewardFillMode = RewardFillMode.FillWithOnes;
     // Gerekirse ek parametreler eklenebilir
+
+    // Sadece CurseEffect için
+    [Header("Lanet Efektleri (Sadece CurseEffect)")]
+    public CurseEffectType curseEffectType;
+    // ReSpinCurse için
+    public int curseReSpinCount = 3;
 }

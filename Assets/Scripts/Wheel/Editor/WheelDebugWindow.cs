@@ -8,7 +8,6 @@ public class WheelDebugWindow : EditorWindow
     private WheelManager wheelManager;
     private int removeSlotIndex = 0;
     private int addSlotIndex = 0;
-    private int testTargetSlot = -1;
     private bool forceTargetSlot = false;
     private int targetSlot = 0;
     
@@ -25,7 +24,7 @@ public class WheelDebugWindow : EditorWindow
     
     // Kategoriler ve segmentler
     private Dictionary<SegmentEffectType, Dictionary<Rarity, List<SegmentData>>> categorizedSegments;
-    private string[] categoryNames = { "Tümü", "Stat Boost", "Wheel Manipulation", "On Remove Effect" };
+    private string[] categoryNames = { "Tümü", "Stat Boost", "Wheel Manipulation", "On Remove Effect", "Curse Effect" };
     private string[] rarityNames = { "Tümü", "Common", "Uncommon", "Rare", "Epic", "Legendary" };
     private bool showAllRarities = true; // Debug window açılınca "Tümü" seçili olsun
     private bool showAllCategories = true; // Debug window açılınca "Tümü" seçili olsun
@@ -355,15 +354,14 @@ public class WheelDebugWindow : EditorWindow
         // Çark döndürme kontrolleri
         EditorGUILayout.LabelField("Çark Döndürme", EditorStyles.boldLabel, GUILayout.Height(20));
         
-        testTargetSlot = EditorGUILayout.IntField("Test Hedef Slot:", testTargetSlot, GUILayout.Height(25)); // 20'den 25'e döndürdük
-        forceTargetSlot = EditorGUILayout.Toggle("Hedef Slotu Zorla", forceTargetSlot, GUILayout.Height(25)); // 20'den 25'e döndürdük
+        forceTargetSlot = EditorGUILayout.Toggle("Hedef Slotu Zorla", forceTargetSlot, GUILayout.Height(25));
         
         if (forceTargetSlot)
         {
-            targetSlot = EditorGUILayout.IntField("Hedef Slot:", targetSlot, GUILayout.Height(25)); // 20'den 25'e döndürdük
+            targetSlot = EditorGUILayout.IntField("Hedef Slot:", targetSlot, GUILayout.Height(25));
         }
         
-        if (GUILayout.Button("Çarkı Döndür", GUILayout.Height(35))) // 25'ten 35'e döndürdük
+        if (GUILayout.Button("Çarkı Döndür", GUILayout.Height(35)))
         {
             Undo.RecordObject(wheelManager, "Spin Wheel");
             if (forceTargetSlot)

@@ -149,6 +149,10 @@ public class SegmentDataEditor : Editor
                 case WheelManipulationType.Repulsor:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
                     break;
+                case WheelManipulationType.ReverseMirrorRedirect:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("reverseMirrorRedirectRange"));
+                    EditorGUILayout.HelpBox("Yanındaki slotlara iğne gelirse, iğneyi karşısındaki slota yönlendirir.", MessageType.Info);
+                    break;
                 case WheelManipulationType.CommonRedirector:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
@@ -170,6 +174,22 @@ public class SegmentDataEditor : Editor
             if (rewardRarity != null) EditorGUILayout.PropertyField(rewardRarity);
             if (rewardType != null) EditorGUILayout.PropertyField(rewardType);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardFillMode"));
+        }
+        else if (effectType == SegmentEffectType.CurseEffect)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("curseEffectType"));
+            var curseType = (CurseEffectType)serializedObject.FindProperty("curseEffectType").enumValueIndex;
+            
+            switch (curseType)
+            {
+                case CurseEffectType.ReSpinCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("curseReSpinCount"));
+                    EditorGUILayout.HelpBox("Segment silinince çarkı belirtilen sayıda tekrar döndürür.", MessageType.Warning);
+                    break;
+                default:
+                    EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);
+                    break;
+            }
         }
 
         if (EditorGUI.EndChangeCheck())
