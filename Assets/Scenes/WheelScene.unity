@@ -688,7 +688,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd5fcd3e5a1176b44bbd60fa72b6d3ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheelSlotPrefab: {fileID: 1385291410846267625, guid: 77324e4dfef918642b936991067b2b87, type: 3}
+  wheelSlotPrefab: {fileID: 5526389836493872226, guid: 2a1671c64c7d7904eb31af7efa7fb0d4, type: 3}
   slotParent: {fileID: 691991447}
   slotCount: 36
   spinDuration: 3

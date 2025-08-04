@@ -109,7 +109,8 @@ public class WheelManager : MonoBehaviour
         {
             GameObject slot = Instantiate(wheelSlotPrefab, slotParent);
             slot.name = "Slot_" + i;
-            slot.transform.localRotation = Quaternion.Euler(0f, 0f, -(i * angleStep));
+            // 5 derece offset ekle
+            slot.transform.localRotation = Quaternion.Euler(0f, 0f, -(i * angleStep) - 5f);
             slots[i] = slot.transform;
             SlotController sc = slot.GetComponent<SlotController>();
             if (sc != null)
