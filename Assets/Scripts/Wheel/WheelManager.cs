@@ -363,28 +363,37 @@ public class WheelManager : MonoBehaviour
         onSpinComplete?.Invoke();
     }
     private void OnSpinEnd() { spinEndCoroutine = StartCoroutine(SpinEndSequence()); }
-    private IEnumerator SpinEndSequence()
+    public IEnumerator SpinEndSequence()
     {
         if (isDestroyed) yield break;
         
         int selectedSlot = GetSlotUnderIndicator();
 
-        // 1. Tüm WheelManipulation segmentlerini bul
+        // 1. Tüm WheelManipulation ve CurseEffect segmentlerini bul
         List<(SegmentInstance, int)> wheelSegments = new List<(SegmentInstance, int)>();
+        List<(SegmentInstance, int)> curseSegments = new List<(SegmentInstance, int)>();
+        
         for (int i = 0; i < slotCount && !isDestroyed; i++)
         {
             foreach (Transform child in slots[i])
             {
                 if (isDestroyed) yield break;
                 var inst = child.GetComponent<SegmentInstance>();
-                if (inst != null && inst.data != null && inst.data.effectType == SegmentEffectType.WheelManipulation)
+                if (inst != null && inst.data != null)
                 {
-                    wheelSegments.Add((inst, inst.startSlotIndex));
+                    if (inst.data.effectType == SegmentEffectType.WheelManipulation)
+                    {
+                        wheelSegments.Add((inst, inst.startSlotIndex));
+                    }
+                    else if (inst.data.effectType == SegmentEffectType.CurseEffect)
+                    {
+                        curseSegments.Add((inst, inst.startSlotIndex));
+                    }
                 }
             }
         }
 
-        // 2. Tetiklenebilecek tüm efektleri topla
+        // 2. Tetiklenebilecek tüm WheelManipulation efektlerini topla
         List<(int targetSlot, SegmentData data)> triggeredEffects = new List<(int targetSlot, SegmentData data)>();
 
         foreach (var (inst, mySlot) in wheelSegments)
@@ -411,7 +420,7 @@ public class WheelManager : MonoBehaviour
             }
         }
 
-        // 3. Tetiklenen efekt varsa, rastgele birini seç ve uygula
+        // 3. Tetiklenen WheelManipulation efekt varsa, rastgele birini seç ve uygula
         if (triggeredEffects.Count > 0 && !isDestroyed)
         {
             int randomIndex = Random.Range(0, triggeredEffects.Count);
@@ -420,7 +429,35 @@ public class WheelManager : MonoBehaviour
             yield break;
         }
 
-        // 4. Hiçbir efekt tetiklenmediyse normal işlem yap
+        // 4. CurseEffect'leri kontrol et
+        bool curseEffectTriggered = false;
+        foreach (var (inst, mySlot) in curseSegments)
+        {
+            if (isDestroyed) yield break;
+            var data = inst.data;
+            bool triggered = SegmentCurseEffectHandler.Instance.HandleCurseEffect(data, selectedSlot, mySlot, slotCount);
+            if (triggered)
+            {
+                curseEffectTriggered = true;
+                break; // İlk tetiklenen curse effect'i kullan
+            }
+        }
+
+        // 5. CurseEffect tetiklendiyse segment silme
+        if (curseEffectTriggered)
+        {
+            yield return new WaitForSeconds(0.1f); // Kısa bekleme
+            
+            // ReSpin efektleri aktifse geri dönüşü engelle
+            if (!isReSpinEffectActive)
+            {
+                resetCoroutine = StartCoroutine(SmoothResetWheel());
+            }
+            
+            yield break; // Segment silme işlemini durdur
+        }
+        
+        // 5. Hiçbir efekt tetiklenmediyse normal işlem yap
         if (!isDestroyed)
         {
             yield return new WaitForSeconds(delayBeforeRemove);
@@ -536,10 +573,14 @@ public class WheelManager : MonoBehaviour
                         {
                             SegmentOnRemoveEffectHandler.Instance.HandleOnRemoveEffect(onRemoveData, onRemoveStartSlot);
                         }
-                        // CurseEffect kontrolü
+                        // CurseEffect kontrolü - segment silindiğinde tetiklenen effect'ler
                         if (inst.data.effectType == SegmentEffectType.CurseEffect)
                         {
-                            SegmentCurseEffectHandler.Instance.HandleCurseEffect(inst.data, segStart);
+                            // Sadece silinme sırasında tetiklenen effect'ler (ReSpin, RandomEscape, BlurredMemory)
+                            if (inst.data.curseEffectType != CurseEffectType.TeleportEscapeCurse)
+                            {
+                                SegmentCurseEffectHandler.Instance.HandleCurseEffect(inst.data, segStart, segStart, slotCount);
+                            }
                         }
                         // Stat boostları güncellemek için bir frame bekle
                         if (recalcStatBoosts)

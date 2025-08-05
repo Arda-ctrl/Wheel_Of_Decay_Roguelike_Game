@@ -194,6 +194,9 @@ public class SegmentDataEditor : Editor
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("tooltipDisabled"));
                     EditorGUILayout.HelpBox("Segment silinince tüm segmentlerin tooltip'lerini kapatır. Oyuncu segment özelliklerini göremez.", MessageType.Warning);
                     break;
+                case CurseEffectType.TeleportEscapeCurse:
+                    EditorGUILayout.HelpBox("Segment yok olmadan önce başka bir segmentle yer değiştirir ve kaçar. Diğer segment yok olur.", MessageType.Warning);
+                    break;
                 default:
                     EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);
                     break;

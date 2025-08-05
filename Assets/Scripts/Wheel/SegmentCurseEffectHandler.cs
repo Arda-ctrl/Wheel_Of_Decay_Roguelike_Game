@@ -21,7 +21,7 @@ public class SegmentCurseEffectHandler : MonoBehaviour
     // Curse Effect interface'i
     public interface ICurseEffect
     {
-        void OnCurseActivated(SegmentData curseSegment, int slotIndex);
+        bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount);
     }
 
     // Factory fonksiyonu
@@ -35,18 +35,20 @@ public class SegmentCurseEffectHandler : MonoBehaviour
                 return new RandomEscapeCurseEffect();
             case CurseEffectType.BlurredMemoryCurse:
                 return new BlurredMemoryCurseEffect();
+            case CurseEffectType.TeleportEscapeCurse:
+                return new TeleportEscapeCurseEffect();
             default:
                 return null;
         }
     }
 
     // Curse Effect'leri işle
-    public void HandleCurseEffect(SegmentData curseSegment, int slotIndex)
+    public bool HandleCurseEffect(SegmentData curseSegment, int landedSlot, int mySlot, int slotCount)
     {
-        if (curseSegment.effectType != SegmentEffectType.CurseEffect) return;
+        if (curseSegment.effectType != SegmentEffectType.CurseEffect) return false;
         
         var curseEffect = CreateCurseEffect(curseSegment);
-        curseEffect?.OnCurseActivated(curseSegment, slotIndex);
+        return curseEffect?.OnNeedleLanded(landedSlot, mySlot, slotCount) ?? false;
     }
 
     // Queue'ya ReSpin ekle
@@ -85,23 +87,35 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             this.spinCount = spinCount;
         }
         
-        public void OnCurseActivated(SegmentData curseSegment, int slotIndex)
+        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            // Queue'ya ekle
-            SegmentCurseEffectHandler.Instance.AddReSpinToQueue(spinCount);
+            // Kendi slotuna gelirse tetikle
+            if (landedSlot == mySlot)
+            {
+                // Queue'ya ekle
+                SegmentCurseEffectHandler.Instance.AddReSpinToQueue(spinCount);
+                return true;
+            }
+            return false;
         }
     }
 
     // RandomEscape Curse Effect - Tüm segmentleri rastgele dağıtır
     public class RandomEscapeCurseEffect : ICurseEffect
     {
-        public void OnCurseActivated(SegmentData curseSegment, int slotIndex)
+        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            var wheelManager = FindFirstObjectByType<WheelManager>();
-            if (wheelManager == null) return;
-            
-            // Tüm segmentleri rastgele dağıt
-            SegmentCurseEffectHandler.Instance.StartCoroutine(RandomizeAllSegments(wheelManager));
+            // Kendi slotuna gelirse tetikle
+            if (landedSlot == mySlot)
+            {
+                var wheelManager = FindFirstObjectByType<WheelManager>();
+                if (wheelManager == null) return false;
+                
+                // Tüm segmentleri rastgele dağıt
+                SegmentCurseEffectHandler.Instance.StartCoroutine(RandomizeAllSegments(wheelManager));
+                return true;
+            }
+            return false;
         }
         
         private IEnumerator RandomizeAllSegments(WheelManager wheelManager)
@@ -195,30 +209,36 @@ public class SegmentCurseEffectHandler : MonoBehaviour
     // BlurredMemory Curse Effect - Tooltip'leri kapatır
     public class BlurredMemoryCurseEffect : ICurseEffect
     {
-        public void OnCurseActivated(SegmentData curseSegment, int slotIndex)
+        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            Debug.Log("[BlurredMemoryCurse] Tooltip'ler tekrar aktif ediliyor...");
-            
-            // Global tooltip disable flag'ini kapat (tooltip'ler geri gelsin)
-            SetGlobalTooltipDisabled(false);
-            
-            // Tüm segmentlerin tooltip'lerini tekrar aç
-            var wheelManager = FindFirstObjectByType<WheelManager>();
-            if (wheelManager == null) return;
-            
-            // Tüm segmentleri bul ve tooltip'lerini tekrar aç
-            for (int i = 0; i < wheelManager.slotCount; i++)
+            // Kendi slotuna gelirse tetikle
+            if (landedSlot == mySlot)
             {
-                if (IsSlotOccupied(wheelManager, i))
+                Debug.Log("[BlurredMemoryCurse] Tooltip'ler tekrar aktif ediliyor...");
+                
+                // Global tooltip disable flag'ini kapat (tooltip'ler geri gelsin)
+                SetGlobalTooltipDisabled(false);
+                
+                // Tüm segmentlerin tooltip'lerini tekrar aç
+                var wheelManager = FindFirstObjectByType<WheelManager>();
+                if (wheelManager == null) return false;
+                
+                // Tüm segmentleri bul ve tooltip'lerini tekrar aç
+                for (int i = 0; i < wheelManager.slotCount; i++)
                 {
-                    var segment = GetSegmentAtSlot(wheelManager, i);
-                    if (segment != null)
+                    if (IsSlotOccupied(wheelManager, i))
                     {
-                        // Segment'in tooltip'ini tekrar aç
-                        EnableSegmentTooltip(segment);
+                        var segment = GetSegmentAtSlot(wheelManager, i);
+                        if (segment != null)
+                        {
+                            // Segment'in tooltip'ini tekrar aç
+                            EnableSegmentTooltip(segment);
+                        }
                     }
                 }
+                return true;
             }
+            return false;
         }
         
         private void EnableSegmentTooltip(SegmentInstance segment)
@@ -248,6 +268,126 @@ public class SegmentCurseEffectHandler : MonoBehaviour
         }
         
         // Slot durumu kontrol metodları (RandomEscapeCurse'den kopyalandı)
+        private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
+            return wheelManager.slotOccupied[slotIndex];
+        }
+        
+        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
+            if (!wheelManager.slotOccupied[slotIndex]) return null;
+            
+            foreach (Transform child in wheelManager.slots[slotIndex])
+            {
+                var segment = child.GetComponent<SegmentInstance>();
+                if (segment != null) return segment;
+            }
+            return null;
+        }
+    }
+
+    // TeleportEscape Curse Effect - Segment yok olmadan önce başka bir segmentle yer değiştirir
+    public class TeleportEscapeCurseEffect : ICurseEffect
+    {
+        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
+        {
+            // Kendi slotuna gelirse tetikle
+            if (landedSlot == mySlot)
+            {
+                Debug.Log("[TeleportEscapeCurse] Segment kaçmaya çalışıyor...");
+                
+                var wheelManager = FindFirstObjectByType<WheelManager>();
+                if (wheelManager == null) return false;
+                
+                // Kaçmaya çalışan segmenti bul
+                SegmentInstance escapingSegment = GetSegmentAtSlot(wheelManager, mySlot);
+                if (escapingSegment == null) return false;
+                
+                // Rastgele başka bir segment bul
+                SegmentInstance targetSegment = FindRandomOtherSegment(wheelManager, escapingSegment);
+                if (targetSegment == null) return false;
+                
+                // İki segmenti yer değiştir
+                SwapSegments(wheelManager, escapingSegment, targetSegment);
+                
+                Debug.Log($"[TeleportEscapeCurse] {escapingSegment.data.segmentID} ve {targetSegment.data.segmentID} yer değiştirdi!");
+                
+                // Yer değiştirdikten sonra hedef segmenti normal silme sürecine yönlendir
+                // Hedef segmentin slot'unu bul ve normal silme işlemini başlat
+                int targetSlot = targetSegment.startSlotIndex;
+                wheelManager.StartCoroutine(wheelManager.SpinEndSequence());
+                
+                // Stat boostları yeniden hesapla
+                SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
+                return true;
+            }
+            return false;
+        }
+        
+
+        
+        private SegmentInstance FindRandomOtherSegment(WheelManager wheelManager, SegmentInstance excludeSegment)
+        {
+            var candidates = new List<SegmentInstance>();
+            
+            for (int i = 0; i < wheelManager.slotCount; i++)
+            {
+                if (IsSlotOccupied(wheelManager, i))
+                {
+                    var segment = GetSegmentAtSlot(wheelManager, i);
+                    if (segment != null && segment != excludeSegment)
+                    {
+                        candidates.Add(segment);
+                    }
+                }
+            }
+            
+            if (candidates.Count > 0)
+            {
+                return candidates[Random.Range(0, candidates.Count)];
+            }
+            
+            return null;
+        }
+        
+        private void SwapSegments(WheelManager wheelManager, SegmentInstance segment1, SegmentInstance segment2)
+        {
+            int slot1 = segment1.startSlotIndex;
+            int slot2 = segment2.startSlotIndex;
+            
+            // İki segmenti yer değiştir
+            MoveSegmentToSlotWithoutDestroy(wheelManager, segment1, slot2);
+            MoveSegmentToSlotWithoutDestroy(wheelManager, segment2, slot1);
+        }
+        
+        private void MoveSegmentToSlotWithoutDestroy(WheelManager wheelManager, SegmentInstance segment, int newSlot)
+        {
+            // Eski slot'lardan çıkar
+            int oldStartSlot = segment.startSlotIndex;
+            int segmentSize = segment.data.size;
+            for (int i = 0; i < segmentSize; i++)
+            {
+                int oldSlot = (oldStartSlot + i) % wheelManager.slotCount;
+                wheelManager.slotOccupied[oldSlot] = false;
+            }
+            
+            // Yeni slot'a yerleştir
+            segment.transform.SetParent(wheelManager.slots[newSlot]);
+            segment.transform.localPosition = Vector3.zero;
+            segment.transform.localRotation = Quaternion.identity;
+            segment.startSlotIndex = newSlot;
+            
+            // Yeni slot'ları işaretle
+            for (int i = 0; i < segmentSize; i++)
+            {
+                int newSlotIndex = (newSlot + i) % wheelManager.slotCount;
+                wheelManager.slotOccupied[newSlotIndex] = true;
+            }
+        }
+        
+        // Slot durumu kontrol metodları
         private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
