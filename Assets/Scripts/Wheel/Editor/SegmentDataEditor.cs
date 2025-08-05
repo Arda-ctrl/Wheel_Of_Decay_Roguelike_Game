@@ -167,9 +167,7 @@ public class SegmentDataEditor : Editor
                 case WheelManipulationType.SegmentSwapper:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
                     break;
-                case WheelManipulationType.RandomEscapeCurse:
-                    EditorGUILayout.HelpBox("Segment silinirken tüm segmentleri rastgele farklı yerlere yerleştirir.", MessageType.Warning);
-                    break;
+
             }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
@@ -191,6 +189,10 @@ public class SegmentDataEditor : Editor
                     break;
                 case CurseEffectType.RandomEscapeCurse:
                     EditorGUILayout.HelpBox("Segment silinince tüm segmentleri rastgele farklı yerlere yerleştirir.", MessageType.Warning);
+                    break;
+                case CurseEffectType.BlurredMemoryCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("tooltipDisabled"));
+                    EditorGUILayout.HelpBox("Segment silinince tüm segmentlerin tooltip'lerini kapatır. Oyuncu segment özelliklerini göremez.", MessageType.Warning);
                     break;
                 default:
                     EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);

@@ -10,17 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: Segment Swapper
+  m_Name: TeleportEscapeCurse
   m_EditorClassIdentifier: 
-  segmentID: segmentswapper
+  segmentID: teleportescapecurse
   size: 1
   type: 0
-  rarity: 1
-  description: "Yan\u0131ndaki segment yokalaca\u011F\u0131 zaman yan\u0131ndaki
-    segmentle rasgele bir segment yer de\u011Fi\u015Ftirir."
+  rarity: 0
+  description: "yok olaca\u011F\u0131 zama ba\u015Fka bir segmentle yer de\u011Fi\u015Ftirir."
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.74575675, g: 0.8113208, b: 0.4094874, a: 1}
-  effectType: 1
+  segmentColor: {r: 0.3018868, g: 0.13243146, b: 0.28817654, a: 1}
+  effectType: 3
   statType: 0
   statAmount: 0
   statBonusMode: 0
@@ -38,7 +37,7 @@ MonoBehaviour:
   includeAttackSpeed: 1
   includeMovementSpeed: 1
   includeCriticalChance: 1
-  wheelManipulationType: 8
+  wheelManipulationType: 0
   redirectDirection: 0
   blackHoleRange: 1
   repulsorRange: 1
@@ -52,5 +51,6 @@ MonoBehaviour:
   rewardRarity: 0
   rewardType: 0
   rewardFillMode: 0
-  curseEffectType: 0
+  curseEffectType: 3
   curseReSpinCount: 3
+  tooltipDisabled: 0

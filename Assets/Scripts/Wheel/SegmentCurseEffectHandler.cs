@@ -33,6 +33,8 @@ public class SegmentCurseEffectHandler : MonoBehaviour
                 return new ReSpinCurseEffect(data.curseReSpinCount);
             case CurseEffectType.RandomEscapeCurse:
                 return new RandomEscapeCurseEffect();
+            case CurseEffectType.BlurredMemoryCurse:
+                return new BlurredMemoryCurseEffect();
             default:
                 return null;
         }
@@ -170,6 +172,82 @@ public class SegmentCurseEffectHandler : MonoBehaviour
         }
         
         // Slot durumu kontrol metodları
+        private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
+            return wheelManager.slotOccupied[slotIndex];
+        }
+        
+        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
+            if (!wheelManager.slotOccupied[slotIndex]) return null;
+            
+            foreach (Transform child in wheelManager.slots[slotIndex])
+            {
+                var segment = child.GetComponent<SegmentInstance>();
+                if (segment != null) return segment;
+            }
+            return null;
+        }
+    }
+
+    // BlurredMemory Curse Effect - Tooltip'leri kapatır
+    public class BlurredMemoryCurseEffect : ICurseEffect
+    {
+        public void OnCurseActivated(SegmentData curseSegment, int slotIndex)
+        {
+            Debug.Log("[BlurredMemoryCurse] Tooltip'ler tekrar aktif ediliyor...");
+            
+            // Global tooltip disable flag'ini kapat (tooltip'ler geri gelsin)
+            SetGlobalTooltipDisabled(false);
+            
+            // Tüm segmentlerin tooltip'lerini tekrar aç
+            var wheelManager = FindFirstObjectByType<WheelManager>();
+            if (wheelManager == null) return;
+            
+            // Tüm segmentleri bul ve tooltip'lerini tekrar aç
+            for (int i = 0; i < wheelManager.slotCount; i++)
+            {
+                if (IsSlotOccupied(wheelManager, i))
+                {
+                    var segment = GetSegmentAtSlot(wheelManager, i);
+                    if (segment != null)
+                    {
+                        // Segment'in tooltip'ini tekrar aç
+                        EnableSegmentTooltip(segment);
+                    }
+                }
+            }
+        }
+        
+        private void EnableSegmentTooltip(SegmentInstance segment)
+        {
+            // Segment'in tooltip'ini tekrar açmak için data'yı güncelle
+            if (segment.data != null)
+            {
+                segment.data.tooltipDisabled = false;
+            }
+        }
+        
+        private void SetGlobalTooltipDisabled(bool disabled)
+        {
+            // Global tooltip disable flag'ini ayarla
+            // Bu flag tüm yeni segmentler için de geçerli olacak
+            PlayerPrefs.SetInt("GlobalTooltipDisabled", disabled ? 1 : 0);
+            
+            // Debug log
+            if (disabled)
+            {
+                Debug.Log("[BlurredMemoryCurse] Global tooltip'ler devre dışı bırakıldı!");
+            }
+            else
+            {
+                Debug.Log("[BlurredMemoryCurse] Global tooltip'ler tekrar aktif edildi!");
+            }
+        }
+        
+        // Slot durumu kontrol metodları (RandomEscapeCurse'den kopyalandı)
         private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;

@@ -24,10 +24,25 @@ MonoBehaviour:
   statType: 0
   statAmount: 0
   statBonusMode: 0
-  wheelManipulationType: 4
+  isolatedBonusAmount: 0
+  targetRarity: 0
+  rarityBonusAmount: 0
+  flankGuardBonusAmount: 0
+  decayStartValue: 0
+  decayAmountPerSpin: 1
+  decayRemoveAtZero: 1
+  growthStartValue: 0
+  growthAmountPerSpin: 1
+  includeAttack: 1
+  includeDefence: 1
+  includeAttackSpeed: 1
+  includeMovementSpeed: 1
+  includeCriticalChance: 1
+  wheelManipulationType: 5
   redirectDirection: 0
   blackHoleRange: 1
   repulsorRange: 1
+  reverseMirrorRedirectRange: 1
   commonRedirectorRange: 2
   commonRedirectorMinRarity: 0
   commonRedirectorMaxRarity: 4
@@ -37,3 +52,5 @@ MonoBehaviour:
   rewardRarity: 0
   rewardType: 0
   rewardFillMode: 0
+  curseEffectType: 0
+  curseReSpinCount: 3

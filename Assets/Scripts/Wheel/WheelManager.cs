@@ -141,8 +141,39 @@ public class WheelManager : MonoBehaviour
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null)
             sr.color = data.segmentColor;
+        
+        // BlurredMemoryCurse kontrolü - segment eklendiğinde tooltip'leri kapat
+        if (data.effectType == SegmentEffectType.CurseEffect && data.curseEffectType == CurseEffectType.BlurredMemoryCurse)
+        {
+            DisableAllTooltips();
+        }
+        
         // Segment yerleştirildikten sonra stat boostları güncelle (RandomEscapeCurse için kaldırıldı)
         // SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
+    }
+    
+    private void DisableAllTooltips()
+    {
+        Debug.Log("[WheelManager] BlurredMemoryCurse segmenti eklendi - Tüm tooltip'ler kapatılıyor...");
+        
+        // Global tooltip disable flag'ini aktif et
+        PlayerPrefs.SetInt("GlobalTooltipDisabled", 1);
+        
+        // Tüm mevcut segmentlerin tooltip'lerini kapat
+        for (int i = 0; i < slotCount; i++)
+        {
+            if (slotOccupied[i])
+            {
+                foreach (Transform child in slots[i])
+                {
+                    var segment = child.GetComponent<SegmentInstance>();
+                    if (segment != null && segment.data != null)
+                    {
+                        segment.data.tooltipDisabled = true;
+                    }
+                }
+            }
+        }
     }
     private bool AreSlotsAvailable(int startIndex, int size)
     {
