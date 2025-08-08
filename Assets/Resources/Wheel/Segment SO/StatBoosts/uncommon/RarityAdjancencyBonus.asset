@@ -10,19 +10,34 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77542a97a82993041ada3b9f3056dc35, type: 3}
-  m_Name: "\u0130mmortal stat boost"
+  m_Name: RarityAdjancencyBonus
   m_EditorClassIdentifier: 
-  segmentID: immortalstatboost
+  segmentID: rarityadjancencybonus
   size: 1
   type: 0
-  rarity: 4
-  description: "+2 stat verir silinece\u011Fi zaman daha \xE7ok g\xFC\xE7lenir"
+  rarity: 1
+  description: "yan\u0131nda legendary segment varsa bonus stat verir"
   segmentPrefab: {fileID: 8867951075013212481, guid: a071a96d6bc7f4642bac57724deac740, type: 3}
-  segmentColor: {r: 0.79423136, g: 0.10679956, b: 0.9056604, a: 1}
+  segmentColor: {r: 0.27625492, g: 0.59068155, b: 0.6037736, a: 1}
   effectType: 0
   statType: 0
   statAmount: 2
-  statBonusMode: 6
+  statBonusMode: 10
+  isolatedBonusAmount: 0
+  adjacentBonusAmount: 0
+  targetRarity: 4
+  rarityBonusAmount: 8
+  flankGuardBonusAmount: 4
+  decayStartValue: 0
+  decayAmountPerSpin: 1
+  decayRemoveAtZero: 1
+  growthStartValue: 0
+  growthAmountPerSpin: 1
+  includeAttack: 1
+  includeDefence: 1
+  includeAttackSpeed: 1
+  includeMovementSpeed: 1
+  includeCriticalChance: 1
   wheelManipulationType: 0
   redirectDirection: 0
   blackHoleRange: 1

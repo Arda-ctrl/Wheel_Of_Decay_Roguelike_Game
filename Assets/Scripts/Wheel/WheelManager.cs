@@ -10,6 +10,7 @@ public class WheelManager : MonoBehaviour
     [SerializeField] private int slotCount = 36;
     [Header("Çark Döndürme Ayarları")]
     [SerializeField] private float spinDuration = 3f;
+    public float SpinDuration => spinDuration;
     [SerializeField] private float minSpinRounds = 3f;
     [SerializeField] private float maxSpinRounds = 6f;
     [SerializeField] private AnimationCurve spinCurve = AnimationCurve.EaseInOut(0,0,1,1);
@@ -21,10 +22,13 @@ public class WheelManager : MonoBehaviour
     private SegmentData selectedSegmentForPlacement;
     private int selectedSlotForPlacement = -1;
     private GameObject tempSegmentInstance = null;
-    private bool isSpinning = false;
+    public bool isSpinning = false;
     public Dictionary<string, int> activeEffectCounts = new Dictionary<string, int>();
     private bool wheelEffectInProgress = false;
     public float lastWheelAngle = 0f;
+    
+    // ReSpin efektleri çalışırken geri dönüşü engellemek için
+    public bool isReSpinEffectActive = false;
     
     // Coroutine referanslarını sakla
     private Coroutine spinCoroutine = null;
@@ -78,6 +82,8 @@ public class WheelManager : MonoBehaviour
         
         wheelEffectInProgress = false;
         isSpinning = false;
+        // Stat boost decay/growth güncelle
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
     }
     
     private void Start()
@@ -192,32 +198,51 @@ public class WheelManager : MonoBehaviour
         selectedSegmentForPlacement = null;
         selectedSlotForPlacement = -1;
     }
-    public void SpinWheel()
+    public void SpinWheel(System.Action onSpinComplete = null)
     {
         if (!isSpinning && !wheelEffectInProgress && !isDestroyed)
         {
             isSpinning = true;
-            spinCoroutine = StartCoroutine(SpinWheelCoroutine());
+            spinCoroutine = StartCoroutine(SpinWheelCoroutine(onSpinComplete));
         }
         else
         {
             Debug.LogWarning("[SpinWheel] Çark zaten dönüyor veya efekt devam ediyor!");
         }
     }
-    private IEnumerator SpinWheelCoroutine()
+    
+    // UI Button için parametresiz versiyon
+    public void SpinWheelButton()
+    {
+        SpinWheel();
+    }
+    private IEnumerator SpinWheelCoroutine(System.Action onSpinComplete = null)
     {
         if (isDestroyed) yield break;
         
         isSpinning = true;
         float duration = spinDuration;
         float elapsed = 0f;
+        
+        // Mevcut rotasyonu normalize et
         float startAngle = slotParent.localEulerAngles.z;
+        startAngle = ((startAngle % 360f) + 360f) % 360f;
+        
         float totalRounds = Random.Range(minSpinRounds, maxSpinRounds);
         float anglePerSlot = 360f / slotCount;
         int targetSlot = Random.Range(0, slotCount);
-        float slotAngle = Mathf.Round((targetSlot * anglePerSlot + 5f) * 10f) / 10f;
-        float endAngle = startAngle + (360f * Mathf.Floor(totalRounds)) + slotAngle;
-        endAngle = Mathf.Round(endAngle * 10f) / 10f;
+        
+        // ReSpin sırasında offset'i sıfırla
+        float offset = isReSpinEffectActive ? 0f : 5f;
+        float targetAngle = (targetSlot * anglePerSlot + offset);
+        targetAngle = ((targetAngle % 360f) + 360f) % 360f;
+        
+        // Toplam dönüş açısını hesapla
+        float totalSpinAngle = (360f * Mathf.Floor(totalRounds)) + targetAngle;
+        float endAngle = startAngle + totalSpinAngle;
+        
+
+        
         while (elapsed < duration && !isDestroyed)
         {
             float t = elapsed / duration;
@@ -231,21 +256,27 @@ public class WheelManager : MonoBehaviour
         
         if (!isDestroyed)
         {
-            float finalAngle = (targetSlot * anglePerSlot + 5f);
-            finalAngle = Mathf.Round(finalAngle * 10f) / 10f;
+            // Final açıyı doğru hesapla
+            float finalAngle = startAngle + totalSpinAngle;
             finalAngle = ((finalAngle % 360f) + 360f) % 360f;
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
+            
+
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
+        onSpinComplete?.Invoke();
     }
     // Sadece debug için: belirli bir slota döndür
-    public void SpinWheelForDebug(int targetSlot)
+    public void SpinWheelForDebug(int targetSlot, System.Action onSpinComplete = null)
     {
         if (!isSpinning && !wheelEffectInProgress && !isDestroyed)
         {
             Debug.Log($"[SpinWheelForDebug] Çark {targetSlot} slotuna döndürülüyor.");
             isSpinning = true;
-            spinCoroutine = StartCoroutine(SpinWheelCoroutine_Debug(targetSlot));
+            spinCoroutine = StartCoroutine(SpinWheelCoroutine_Debug(targetSlot, onSpinComplete));
         }
         else
         {
@@ -253,20 +284,31 @@ public class WheelManager : MonoBehaviour
         }
     }
 
-    private IEnumerator SpinWheelCoroutine_Debug(int forcedTargetSlot)
+    private IEnumerator SpinWheelCoroutine_Debug(int forcedTargetSlot, System.Action onSpinComplete = null)
     {
         if (isDestroyed) yield break;
         
         isSpinning = true;
         float duration = spinDuration;
         float elapsed = 0f;
+        
+        // Mevcut rotasyonu normalize et
         float startAngle = slotParent.localEulerAngles.z;
+        startAngle = ((startAngle % 360f) + 360f) % 360f;
+        
         float totalRounds = Random.Range(minSpinRounds, maxSpinRounds);
         float anglePerSlot = 360f / slotCount;
         int targetSlot = forcedTargetSlot % slotCount;
-        float slotAngle = Mathf.Round((targetSlot * anglePerSlot + 5f) * 10f) / 10f;
-        float endAngle = startAngle + (360f * Mathf.Floor(totalRounds)) + slotAngle;
-        endAngle = Mathf.Round(endAngle * 10f) / 10f;
+        
+        // ReSpin sırasında offset'i sıfırla
+        float offset = isReSpinEffectActive ? 0f : 5f;
+        float targetAngle = (targetSlot * anglePerSlot + offset);
+        targetAngle = ((targetAngle % 360f) + 360f) % 360f;
+        
+        // Toplam dönüş açısını hesapla
+        float totalSpinAngle = (360f * Mathf.Floor(totalRounds)) + targetAngle;
+        float endAngle = startAngle + totalSpinAngle;
+        
         while (elapsed < duration && !isDestroyed)
         {
             float t = elapsed / duration;
@@ -280,12 +322,16 @@ public class WheelManager : MonoBehaviour
         
         if (!isDestroyed)
         {
-            float finalAngle = (targetSlot * anglePerSlot + 5f);
-            finalAngle = Mathf.Round(finalAngle * 10f) / 10f;
+            // Final açıyı normalize et
+            float finalAngle = targetAngle;
             finalAngle = ((finalAngle % 360f) + 360f) % 360f;
             slotParent.localEulerAngles = new Vector3(0, 0, finalAngle);
             OnSpinEnd();
         }
+        isSpinning = false;
+        // Stat boost decay/growth güncelle (normal spin için)
+        SegmentStatBoostHandler.Instance?.OnSpinEnd();
+        onSpinComplete?.Invoke();
     }
     private void OnSpinEnd() { spinEndCoroutine = StartCoroutine(SpinEndSequence()); }
     private IEnumerator SpinEndSequence()
@@ -351,14 +397,19 @@ public class WheelManager : MonoBehaviour
             yield return new WaitForSeconds(delayBeforeRemove);
             RemoveSegmentAtSlot(selectedSlot);
             yield return new WaitForSeconds(delayBeforeReset);
-            resetCoroutine = StartCoroutine(SmoothResetWheel());
+            
+            // ReSpin efektleri aktifse geri dönüşü engelle
+            if (!isReSpinEffectActive)
+            {
+                resetCoroutine = StartCoroutine(SmoothResetWheel());
+            }
         }
         isSpinning = false;
     }
 
     // RemoveSegmentAfterEffect fonksiyonunu tamamen kaldır
 
-    private IEnumerator SmoothResetWheel()
+    public IEnumerator SmoothResetWheel()
     {
         if (isDestroyed) yield break;
         
@@ -386,26 +437,25 @@ public class WheelManager : MonoBehaviour
     private int GetSlotUnderIndicator()
     {
         if (indicatorTip == null) return 0;
-        float minDist = float.MaxValue;
-        int closestSlot = 0;
-        Vector3 tipPos = indicatorTip.position;
-        for (int i = 0; i < slots.Length; i++)
-        {
-            Transform center = slots[i].Find("SlotCenter");
-            Vector3 centerPos = center != null ? center.position : slots[i].position;
-            float dist = Vector3.Distance(tipPos, centerPos);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closestSlot = i;
-            }
-        }
-        return closestSlot;
+        
+        // Çarkın rotasyonunu al
+        float wheelRotation = slotParent.localEulerAngles.z;
+        
+        // Slot hesaplaması - Floor kullanarak aşağı yuvarla
+        float anglePerSlot = 360f / slotCount;
+        int selectedSlot = Mathf.FloorToInt(wheelRotation / anglePerSlot) % slotCount;
+        
+        // Negatif değerleri düzelt
+        if (selectedSlot < 0) selectedSlot += slotCount;
+        
+
+        
+        return selectedSlot;
     }
     public void RemoveSegmentAtSlot(int slotIndex, bool recalcStatBoosts = true)
     {
-        int maxSize = 3;
-        for (int offset = maxSize - 1; offset >= 0; offset--)
+        int slotCount = slots.Length;
+        for (int offset = 0; offset < slotCount; offset++)
         {
             int i = (slotIndex - offset + slotCount) % slotCount;
             Transform slot = slots[i];
@@ -444,6 +494,8 @@ public class WheelManager : MonoBehaviour
                             SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
                             inst._appliedStatBoost = 0f;
                         }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
                         Destroy(child.gameObject);
                         for (int j = 0; j < size; j++)
                         {
@@ -454,6 +506,11 @@ public class WheelManager : MonoBehaviour
                         if (isOnRemoveEffect && onRemoveData != null)
                         {
                             SegmentOnRemoveEffectHandler.Instance.HandleOnRemoveEffect(onRemoveData, onRemoveStartSlot);
+                        }
+                        // CurseEffect kontrolü
+                        if (inst.data.effectType == SegmentEffectType.CurseEffect)
+                        {
+                            SegmentCurseEffectHandler.Instance.HandleCurseEffect(inst.data, segStart);
                         }
                         // Stat boostları güncellemek için bir frame bekle
                         if (recalcStatBoosts)
@@ -492,10 +549,37 @@ public class WheelManager : MonoBehaviour
 
     public void ClearWheel()
     {
+        // Tüm segmentleri doğrudan yok et
         for (int i = 0; i < slotCount; i++)
         {
-            RemoveSegmentAtSlot(i, false);
+            foreach (Transform child in slots[i])
+            {
+                if (child != null)
+                {
+                    var inst = child.GetComponent<SegmentInstance>();
+                    if (inst != null && inst.data != null)
+                    {
+                        // Stat boost segmenti ise, statı silmeden önce sıfırla
+                        if (inst.data.effectType == SegmentEffectType.StatBoost && inst._appliedStatBoost != 0f)
+                        {
+                            StatType statType = inst.data.statType;
+                            SegmentStatBoostHandler.Instance.RemoveStat(inst, inst._appliedStatBoost, statType);
+                            inst._appliedStatBoost = 0f;
+                        }
+                        // Random stat stack'i varsa temizle
+                        SegmentStatBoostHandler.RemoveAllRandomStatsFor(inst);
+                    }
+                    Destroy(child.gameObject);
+                }
+            }
         }
+        
+        // Tüm slotları boş olarak işaretle
+        for (int i = 0; i < slotCount; i++)
+        {
+            slotOccupied[i] = false;
+        }
+        
         // Tüm segmentler silindikten sonra stat boostları güncelle
         StartCoroutine(DelayedRecalcStatBoosts());
     }

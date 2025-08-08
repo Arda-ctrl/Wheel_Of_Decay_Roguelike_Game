@@ -88,41 +88,85 @@ public class SegmentDataEditor : Editor
             {
                 EditorGUILayout.HelpBox("Bu segment iğneye gelince silinmez, statı güçlenir.", MessageType.None);
             }
+            else if (statBonusMode == StatBonusMode.Isolated)
+            {
+                EditorGUILayout.HelpBox("Yanında hiç segment olmayan (boş slotlarla çevrili) segmentler ekstra bonus alır. Temel bonus (statAmount) + isolated bonus (isolatedBonusAmount).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("isolatedBonusAmount"));
+            }
+            else if (statBonusMode == StatBonusMode.DecayOverTime)
+            {
+                EditorGUILayout.HelpBox("Segment her spin sonrası bonusunu yavaşça kaybeder (her spin sonrası -X stat). 0'a inince silinsin mi? (toggle)", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayStartValue"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayAmountPerSpin"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("decayRemoveAtZero"));
+            }
+            else if (statBonusMode == StatBonusMode.GrowthOverTime)
+            {
+                EditorGUILayout.HelpBox("Segment her spin sonrası bonusunu artırır (her spin sonrası +X stat).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("growthStartValue"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("growthAmountPerSpin"));
+            }
+            else if (statBonusMode == StatBonusMode.RarityAdjacency)
+            {
+                EditorGUILayout.HelpBox("Yanında belirli nadirlikte segment varsa ekstra bonus verir. Temel bonus (statAmount) + rarity bonus (rarityBonusAmount).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("targetRarity"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("rarityBonusAmount"));
+            }
+            else if (statBonusMode == StatBonusMode.FlankGuard)
+            {
+                EditorGUILayout.HelpBox("Her iki yanı da dolu segmentler varsa ekstra bonus verir. Temel bonus (statAmount) + flank bonus (flankGuardBonusAmount).", MessageType.Info);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("flankGuardBonusAmount"));
+            }
+            
+            // Random stat ayarları (sadece statType Random seçiliyse göster)
+            if (statType == StatType.Random)
+            {
+                EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Random Stat Ayarları:", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("Hangi statların rastgele seçilebileceğini belirleyin.", MessageType.None);
+                
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeAttack"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeDefence"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeAttackSpeed"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeMovementSpeed"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("includeCriticalChance"));
+            }
         }
         else if (effectType == SegmentEffectType.WheelManipulation)
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("wheelManipulationType"));
             var wheelType = (WheelManipulationType)serializedObject.FindProperty("wheelManipulationType").enumValueIndex;
-            if (wheelType == WheelManipulationType.Redirector)
+            
+            // Wheel manipulation parametreleri
+            switch (wheelType)
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
-            }
-            else if (wheelType == WheelManipulationType.BlackHole)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
-            }
-            else if (wheelType == WheelManipulationType.Repulsor)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
-            }
-            // MirrorRedirect için özel parametre yok
-            else if (wheelType == WheelManipulationType.CommonRedirector)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMaxRarity"));
-            }
-            else if (wheelType == WheelManipulationType.SafeEscape)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("safeEscapeRange"));
-            }
-            else if (wheelType == WheelManipulationType.ExplosiveEscape)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
-            }
-            else if (wheelType == WheelManipulationType.SegmentSwapper)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
+                case WheelManipulationType.Redirector:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("redirectDirection"));
+                    break;
+                case WheelManipulationType.BlackHole:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("blackHoleRange"));
+                    break;
+                case WheelManipulationType.Repulsor:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("repulsorRange"));
+                    break;
+                case WheelManipulationType.ReverseMirrorRedirect:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("reverseMirrorRedirectRange"));
+                    EditorGUILayout.HelpBox("Yanındaki slotlara iğne gelirse, iğneyi karşısındaki slota yönlendirir.", MessageType.Info);
+                    break;
+                case WheelManipulationType.CommonRedirector:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorRange"));
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMinRarity"));
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("commonRedirectorMaxRarity"));
+                    break;
+                case WheelManipulationType.SafeEscape:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("safeEscapeRange"));
+                    break;
+                case WheelManipulationType.ExplosiveEscape:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveEscapeRange"));
+                    break;
+                case WheelManipulationType.SegmentSwapper:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
+                    break;
             }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
@@ -130,6 +174,22 @@ public class SegmentDataEditor : Editor
             if (rewardRarity != null) EditorGUILayout.PropertyField(rewardRarity);
             if (rewardType != null) EditorGUILayout.PropertyField(rewardType);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardFillMode"));
+        }
+        else if (effectType == SegmentEffectType.CurseEffect)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("curseEffectType"));
+            var curseType = (CurseEffectType)serializedObject.FindProperty("curseEffectType").enumValueIndex;
+            
+            switch (curseType)
+            {
+                case CurseEffectType.ReSpinCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("curseReSpinCount"));
+                    EditorGUILayout.HelpBox("Segment silinince çarkı belirtilen sayıda tekrar döndürür.", MessageType.Warning);
+                    break;
+                default:
+                    EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);
+                    break;
+            }
         }
 
         if (EditorGUI.EndChangeCheck())
