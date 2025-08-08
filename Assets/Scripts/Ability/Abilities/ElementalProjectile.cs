@@ -61,7 +61,7 @@ public class ElementalProjectile : MonoBehaviour, IAbility
         elementalAbilityManager = GetComponent<ElementalAbilityManager>();
         if (elementalAbilityManager == null)
         {
-            elementalAbilityManager = FindObjectOfType<ElementalAbilityManager>();
+            elementalAbilityManager = FindFirstObjectByType<ElementalAbilityManager>();
         }
     }
     

@@ -17,7 +17,6 @@ public class AbilityDebugVisualizer : MonoBehaviour
     [SerializeField] private bool showEnemyStacks = true;
     [SerializeField] private bool showElementColors = true;
     [SerializeField] private bool showStackNumbers = true;
-    [SerializeField] private bool showStackTimers = false;
     
     [Header("⚙️ Debug Settings")]
     [SerializeField] private bool showOnlyWhenSelected = false;

@@ -52,29 +52,28 @@ public class DebugLogSuppressor : EditorWindow
     
     private void ConfigureBuildSettings()
     {
-        // Player Settings'i yapılandır
-        PlayerSettings.SetScriptingDefineSymbolsForGroup(
-            BuildTargetGroup.Standalone,
-            "DISABLE_DEBUG_LOGS;SUPPRESS_MEMORY_WARNINGS"
-        );
+        // Player Settings'i yapılandır - Deprecated API'ler kaldırıldı
+        // PlayerSettings.SetScriptingDefineSymbolsForGroup(
+        //     BuildTargetGroup.Standalone,
+        //     "DISABLE_DEBUG_LOGS;SUPPRESS_MEMORY_WARNINGS"
+        // );
         
         // Debug ayarlarını kapat
-        PlayerSettings.scriptingRuntimeVersion = ScriptingRuntimeVersion.Latest;
         PlayerSettings.allowUnsafeCode = false;
         
-        // Build ayarlarını optimize et
-        PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.Standalone, ApiCompatibilityLevel.NET_4_6);
+        // Build ayarlarını optimize et - Deprecated API kaldırıldı
+        // PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.Standalone, ApiCompatibilityLevel.NET_4_6);
         
         // Debug log'ları kapat
         PlayerSettings.enableInternalProfiler = false;
         
-        Debug.Log("Build settings configured for release - Debug logs suppressed");
+        Debug.Log("Build settings configured for release - Debug logs suppressed (deprecated APIs removed)");
     }
     
     private void AddDebugLogFilterToScene()
     {
         // Sahneye DebugLogFilter ekle
-        DebugLogFilter existingFilter = FindObjectOfType<DebugLogFilter>();
+        DebugLogFilter existingFilter = FindFirstObjectByType<DebugLogFilter>();
         if (existingFilter == null)
         {
             GameObject filterObj = new GameObject("DebugLogFilter");
@@ -92,7 +91,7 @@ public class DebugLogSuppressor : EditorWindow
         }
         
         // Sahneye MemoryLeakSuppressor ekle
-        MemoryLeakSuppressor existingSuppressor = FindObjectOfType<MemoryLeakSuppressor>();
+        MemoryLeakSuppressor existingSuppressor = FindFirstObjectByType<MemoryLeakSuppressor>();
         if (existingSuppressor == null)
         {
             GameObject suppressorObj = new GameObject("MemoryLeakSuppressor");

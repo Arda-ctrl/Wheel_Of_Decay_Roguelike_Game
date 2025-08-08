@@ -18,7 +18,7 @@ public class SaveSystemTest : MonoBehaviour
     void Start()
     {
         saveManager = SaveManager.Instance;
-        uiManager = FindObjectOfType<UI_Manager>();
+        uiManager = FindFirstObjectByType<UI_Manager>();
         
         if (saveManager == null)
         {

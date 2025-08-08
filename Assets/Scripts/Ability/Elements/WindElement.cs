@@ -63,9 +63,17 @@ public class WindElement : IElement
     /// <param name="stackCount">Mevcut stack sayısı</param>
     public void TriggerElementEffect(GameObject target, int stackCount)
     {
+        Debug.Log($"💨 Wind TriggerElementEffect called for {target.name} with {stackCount} stacks");
+        
         // Wind element data'sını al
         var windElementData = GetWindElementData();
-        if (windElementData == null) return;
+        if (windElementData == null) 
+        {
+            Debug.LogError("💨 Wind TriggerElementEffect: WindElementData is null!");
+            return;
+        }
+        
+        Debug.Log($"💨 Wind TriggerElementEffect: Threshold = {windElementData.knockbackStackThreshold}, Current stacks = {stackCount}");
         
         // 2 stack'te knockback uygula
         if (stackCount >= windElementData.knockbackStackThreshold)
@@ -75,7 +83,7 @@ public class WindElement : IElement
         }
         else
         {
-            Debug.Log($"💨 Wind TriggerElementEffect: {stackCount} stack - No knockback yet");
+            Debug.Log($"💨 Wind TriggerElementEffect: {stackCount} stack - No knockback yet (need {windElementData.knockbackStackThreshold})");
         }
     }
     
@@ -86,10 +94,14 @@ public class WindElement : IElement
     /// <param name="windData">Wind element data</param>
     private void ApplyKnockbackEffect(GameObject target, WindElementData windData)
     {
+        Debug.Log($"💨 ApplyKnockbackEffect called for {target.name} with force {windData.knockbackForce}");
+        
         // Player'dan uzaklaştırma yönünü hesapla
         Vector3 playerPosition = PlayerController.Instance.transform.position;
         Vector3 targetPosition = target.transform.position;
         Vector3 knockbackDirection = (targetPosition - playerPosition).normalized;
+        
+        Debug.Log($"💨 Knockback direction: {knockbackDirection}, Force: {windData.knockbackForce}");
         
         // Rigidbody2D ile knockback uygula
         var rb = target.GetComponent<Rigidbody2D>();
@@ -99,13 +111,24 @@ public class WindElement : IElement
             Vector2 knockbackForce = knockbackDirection * windData.knockbackForce;
             rb.AddForce(knockbackForce, ForceMode2D.Impulse);
             
+            Debug.Log($"💨 Applied knockback force: {knockbackForce} to {target.name}");
+            
             // Knockback süresi boyunca hareketi kısıtla
             // Target'ta zaten bir MonoBehaviour component'i olmalı (EnemyController gibi)
             var targetMonoBehaviour = target.GetComponent<MonoBehaviour>();
             if (targetMonoBehaviour != null)
             {
                 targetMonoBehaviour.StartCoroutine(KnockbackStun(target, windData.knockbackStunDuration));
+                Debug.Log($"💨 Started knockback stun coroutine for {target.name}");
             }
+            else
+            {
+                Debug.LogWarning($"💨 No MonoBehaviour found on {target.name} for knockback stun");
+            }
+        }
+        else
+        {
+            Debug.LogError($"💨 No Rigidbody2D found on {target.name} for knockback!");
         }
         
         // VFX ve SFX oynat
@@ -159,24 +182,20 @@ public class WindElement : IElement
     /// <returns>Wind element data</returns>
     private WindElementData GetWindElementData()
     {
-        // Player'dan WindElementData'yı al
-        var playerController = PlayerController.Instance;
-        if (playerController != null)
-        {
-            // ElementalAbilityManager'dan wind element data'sını al
-            var elementalManager = playerController.GetComponent<ElementalAbilityManager>();
-            if (elementalManager != null)
-            {
-                // Wind element data'sını bul
-                var windAbility = elementalManager.GetAbility(ElementType.Wind, AbilityType.ElementalStrike);
-                if (windAbility != null)
-                {
-                    // WindElementData'yı döndür (bu kısım implementasyona bağlı)
-                    return Resources.Load<WindElementData>("ElementData/Wind/WindElementData");
-                }
-            }
-        }
+        // Try to load from Resources first
+        var windData = Resources.Load<WindElementData>("SO/ElementData/Wind/WindElementData");
+        if (windData != null) return windData;
         
-        return null;
+        // Fallback: Try to load from SO folder directly
+        windData = Resources.Load<WindElementData>("ElementData/Wind/WindElementData");
+        if (windData != null) return windData;
+        
+        // Create default wind data if none found
+        Debug.LogWarning("WindElementData not found in Resources, creating default values");
+        var defaultWindData = ScriptableObject.CreateInstance<WindElementData>();
+        defaultWindData.knockbackForce = 8f;
+        defaultWindData.knockbackStackThreshold = 2;
+        defaultWindData.knockbackStunDuration = 0.5f;
+        return defaultWindData;
     }
 } 

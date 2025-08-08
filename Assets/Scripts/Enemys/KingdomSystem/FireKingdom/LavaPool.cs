@@ -4,7 +4,6 @@ using System.Collections;
 public class LavaPool : MonoBehaviour
 {
     [Header("Lava Pool Settings")]
-    [SerializeField] private float damagePerSecond = 8f;
     [SerializeField] private float tickRate = 0.5f;
     [SerializeField] private float radius = 4f;
     [SerializeField] private float duration = 8f;

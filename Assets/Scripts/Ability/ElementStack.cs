@@ -44,6 +44,10 @@ public class ElementStack : MonoBehaviour
         elementEffects[ElementType.Fire] = new FireElement();
         elementEffects[ElementType.Ice] = new IceElement();
         elementEffects[ElementType.Poison] = new PoisonElement();
+        elementEffects[ElementType.Wind] = new WindElement();
+        elementEffects[ElementType.Lightning] = new LightningElement();
+        elementEffects[ElementType.Earth] = new EarthElement();
+        elementEffects[ElementType.Void] = new VoidElement();
         // Yeni elementler buraya eklenebilir
     }
     
@@ -71,7 +75,12 @@ public class ElementStack : MonoBehaviour
         // Element efektini tetikle
         if (elementEffects.ContainsKey(elementType))
         {
+            Debug.Log($"📊 {gameObject.name} triggering {elementType} effect with {newStacks} stacks");
             elementEffects[elementType].TriggerElementEffect(gameObject, newStacks);
+        }
+        else
+        {
+            Debug.LogError($"📊 {gameObject.name} - No element effect found for {elementType}!");
         }
         
         // Event'i tetikle

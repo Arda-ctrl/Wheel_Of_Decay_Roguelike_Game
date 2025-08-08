@@ -30,7 +30,16 @@ public class ElementalAbilityManager : MonoBehaviour
         // Mevcut ability'leri yükle
         LoadActiveAbilities();
         
-        Debug.Log("Elemental Ability System initialized");
+        Debug.Log($"Elemental Ability System initialized with {availableAbilities.Length} abilities");
+        
+        // Debug: Print all loaded abilities
+        foreach (var ability in availableAbilities)
+        {
+            if (ability != null)
+            {
+                Debug.Log($"Loaded ability: {ability.abilityName} ({ability.elementType}) - {ability.abilityType}");
+            }
+        }
     }
     
     /// <summary>
@@ -105,6 +114,14 @@ public class ElementalAbilityManager : MonoBehaviour
                     
                     Debug.Log($"🔥 Loaded {elementType} {abilityType} ability");
                 }
+                else
+                {
+                    Debug.LogError($"Failed to create ability: {abilityData.abilityName} ({abilityData.elementType})");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Ability data is null in availableAbilities array");
             }
         }
     }
@@ -165,6 +182,10 @@ public class ElementalAbilityManager : MonoBehaviour
                     }
                     strikeAbility.UseAbility(gameObject, target, element);
                     Debug.Log($"⚔️ {elementAbilities.Key} Strike applied to {target.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"⚔️ {elementAbilities.Key} Strike ability not found or cannot be used");
                 }
             }
         }

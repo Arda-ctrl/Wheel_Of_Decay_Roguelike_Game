@@ -6,7 +6,6 @@ public class WeaponController : MonoBehaviour
     [Header("Weapon Settings")]
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
-    [SerializeField] private float fireRate = 0.5f;
     private float nextFireTime;
     private bool isFiring = false;
 

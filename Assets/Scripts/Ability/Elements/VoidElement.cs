@@ -167,7 +167,7 @@ public class VoidElement : IElement
         try
         {
             // Canvas'ı bul
-            Canvas canvas = Object.FindObjectOfType<Canvas>();
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
             if (canvas == null)
             {
                 // Eğer canvas yoksa, yeni bir canvas oluştur

@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Wheel_Of_Decay_Roguelike_Game.sln"
+    "dotnet.defaultSolution": "Wheel_Of_Decay_Roguelike_Game.sln",
+    "dotrush.roslyn.projectOrSolutionFiles": []
 }

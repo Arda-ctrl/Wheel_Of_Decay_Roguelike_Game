@@ -12,7 +12,6 @@ public class EnemyProjectile : MonoBehaviour
     private Vector2 direction;
     private GameObject owner;
     private Rigidbody2D rb;
-    private bool isInitialized = false;
 
     private void Awake()
     {
@@ -30,7 +29,6 @@ public class EnemyProjectile : MonoBehaviour
         speed = spd;
         damage = dmg;
         owner = ownerObj;
-        isInitialized = true;
 
         // Set velocity
         if (rb != null)

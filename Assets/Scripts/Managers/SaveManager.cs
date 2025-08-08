@@ -62,18 +62,7 @@ public class PickupData
     public bool isCollected;
 }
 
-[System.Serializable]
-public class SettingsData
-{
-    public float masterVolume;
-    public float musicVolume;
-    public float sfxVolume;
-    public bool isFullscreen;
-    public int qualityLevel;
-    public string language;
-    public bool showDamageNumbers;
-    public bool showFPS;
-}
+// SettingsData artık ayrı dosyada tanımlanıyor (Assets/Scripts/Data/SettingsData.cs)
 
 [System.Serializable]
 public class GameSaveData
@@ -94,7 +83,6 @@ public class SaveManager : MonoBehaviour
     [Header("Save Settings")]
     [SerializeField] private string saveFileName = "gamesave.json";
     [SerializeField] private string backupFileName = "gamesave_backup.json";
-    [SerializeField] private int maxSaveSlots = 3;
     [SerializeField] private bool autoSaveEnabled = true;
     [SerializeField] private float autoSaveInterval = 60f; // seconds
 
@@ -144,7 +132,7 @@ public class SaveManager : MonoBehaviour
     #region Initialization
     private void InitializeSaveManager()
     {
-        uiManager = FindObjectOfType<UI_Manager>();
+        uiManager = FindFirstObjectByType<UI_Manager>();
         lastAutoSaveTime = Time.time;
         
         // Create save directory if it doesn't exist
@@ -434,17 +422,35 @@ public class SaveManager : MonoBehaviour
 
     private SettingsData GetCurrentSettingsData()
     {
+        // Yeni SettingsData sınıfını kullan
         SettingsData settingsData = new SettingsData();
         
-        // Get settings from PlayerPrefs
-        settingsData.masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1f);
-        settingsData.musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
-        settingsData.sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
-        settingsData.isFullscreen = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
-        settingsData.qualityLevel = PlayerPrefs.GetInt("QualityLevel", 2);
-        settingsData.language = PlayerPrefs.GetString("Language", "English");
-        settingsData.showDamageNumbers = PlayerPrefs.GetInt("ShowDamageNumbers", 1) == 1;
-        settingsData.showFPS = PlayerPrefs.GetInt("ShowFPS", 0) == 1;
+        // SettingsManager'dan ayarları al (eğer varsa)
+        if (SettingsManager.Instance != null)
+        {
+            settingsData.masterVolume = SettingsManager.Instance.GetMasterVolume();
+            settingsData.soundVolume = SettingsManager.Instance.GetSoundVolume();
+            settingsData.musicVolume = SettingsManager.Instance.GetMusicVolume();
+            settingsData.fullscreen = Screen.fullScreen;
+            settingsData.vSync = QualitySettings.vSyncCount > 0;
+            settingsData.particleEffectsQuality = PlayerPrefs.GetInt("ParticleEffects", 1);
+            settingsData.blurQuality = PlayerPrefs.GetInt("BlurQuality", 1);
+            settingsData.brightness = SettingsManager.Instance.GetBrightness();
+            settingsData.languageIndex = PlayerPrefs.GetInt("Language", 0);
+        }
+        else
+        {
+            // Fallback: PlayerPrefs'den al
+            settingsData.masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1f);
+            settingsData.soundVolume = PlayerPrefs.GetFloat("SoundVolume", 1f);
+            settingsData.musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
+            settingsData.fullscreen = Screen.fullScreen;
+            settingsData.vSync = QualitySettings.vSyncCount > 0;
+            settingsData.particleEffectsQuality = PlayerPrefs.GetInt("ParticleEffects", 1);
+            settingsData.blurQuality = PlayerPrefs.GetInt("BlurQuality", 1);
+            settingsData.brightness = PlayerPrefs.GetFloat("Brightness", 1f);
+            settingsData.languageIndex = PlayerPrefs.GetInt("Language", 0);
+        }
         
         return settingsData;
     }
@@ -518,20 +524,37 @@ public class SaveManager : MonoBehaviour
 
     private void ApplySettingsData(SettingsData settingsData)
     {
-        // Apply settings
-        PlayerPrefs.SetFloat("MasterVolume", settingsData.masterVolume);
-        PlayerPrefs.SetFloat("MusicVolume", settingsData.musicVolume);
-        PlayerPrefs.SetFloat("SFXVolume", settingsData.sfxVolume);
-        PlayerPrefs.SetInt("Fullscreen", settingsData.isFullscreen ? 1 : 0);
-        PlayerPrefs.SetInt("QualityLevel", settingsData.qualityLevel);
-        PlayerPrefs.SetString("Language", settingsData.language);
-        PlayerPrefs.SetInt("ShowDamageNumbers", settingsData.showDamageNumbers ? 1 : 0);
-        PlayerPrefs.SetInt("ShowFPS", settingsData.showFPS ? 1 : 0);
-        PlayerPrefs.Save();
-        
-        // Apply to current system
-        Screen.fullScreen = settingsData.isFullscreen;
-        QualitySettings.SetQualityLevel(settingsData.qualityLevel);
+        // SettingsManager'a ayarları uygula (eğer varsa)
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.SetMasterVolume(settingsData.masterVolume);
+            SettingsManager.Instance.SetSoundVolume(settingsData.soundVolume);
+            SettingsManager.Instance.SetMusicVolume(settingsData.musicVolume);
+            SettingsManager.Instance.SetFullscreen(settingsData.fullscreen);
+            SettingsManager.Instance.SetVSync(settingsData.vSync);
+            SettingsManager.Instance.SetParticleEffects(settingsData.particleEffectsQuality);
+            SettingsManager.Instance.SetBlurQuality(settingsData.blurQuality);
+            SettingsManager.Instance.SetBrightness(settingsData.brightness);
+            SettingsManager.Instance.SetLanguage(settingsData.languageIndex);
+        }
+        else
+        {
+            // Fallback: PlayerPrefs'e kaydet
+            PlayerPrefs.SetFloat("MasterVolume", settingsData.masterVolume);
+            PlayerPrefs.SetFloat("SoundVolume", settingsData.soundVolume);
+            PlayerPrefs.SetFloat("MusicVolume", settingsData.musicVolume);
+            PlayerPrefs.SetInt("Fullscreen", settingsData.fullscreen ? 1 : 0);
+            PlayerPrefs.SetInt("VSync", settingsData.vSync ? 1 : 0);
+            PlayerPrefs.SetInt("ParticleEffects", settingsData.particleEffectsQuality);
+            PlayerPrefs.SetInt("BlurQuality", settingsData.blurQuality);
+            PlayerPrefs.SetFloat("Brightness", settingsData.brightness);
+            PlayerPrefs.SetInt("Language", settingsData.languageIndex);
+            PlayerPrefs.Save();
+            
+            // Apply to current system
+            Screen.fullScreen = settingsData.fullscreen;
+            QualitySettings.vSyncCount = settingsData.vSync ? 1 : 0;
+        }
     }
     #endregion
 

@@ -12,7 +12,6 @@ public class GridConnectionValidator : MonoBehaviour
     [SerializeField] private ImprovedDungeonGenerator dungeonGenerator;
     
     [Header("Settings")]
-    [SerializeField] private int maxSpawnAttempts = 5;
     [SerializeField] private bool detailedDebugLogging = true;  // Detaylı debug logları için yeni değişken
     
     private Dictionary<Vector2Int, List<ConnectionRequirement>> requiredConnectionsMap = new Dictionary<Vector2Int, List<ConnectionRequirement>>();

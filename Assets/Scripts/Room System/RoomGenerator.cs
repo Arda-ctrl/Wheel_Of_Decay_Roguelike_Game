@@ -822,7 +822,7 @@ public class RoomGenerator : MonoBehaviour
     private void InitializeMinimap()
     {
         // Find or create dungeon minimap
-        DungeonMinimap minimap = FindObjectOfType<DungeonMinimap>();
+        DungeonMinimap minimap = FindFirstObjectByType<DungeonMinimap>();
         if (minimap == null)
         {
             GameObject minimapObj = new GameObject("Dungeon Minimap");

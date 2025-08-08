@@ -13,6 +13,9 @@ public class UI_Manager : MonoBehaviour
     [SerializeField] private GameObject inventoryPanel;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject victoryPanel;
+    
+    [Header("Main Menu Integration")]
+    [SerializeField] private MainMenuManager mainMenuManager;
 
     [Header("Game UI Elements")]
     [SerializeField] private Slider healthBar;
@@ -429,6 +432,25 @@ public class UI_Manager : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             SaveManager.Instance.DeleteSave();
+        }
+    }
+    #endregion
+
+    #region Main Menu Integration
+    public void SetMainMenuManager(MainMenuManager manager)
+    {
+        mainMenuManager = manager;
+    }
+
+    public void ReturnToMainMenu()
+    {
+        if (mainMenuManager != null)
+        {
+            mainMenuManager.ShowMainMenu();
+        }
+        else
+        {
+            ShowMainMenu();
         }
     }
     #endregion

@@ -70,7 +70,7 @@ public class MapSceneController : MonoBehaviour
     {
         if (mapManager == null)
         {
-            mapManager = FindObjectOfType<MapManager>();
+            mapManager = FindFirstObjectByType<MapManager>();
             
             if (mapManager == null)
             {

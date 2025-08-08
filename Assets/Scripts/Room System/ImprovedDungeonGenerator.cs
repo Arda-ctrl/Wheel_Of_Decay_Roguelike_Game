@@ -1635,7 +1635,7 @@ public class ImprovedDungeonGenerator : MonoBehaviour
         Debug.Log("<color=yellow>********** STARTING GRID CONSISTENCY CHECK **********</color>");
         
         // Sahne üzerindeki tüm oda objelerini bul
-        var allRoomObjects = FindObjectsOfType<RoomInteractive>().Select(ri => ri.gameObject).ToList();
+        var allRoomObjects = FindObjectsByType<RoomInteractive>(FindObjectsSortMode.None).Select(ri => ri.gameObject).ToList();
         List<GameObject> missingInGrid = new List<GameObject>();
         List<Vector2Int> emptyGridEntries = new List<Vector2Int>();
         List<Vector2Int> mismatchedEntries = new List<Vector2Int>();

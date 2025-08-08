@@ -9,8 +9,6 @@ public class MemoryLeakSuppressor : MonoBehaviour
 {
     [Header("Suppression Settings")]
     [SerializeField] private bool enableSuppression = true;
-    [SerializeField] private bool suppressInEditor = true;
-    [SerializeField] private bool suppressInBuild = true;
     
     [Header("Filter Keywords")]
     [SerializeField] private string[] memoryLeakKeywords = {

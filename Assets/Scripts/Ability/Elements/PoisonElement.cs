@@ -89,7 +89,6 @@ public class ElementalPoisonEffect : MonoBehaviour
     private float maxSlowAmount;
     private float lastTickTime;
     private float elapsedTime;
-    private float originalSpeedMultiplier = 1f;
     
     public void Initialize(int stacks, float damage, float tickRate, float slowAmount, float maxSlow)
     {
@@ -173,7 +172,7 @@ public class ElementalPoisonEffect : MonoBehaviour
     private void CreateDamageNumber(float damage, Color color)
     {
         // Canvas'ı bul
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             // Eğer canvas yoksa, yeni bir canvas oluştur

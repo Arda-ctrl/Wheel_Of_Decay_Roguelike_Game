@@ -4,14 +4,12 @@ using System.Collections.Generic;
 public class FireEffect : AbilityEffect
 {
     private float lastDamageTime;
-    private bool initialDamageApplied;
     private List<GameObject> affectedTargets = new List<GameObject>();
 
     public override void Initialize(AbilityEventData data)
     {
         base.Initialize(data);
         lastDamageTime = 0f;
-        initialDamageApplied = false;
 
         // Apply initial burst damage and find AOE targets
         ApplyInitialDamage();

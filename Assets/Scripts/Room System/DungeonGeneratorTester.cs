@@ -14,7 +14,7 @@ public class DungeonGeneratorTester : MonoBehaviour
         // Find the dungeon generator if not assigned
         if (dungeonGenerator == null)
         {
-            dungeonGenerator = FindObjectOfType<ImprovedDungeonGenerator>();
+            dungeonGenerator = FindFirstObjectByType<ImprovedDungeonGenerator>();
             
             if (dungeonGenerator == null)
             {

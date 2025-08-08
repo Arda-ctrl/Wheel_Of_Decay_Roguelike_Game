@@ -150,7 +150,7 @@ public class RoomInitializer : MonoBehaviour
             Debug.Log("End room completed!");
             
             // Find MapRoomIntegrator and notify it
-            MapRoomIntegrator integrator = FindObjectOfType<MapRoomIntegrator>();
+            MapRoomIntegrator integrator = FindFirstObjectByType<MapRoomIntegrator>();
             if (integrator != null)
             {
                 integrator.ReturnToMap(true);

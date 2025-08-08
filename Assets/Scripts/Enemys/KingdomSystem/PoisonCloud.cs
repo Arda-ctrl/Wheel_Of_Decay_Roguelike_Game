@@ -4,7 +4,6 @@ using System.Collections;
 public class PoisonCloud : MonoBehaviour
 {
     [Header("Poison Cloud Settings")]
-    [SerializeField] private float damagePerSecond = 5f;
     [SerializeField] private float tickRate = 1f;
     [SerializeField] private float radius = 3f;
     [SerializeField] private GameObject poisonVFX;

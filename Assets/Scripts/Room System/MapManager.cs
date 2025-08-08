@@ -73,7 +73,7 @@ public class MapManager : MonoBehaviour
         }
         
         // Ensure we have an EventSystem for UI interactions
-        if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             if (enableDebugLogs) Debug.Log("No EventSystem found in scene. Creating one...");
             GameObject eventSystem = new GameObject("EventSystem");
@@ -629,7 +629,7 @@ public class MapManager : MonoBehaviour
         SaveMapState();
         
         // Pass node data to MapRoomIntegrator before loading the scene
-        MapRoomIntegrator integrator = FindObjectOfType<MapRoomIntegrator>();
+        MapRoomIntegrator integrator = FindFirstObjectByType<MapRoomIntegrator>();
         if (integrator == null)
         {
             // Create a new MapRoomIntegrator if it doesn't exist
@@ -666,7 +666,7 @@ public class MapManager : MonoBehaviour
             Debug.Log($"Scene {scene.name} loaded successfully. Looking for RoomGenerator...");
             
             // Find room generator or initializer
-            RoomGenerator roomGenerator = FindObjectOfType<RoomGenerator>();
+            RoomGenerator roomGenerator = FindFirstObjectByType<RoomGenerator>();
             if (roomGenerator != null)
             {
                 Debug.Log("RoomGenerator found. Setting up room...");
@@ -678,7 +678,7 @@ public class MapManager : MonoBehaviour
                 Debug.LogWarning("RoomGenerator not found in the loaded scene! Make sure it exists in the scene.");
                 
                 // Try to find MapRoomIntegrator as an alternative
-                MapRoomIntegrator integrator = FindObjectOfType<MapRoomIntegrator>();
+                MapRoomIntegrator integrator = FindFirstObjectByType<MapRoomIntegrator>();
                 if (integrator != null)
                 {
                     Debug.Log("MapRoomIntegrator found. Room setup will be handled by the integrator.");

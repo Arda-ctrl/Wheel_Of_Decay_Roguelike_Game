@@ -100,7 +100,7 @@ public class MapRoomIntegrator : MonoBehaviour
         else
         {
             // ImprovedDungeonGenerator'ı bul
-            improvedDungeonGenerator = FindObjectOfType<ImprovedDungeonGenerator>();
+            improvedDungeonGenerator = FindFirstObjectByType<ImprovedDungeonGenerator>();
             
             if (improvedDungeonGenerator == null && useImprovedGenerator)
             {
@@ -124,7 +124,7 @@ public class MapRoomIntegrator : MonoBehaviour
         else
         {
             // RoomGenerator'ı bul
-            roomGenerator = FindObjectOfType<RoomGenerator>();
+            roomGenerator = FindFirstObjectByType<RoomGenerator>();
             
             if (roomGenerator == null && !useImprovedGenerator)
             {
@@ -147,7 +147,7 @@ public class MapRoomIntegrator : MonoBehaviour
         }
         
         // LevelGenerator'ı da bul
-        levelGenerator = FindObjectOfType<LevelGenerator>();
+        levelGenerator = FindFirstObjectByType<LevelGenerator>();
     }
     
     private void Start()
@@ -155,17 +155,17 @@ public class MapRoomIntegrator : MonoBehaviour
         // Find generators if not assigned
         if (roomGenerator == null && !useImprovedGenerator)
         {
-            roomGenerator = FindObjectOfType<RoomGenerator>();
+            roomGenerator = FindFirstObjectByType<RoomGenerator>();
         }
         
         if (improvedDungeonGenerator == null && useImprovedGenerator)
         {
-            improvedDungeonGenerator = FindObjectOfType<ImprovedDungeonGenerator>();
+            improvedDungeonGenerator = FindFirstObjectByType<ImprovedDungeonGenerator>();
         }
         
         if (levelGenerator == null)
         {
-            levelGenerator = FindObjectOfType<LevelGenerator>();
+            levelGenerator = FindFirstObjectByType<LevelGenerator>();
         }
     }
     
@@ -241,7 +241,7 @@ public class MapRoomIntegrator : MonoBehaviour
         if (useImprovedGenerator && improvedDungeonGenerator == null)
         {
             Debug.Log("Looking for ImprovedDungeonGenerator...");
-            improvedDungeonGenerator = FindObjectOfType<ImprovedDungeonGenerator>();
+            improvedDungeonGenerator = FindFirstObjectByType<ImprovedDungeonGenerator>();
             
             if (improvedDungeonGenerator == null)
             {
@@ -251,7 +251,7 @@ public class MapRoomIntegrator : MonoBehaviour
         else if (!useImprovedGenerator && roomGenerator == null)
         {
             Debug.Log("Looking for RoomGenerator...");
-            roomGenerator = FindObjectOfType<RoomGenerator>();
+            roomGenerator = FindFirstObjectByType<RoomGenerator>();
             
             if (roomGenerator == null)
             {
@@ -601,7 +601,7 @@ public class MapRoomIntegrator : MonoBehaviour
             }
             else
             {
-                roomGenerator = FindObjectOfType<RoomGenerator>();
+                roomGenerator = FindFirstObjectByType<RoomGenerator>();
                 
                 if (roomGenerator == null)
                 {
@@ -716,7 +716,7 @@ public class MapRoomIntegrator : MonoBehaviour
         }
         
         // Find and clear the minimap if it exists
-        DungeonMinimap minimap = FindObjectOfType<DungeonMinimap>();
+        DungeonMinimap minimap = FindFirstObjectByType<DungeonMinimap>();
         if (minimap != null)
         {
             minimap.ClearMinimap();
@@ -726,7 +726,7 @@ public class MapRoomIntegrator : MonoBehaviour
     public void ToggleMap()
     {
         // Find MapManager
-        MapManager mapManager = FindObjectOfType<MapManager>();
+        MapManager mapManager = FindFirstObjectByType<MapManager>();
         if (mapManager != null)
         {
             mapManager.ToggleMap();
