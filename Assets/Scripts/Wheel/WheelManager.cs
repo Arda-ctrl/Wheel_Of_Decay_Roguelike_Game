@@ -154,8 +154,6 @@ public class WheelManager : MonoBehaviour
     
     private void DisableAllTooltips()
     {
-        Debug.Log("[WheelManager] BlurredMemoryCurse segmenti eklendi - Tüm tooltip'ler kapatılıyor...");
-        
         // Global tooltip disable flag'ini aktif et
         PlayerPrefs.SetInt("GlobalTooltipDisabled", 1);
         
@@ -234,10 +232,6 @@ public class WheelManager : MonoBehaviour
             isSpinning = true;
             spinCoroutine = StartCoroutine(SpinWheelCoroutine(onSpinComplete));
         }
-        else
-        {
-            Debug.LogWarning("[SpinWheel] Çark zaten dönüyor veya efekt devam ediyor!");
-        }
     }
     
     // UI Button için parametresiz versiyon
@@ -303,13 +297,8 @@ public class WheelManager : MonoBehaviour
     {
         if (!isSpinning && !wheelEffectInProgress && !isDestroyed)
         {
-            Debug.Log($"[SpinWheelForDebug] Çark {targetSlot} slotuna döndürülüyor.");
             isSpinning = true;
             spinCoroutine = StartCoroutine(SpinWheelCoroutine_Debug(targetSlot, onSpinComplete));
-        }
-        else
-        {
-            Debug.LogWarning("[SpinWheelForDebug] Çark zaten dönüyor veya efekt devam ediyor!");
         }
     }
 
@@ -378,6 +367,8 @@ public class WheelManager : MonoBehaviour
             foreach (Transform child in slots[i])
             {
                 if (isDestroyed) yield break;
+                if (child == null) continue; // Null check ekle
+                
                 var inst = child.GetComponent<SegmentInstance>();
                 if (inst != null && inst.data != null)
                 {
@@ -399,6 +390,8 @@ public class WheelManager : MonoBehaviour
         foreach (var (inst, mySlot) in wheelSegments)
         {
             if (isDestroyed) yield break;
+            if (inst == null || inst.data == null) continue; // Null check ekle
+            
             var data = inst.data;
             var effect = SegmentWheelManipulationHandler.CreateWheelEffect(data);
             if (effect != null)
@@ -434,7 +427,11 @@ public class WheelManager : MonoBehaviour
         foreach (var (inst, mySlot) in curseSegments)
         {
             if (isDestroyed) yield break;
+            if (inst == null || inst.data == null) continue; // Null check ekle
+            
             var data = inst.data;
+            if (SegmentCurseEffectHandler.Instance == null) continue; // Instance null check ekle
+            
             bool triggered = SegmentCurseEffectHandler.Instance.HandleCurseEffect(data, selectedSlot, mySlot, slotCount);
             if (triggered)
             {
@@ -447,6 +444,15 @@ public class WheelManager : MonoBehaviour
         if (curseEffectTriggered)
         {
             yield return new WaitForSeconds(0.1f); // Kısa bekleme
+            
+            // Curse effect'lerden sonra stat boostları yeniden hesapla
+            // Özellikle ExplosiveCurse gibi segment yok eden effect'ler için gerekli
+            if (SegmentStatBoostHandler.Instance != null)
+            {
+                // Bir frame bekle, segmentlerin tam olarak yok edilmesi için
+                yield return null;
+                SegmentStatBoostHandler.Instance.RecalculateAllStatBoosts();
+            }
             
             // ReSpin efektleri aktifse geri dönüşü engelle
             if (!isReSpinEffectActive)

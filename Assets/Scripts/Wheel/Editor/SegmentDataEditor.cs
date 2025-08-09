@@ -197,6 +197,10 @@ public class SegmentDataEditor : Editor
                 case CurseEffectType.TeleportEscapeCurse:
                     EditorGUILayout.HelpBox("Segment yok olmadan önce başka bir segmentle yer değiştirir ve kaçar. Diğer segment yok olur.", MessageType.Warning);
                     break;
+                case CurseEffectType.ExplosiveCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveRange"));
+                    EditorGUILayout.HelpBox("Segment yok olacağı zaman yanındaki segmentleri de siler. Range: 1-3 slot mesafesi.", MessageType.Warning);
+                    break;
                 default:
                     EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);
                     break;
