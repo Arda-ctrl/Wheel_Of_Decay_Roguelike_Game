@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_tr
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: bd40fd87613cb1a4e8a0518c5ab67478, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 868774592512
+    m_Localized: "Hay\u0131r"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 866987819008
+    m_Localized: Evet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10779377664
+    m_Localized: "Oyunu Ba\u015Flat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17557372928
+    m_Localized: Devam Et
+    m_Metadata:
+      m_Items: []
+  - m_Id: 150302900224
+    m_Localized: Ayarlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 152479744000
+    m_Localized: "\xC7\u0131k\u0131\u015F"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 154966966272
+    m_Localized: "Oyunu Y\xFCkle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156976037888
+    m_Localized: "Kay\u0131tlar\u0131 Temizle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 158993498112
+    m_Localized: Geri
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161409417216
+    m_Localized: "Oyun Ayarlar\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 162919366656
+    m_Localized: "Ses Ayarlar\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 163644981248
+    m_Localized: "Video Ayarlar\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 166941704192
+    m_Localized: "Kontrolc\xFC Ayarlar\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 676830658560
+    m_Localized: "Klavye Ayarlar\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 679569539072
+    m_Localized: Jenerik
+    m_Metadata:
+      m_Items: []
+  - m_Id: 681083682816
+    m_Localized: "Kay\u0131t verisi bulunamad\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 684883722240
+    m_Localized: Dil
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16175991898112
+    m_Localized: "Parlakl\u0131k"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16174595194880
+    m_Localized: "Ba\u015Far\u0131mlar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16172250578944
+    m_Localized: "Destek\xE7i Jenerikleri"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16658626265088
+    m_Localized: "Ayarlar\u0131 S\u0131f\u0131rla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17142661529600
+    m_Localized: Ekstralar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17193710403584
+    m_Localized: Ana Seviyesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37094848217088
+    m_Localized: "M\xFCzik Seviyesi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37067987894272
+    m_Localized: SFX Seviyesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40951909203968
+    m_Localized: "D\xFC\u015F\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40953398181888
+    m_Localized: Orta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40954631307264
+    m_Localized: "Y\xFCksek"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40955264647168
+    m_Localized: Ultra
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40956137062400
+    m_Localized: "Kapal\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41067684577280
+    m_Localized: "D\xFC\u015F\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41069441990656
+    m_Localized: Orta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41131484135424
+    m_Localized: "Y\xFCksek"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41788295364608
+    m_Localized: VSync
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48072046428160
+    m_Localized: "\xC7\xF6z\xFCn\xFCrl\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48077394165760
+    m_Localized: "Bulan\u0131kl\u0131k Kalitesi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48075506728960
+    m_Localized: "Par\xE7ac\u0131k Etkileri"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48079310962688
+    m_Localized: Tam Ekran
+    m_Metadata:
+      m_Items: []
+  - m_Id: 75698337234944
+    m_Localized: "Daha iyi bir deneyim i\xE7in \u0131\u015F\u0131\u011F\u0131 ayarlay\u0131n."
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

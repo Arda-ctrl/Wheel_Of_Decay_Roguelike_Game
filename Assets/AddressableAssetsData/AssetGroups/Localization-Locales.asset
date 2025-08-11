@@ -15,19 +15,13 @@ MonoBehaviour:
   m_GroupName: Localization-Locales
   m_GUID: 7235a8d809d3db64db885043d15f8daf
   m_SerializeEntries:
-  - m_GUID: 1a983c6e735a25548b9cc4817ad99963
-    m_Address: German (de)
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - Locale
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6757014ad18d40848996740bc17b66fe
+  - m_GUID: 1c23b2d83f7cb9e41b180a014bcb0628
     m_Address: Turkish (tr)
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 770b083fabe67ca4c845271562755847
+  - m_GUID: ff1ed5c7faa784e43a21b146464f3785
     m_Address: English (en)
     m_ReadOnly: 1
     m_SerializedLabels:

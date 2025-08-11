@@ -1,0 +1,184 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: UI Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: UI
+  m_TableCollectionNameGuidString: bd40fd87613cb1a4e8a0518c5ab67478
+  m_Entries:
+  - m_Id: 10779377664
+    m_Key: StartGame
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17557372928
+    m_Key: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 150302900224
+    m_Key: Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 152479744000
+    m_Key: Quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 154966966272
+    m_Key: LoadGame
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156976037888
+    m_Key: ClearSave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 158993498112
+    m_Key: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161409417216
+    m_Key: GameOptions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 162919366656
+    m_Key: AudioOptions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 163644981248
+    m_Key: VideoOptions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 166941704192
+    m_Key: ControllerOptions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 676830658560
+    m_Key: KeyboardOptions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 679569539072
+    m_Key: Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 681083682816
+    m_Key: NoSaveData
+    m_Metadata:
+      m_Items: []
+  - m_Id: 684883722240
+    m_Key: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 866987819008
+    m_Key: Yes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 868774592512
+    m_Key: No
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16172250578944
+    m_Key: BackerCredits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16174595194880
+    m_Key: Achievements
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16175991898112
+    m_Key: Brightness
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16658626265088
+    m_Key: ResetDefaults
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17142661529600
+    m_Key: Extras
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17193710403584
+    m_Key: MasterVolume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37067987894272
+    m_Key: SoundVolume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37094848217088
+    m_Key: MusicVolume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40951909203968
+    m_Key: ParticleEffects_Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40953398181888
+    m_Key: ParticleEffects_Medium
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40954631307264
+    m_Key: ParticleEffects_High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40955264647168
+    m_Key: ParticleEffects_Ultra
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40956137062400
+    m_Key: BlurQuality_Off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41067684577280
+    m_Key: BlurQuality_Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41069441990656
+    m_Key: BlurQuality_Medium
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41131484135424
+    m_Key: BlurQuality_High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41788295364608
+    m_Key: VSync
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48072046428160
+    m_Key: Resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48075506728960
+    m_Key: ParticleEffects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48077394165760
+    m_Key: BlurQuality
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48079310962688
+    m_Key: Fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 75698337234944
+    m_Key: BrightnessInfo
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 31372620528615740
+  references:
+    version: 2
+    RefIds:
+    - rid: 31372620528615740
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1754898097926

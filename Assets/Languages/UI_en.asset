@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: bd40fd87613cb1a4e8a0518c5ab67478, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 10779377664
+    m_Localized: Start Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17557372928
+    m_Localized: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 150302900224
+    m_Localized: Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 152479744000
+    m_Localized: Quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 154966966272
+    m_Localized: Load Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156976037888
+    m_Localized: Clear Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 158993498112
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161409417216
+    m_Localized: Game Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 162919366656
+    m_Localized: Audio Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 163644981248
+    m_Localized: Video Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 166941704192
+    m_Localized: Controller Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 676830658560
+    m_Localized: Keyboard Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 679569539072
+    m_Localized: Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 681083682816
+    m_Localized: No save data found
+    m_Metadata:
+      m_Items: []
+  - m_Id: 684883722240
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 866987819008
+    m_Localized: Yes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 868774592512
+    m_Localized: No
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16174595194880
+    m_Localized: Achievements
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16175991898112
+    m_Localized: Brightness
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16172250578944
+    m_Localized: Backer Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16658626265088
+    m_Localized: Reset Defaults
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17142661529600
+    m_Localized: Extras
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17193710403584
+    m_Localized: Master Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37094848217088
+    m_Localized: Master Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 37067987894272
+    m_Localized: Sound Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40951909203968
+    m_Localized: Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40953398181888
+    m_Localized: Medium
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40954631307264
+    m_Localized: High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40955264647168
+    m_Localized: Ultra
+    m_Metadata:
+      m_Items: []
+  - m_Id: 40956137062400
+    m_Localized: Off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41067684577280
+    m_Localized: Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41069441990656
+    m_Localized: Medium
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41131484135424
+    m_Localized: High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 41788295364608
+    m_Localized: VSync
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48072046428160
+    m_Localized: Resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48075506728960
+    m_Localized: Particle Effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48077394165760
+    m_Localized: Blur Quality
+    m_Metadata:
+      m_Items: []
+  - m_Id: 48079310962688
+    m_Localized: Full Screen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 75698337234944
+    m_Localized: Adjust the light for a better experience.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

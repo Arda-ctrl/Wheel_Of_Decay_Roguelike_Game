@@ -29,6 +29,18 @@ public class SettingsManager : MonoBehaviour
     [SerializeField] private float fadeInDuration = 1f;
     [SerializeField] private AnimationCurve fadeCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     
+    [Header("Default Values (Inspector'dan Ayarlanabilir)")]
+    [SerializeField] private float defaultBrightness = 0f;
+    [SerializeField] private float defaultMasterVolume = 1f;
+    [SerializeField] private float defaultSoundVolume = 1f;
+    [SerializeField] private float defaultMusicVolume = 1f;
+    [SerializeField] private int defaultResolutionIndex = 0;
+    [SerializeField] private bool defaultFullscreen = true;
+    [SerializeField] private bool defaultVSync = false;
+    [SerializeField] private int defaultParticleEffectsQuality = 1;
+    [SerializeField] private int defaultBlurQuality = 1;
+    [SerializeField] private int defaultLanguageIndex = 0;
+    
     private SettingsData settingsData;
     private string settingsFilePath;
     private bool isTransitioning = false;
@@ -135,20 +147,46 @@ public class SettingsManager : MonoBehaviour
             {
                 string json = File.ReadAllText(settingsFilePath);
                 settingsData = JsonUtility.FromJson<SettingsData>(json);
-                Debug.Log($"Settings loaded from: {settingsFilePath}");
-                Debug.Log($"Loaded settings: Brightness={settingsData.brightness}, Master={settingsData.masterVolume}, Sound={settingsData.soundVolume}, Music={settingsData.musicVolume}");
+                Debug.Log($"📂 Settings loaded from: {settingsFilePath}");
+                Debug.Log($"📊 Loaded settings: Brightness={settingsData.brightness}, Master={settingsData.masterVolume}, Sound={settingsData.soundVolume}, Music={settingsData.musicVolume}");
             }
             else
             {
-                settingsData = new SettingsData();
+                Debug.Log("⚠️ No settings file found, creating with Inspector default values...");
+                Debug.Log($"🔧 Inspector default değerleri: Brightness={defaultBrightness}, Master={defaultMasterVolume}, Sound={defaultSoundVolume}, Music={defaultMusicVolume}");
+                
+                // Inspector'dan alınan default değerleri kullan
+                settingsData.brightness = defaultBrightness;
+                settingsData.masterVolume = defaultMasterVolume;
+                settingsData.soundVolume = defaultSoundVolume;
+                settingsData.musicVolume = defaultMusicVolume;
+                settingsData.resolutionIndex = defaultResolutionIndex;
+                settingsData.fullscreen = defaultFullscreen;
+                settingsData.vSync = defaultVSync;
+                settingsData.particleEffectsQuality = defaultParticleEffectsQuality;
+                settingsData.blurQuality = defaultBlurQuality;
+                settingsData.languageIndex = defaultLanguageIndex;
+                
                 SaveSettings(); // Save default settings
-                Debug.Log("No settings file found, created default settings");
+                Debug.Log("✅ Default settings created and saved");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Failed to load settings: {e.Message}");
-            settingsData = new SettingsData();
+            Debug.LogError($"❌ Failed to load settings: {e.Message}");
+            Debug.Log("🔄 Creating fallback settings with Inspector defaults...");
+            
+            // Fallback: Inspector'dan alınan default değerleri kullan
+            settingsData.brightness = defaultBrightness;
+            settingsData.masterVolume = defaultMasterVolume;
+            settingsData.soundVolume = defaultSoundVolume;
+            settingsData.musicVolume = defaultMusicVolume;
+            settingsData.resolutionIndex = defaultResolutionIndex;
+            settingsData.fullscreen = defaultFullscreen;
+            settingsData.vSync = defaultVSync;
+            settingsData.particleEffectsQuality = defaultParticleEffectsQuality;
+            settingsData.blurQuality = defaultBlurQuality;
+            settingsData.languageIndex = defaultLanguageIndex;
         }
     }
     
@@ -290,10 +328,7 @@ public class SettingsManager : MonoBehaviour
         return settingsData.musicVolume;
     }
     
-    public void ResetBrightness()
-    {
-        SetBrightness(0f);
-    }
+
     #endregion
     
     #region Audio Settings
@@ -358,6 +393,12 @@ public class SettingsManager : MonoBehaviour
     public void SetLanguage(int languageIndex)
     {
         settingsData.languageIndex = languageIndex;
+        
+        // LocalizationManager'a da bildir
+        if (LocalizationManager.Instance != null)
+        {
+            LocalizationManager.Instance.SetLanguage(languageIndex);
+        }
     }
     #endregion
     
@@ -498,30 +539,104 @@ public class SettingsManager : MonoBehaviour
     #region Reset Functions
     public void ResetAllSettings()
     {
-        settingsData = new SettingsData();
+        Debug.Log("🔄 Resetting ALL settings to defaults...");
+        Debug.Log($"🔧 Inspector default değerleri: Brightness={defaultBrightness}, Master={defaultMasterVolume}, Sound={defaultSoundVolume}, Music={defaultMusicVolume}");
+        
+        // Inspector'dan alınan default değerleri kullan
+        settingsData.brightness = defaultBrightness;
+        settingsData.masterVolume = defaultMasterVolume;
+        settingsData.soundVolume = defaultSoundVolume;
+        settingsData.musicVolume = defaultMusicVolume;
+        settingsData.resolutionIndex = defaultResolutionIndex;
+        settingsData.fullscreen = defaultFullscreen;
+        settingsData.vSync = defaultVSync;
+        settingsData.particleEffectsQuality = defaultParticleEffectsQuality;
+        settingsData.blurQuality = defaultBlurQuality;
+        settingsData.languageIndex = defaultLanguageIndex;
+        
         ApplySettings();
         SaveSettings();
+        Debug.Log("✅ All settings reset to defaults!");
     }
     
     public void ResetAudioSettings()
     {
-        settingsData.masterVolume = 1f;
-        settingsData.soundVolume = 1f;
-        settingsData.musicVolume = 1f;
-        ApplySettings();
+        Debug.Log("🔊 Resetting audio settings to defaults...");
+        Debug.Log($"🔊 Default values: Master={defaultMasterVolume}, Sound={defaultSoundVolume}, Music={defaultMusicVolume}");
+        
+        settingsData.masterVolume = defaultMasterVolume;
+        settingsData.soundVolume = defaultSoundVolume;
+        settingsData.musicVolume = defaultMusicVolume;
+        
+        // UI'ı güncelle
+        if (masterVolumeSlider != null) masterVolumeSlider.value = defaultMasterVolume;
+        if (soundVolumeSlider != null) soundVolumeSlider.value = defaultSoundVolume;
+        if (musicVolumeSlider != null) musicVolumeSlider.value = defaultMusicVolume;
+        
+        // AudioManager'a uygula
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.SetMasterVolume(defaultMasterVolume);
+            AudioManager.Instance.SetSFXVolume(defaultSoundVolume);
+            AudioManager.Instance.SetMusicVolume(defaultMusicVolume);
+        }
+        
         SaveSettings();
+        Debug.Log("✅ Audio settings reset to defaults!");
     }
     
     public void ResetVideoSettings()
     {
-        settingsData.resolutionIndex = 0;
-        settingsData.fullscreen = true;
-        settingsData.vSync = false;
-        settingsData.particleEffectsQuality = 1;
-        settingsData.blurQuality = 1;
-        settingsData.brightness = 0f;
-        ApplySettings();
+        Debug.Log("🎮 Resetting video settings to defaults...");
+        Debug.Log($"🎮 Default values: Resolution={defaultResolutionIndex}, Fullscreen={defaultFullscreen}, V-Sync={defaultVSync}, Particle={defaultParticleEffectsQuality}, Blur={defaultBlurQuality}, Brightness={defaultBrightness}");
+        
+        settingsData.resolutionIndex = defaultResolutionIndex;
+        settingsData.fullscreen = defaultFullscreen;
+        settingsData.vSync = defaultVSync;
+        settingsData.particleEffectsQuality = defaultParticleEffectsQuality;
+        settingsData.blurQuality = defaultBlurQuality;
+        settingsData.brightness = defaultBrightness;
+        
+        // UI'ı güncelle
+        if (resolutionDropdown != null) resolutionDropdown.value = defaultResolutionIndex;
+        if (fullscreenToggle != null) fullscreenToggle.isOn = defaultFullscreen;
+        if (vSyncToggle != null) vSyncToggle.isOn = defaultVSync;
+        if (particleEffectsDropdown != null) particleEffectsDropdown.value = defaultParticleEffectsQuality;
+        if (blurQualityDropdown != null) blurQualityDropdown.value = defaultBlurQuality;
+        if (brightnessSlider != null) brightnessSlider.value = defaultBrightness;
+        
+        // Brightness overlay'i güncelle
+        SetBrightness(defaultBrightness);
+        
+        // Unity sistemlerine uygula
+        Screen.fullScreen = defaultFullscreen;
+        QualitySettings.vSyncCount = defaultVSync ? 1 : 0;
+        
         SaveSettings();
+        Debug.Log("✅ Video settings reset to defaults!");
+    }
+    
+    public void ResetGameSettings()
+    {
+        Debug.Log("🎯 Resetting game settings to defaults...");
+        Debug.Log($"🎯 Default language index: {defaultLanguageIndex}");
+        
+        settingsData.languageIndex = defaultLanguageIndex;
+        
+        // UI'ı güncelle
+        if (languageDropdown != null) languageDropdown.value = defaultLanguageIndex;
+        
+        SaveSettings();
+        Debug.Log("✅ Game settings reset to defaults!");
+    }
+    
+    public void ResetBrightness()
+    {
+        Debug.Log("💡 Resetting brightness to default...");
+        Debug.Log($"💡 Default brightness: {defaultBrightness}");
+        SetBrightness(defaultBrightness);
+        SaveSettings();
+        Debug.Log("✅ Brightness reset to default!");
     }
     #endregion
     
@@ -531,50 +646,82 @@ public class SettingsManager : MonoBehaviour
         // P tuşuna basıldığında save dosyalarını temizle
         if (Input.GetKeyDown(KeyCode.P))
         {
+            Debug.Log("🔑 P tuşuna basıldı! ClearAllSaveFiles çağrılıyor...");
             ClearAllSaveFiles();
         }
         
         // O tuşuna basıldığında tüm ayarları kaydet
         if (Input.GetKeyDown(KeyCode.O))
         {
+            Debug.Log("🔑 O tuşuna basıldı! SaveAllSettings çağrılıyor...");
             SaveAllSettings();
         }
     }
     
     public void ClearAllSaveFiles()
     {
+        Debug.Log("🗑️ ClearAllSaveFiles başladı...");
         try
         {
             // Settings dosyasını sil
             if (File.Exists(settingsFilePath))
             {
                 File.Delete(settingsFilePath);
-                Debug.Log("Settings file deleted successfully");
+                Debug.Log("✅ Settings file deleted successfully");
+            }
+            else
+            {
+                Debug.Log("⚠️ Settings file bulunamadı, zaten silinmiş olabilir");
             }
             
             // Diğer save dosyalarını da sil (SaveManager'dan)
             string saveDirectory = Path.GetDirectoryName(settingsFilePath);
-            string[] saveFiles = Directory.GetFiles(saveDirectory, "*.json");
+            Debug.Log($"📁 Save directory: {saveDirectory}");
             
-            foreach (string file in saveFiles)
+            if (Directory.Exists(saveDirectory))
             {
-                if (file != settingsFilePath) // Settings dosyasını tekrar silme
+                string[] saveFiles = Directory.GetFiles(saveDirectory, "*.json");
+                Debug.Log($"📄 Bulunan JSON dosyaları: {saveFiles.Length}");
+                
+                foreach (string file in saveFiles)
                 {
-                    File.Delete(file);
-                    Debug.Log($"Deleted save file: {file}");
+                    if (file != settingsFilePath) // Settings dosyasını tekrar silme
+                    {
+                        File.Delete(file);
+                        Debug.Log($"🗑️ Deleted save file: {file}");
+                    }
                 }
             }
+            else
+            {
+                Debug.Log("⚠️ Save directory bulunamadı");
+            }
             
-            // Yeni default settings oluştur
-            settingsData = new SettingsData();
+            // Yeni default settings oluştur (Inspector'dan alınan değerlerle)
+            Debug.Log("🔄 Yeni default settings oluşturuluyor...");
+            Debug.Log($"🔧 Inspector default değerleri: Brightness={defaultBrightness}, Master={defaultMasterVolume}, Sound={defaultSoundVolume}, Music={defaultMusicVolume}");
+            
+            // Inspector'dan alınan default değerleri kullan
+            settingsData.brightness = defaultBrightness;
+            settingsData.masterVolume = defaultMasterVolume;
+            settingsData.soundVolume = defaultSoundVolume;
+            settingsData.musicVolume = defaultMusicVolume;
+            settingsData.resolutionIndex = defaultResolutionIndex;
+            settingsData.fullscreen = defaultFullscreen;
+            settingsData.vSync = defaultVSync;
+            settingsData.particleEffectsQuality = defaultParticleEffectsQuality;
+            settingsData.blurQuality = defaultBlurQuality;
+            settingsData.languageIndex = defaultLanguageIndex;
+            
             SaveSettings();
             ApplySettings();
             
-            Debug.Log("All save files cleared and default settings created");
+            Debug.Log("🎉 All save files cleared and default settings created");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Failed to clear save files: {e.Message}");
+            Debug.LogError($"❌ Failed to clear save files: {e.Message}");
+            Debug.LogError($"❌ Stack trace: {e.StackTrace}");
         }
     }
     
