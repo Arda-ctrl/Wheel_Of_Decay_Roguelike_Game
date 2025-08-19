@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// TempWindEffect - Wind element için geçici efekt
@@ -10,6 +11,8 @@ public class TempWindEffect : MonoBehaviour
     public float windForce = 5f;
     public float duration = 3f;
     public float speedBoostPercent = 20f; // Hız artışı yüzdesi
+    public float knockbackDistance = 3f; // İtme mesafesi
+    public float knockbackDuration = 0.3f; // İtme süresi
     
     private float elapsedTime;
     private IMoveable moveable;
@@ -51,7 +54,7 @@ public class TempWindEffect : MonoBehaviour
             moveable.SetSpeedMultiplier(speedBoost);
         }
         
-        // Knockback efekti (eğer player varsa)
+                    // Knockback efekti (eğer player varsa)
         if (PlayerController.Instance != null)
         {
             Vector3 playerPosition = PlayerController.Instance.transform.position;
@@ -60,9 +63,14 @@ public class TempWindEffect : MonoBehaviour
             
             if (rb != null)
             {
-                // Knockback kuvvetini uygula
-                Vector2 knockbackForce = knockbackDirection * windForce;
-                rb.AddForce(knockbackForce, ForceMode2D.Impulse);
+                // Hedefin orijinal pozisyonunu al
+                Vector3 originalPosition = transform.position;
+                
+                // Knockback kuvvetini uygula - çok yüksek değer uygulamak için AddForce yerine pozisyonu doğrudan değiştirme
+                Vector3 knockbackPosition = originalPosition + (knockbackDirection * knockbackDistance);
+                
+                // Rigidbody2D'yi kullanarak pozisyonu güncelle - anlık değişim için
+                StartCoroutine(MoveToPosition(knockbackPosition, knockbackDuration));
             }
         }
         
@@ -107,6 +115,36 @@ public class TempWindEffect : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Hedefe doğru hareket ettiren coroutine
+    /// </summary>
+    private IEnumerator MoveToPosition(Vector3 targetPosition, float duration)
+    {
+        // Hedefe doğrudan hareket etmek için düşmanı sabitlememiz gerekiyor
+        RigidbodyType2D originalBodyType = rb.bodyType;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        
+        // Orijinal pozisyonu kaydet
+        Vector3 startPosition = transform.position;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            // Lerp ile pozisyonu güncelle
+            transform.position = Vector3.Lerp(startPosition, targetPosition, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        
+        // Son pozisyona ulaştığından emin ol
+        transform.position = targetPosition;
+        
+        // Rigidbody durumunu geri yükle
+        rb.bodyType = originalBodyType;
+        
+        Debug.Log($"💨 Knockback completed for {gameObject.name} - moved to {targetPosition}");
+    }
+
     private void OnDestroy()
     {
         // Component yok edilirken efektleri temizle

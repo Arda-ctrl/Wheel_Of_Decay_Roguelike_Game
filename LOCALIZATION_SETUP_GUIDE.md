@@ -151,3 +151,4 @@ Herhangi bir sorun yaşarsanız:
 ---
 
 **Not**: Bu sistem Unity 2022.3+ ve Localization package gerektirir. Eski Unity sürümlerinde çalışmayabilir.
+

@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     [Header("References")]
     [SerializeField] private WeaponController weaponController;
     [SerializeField] private ElementalAbilityManager elementalAbilityManager;
+    [SerializeField] private Animator animator;
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
@@ -31,6 +32,16 @@ public class PlayerController : MonoBehaviour
     private float speedMultiplier = 1f;
     private float damageMultiplier = 1f;
     private float poisonDamage = 0f;
+    
+    // Animation parameters
+    private readonly int IsMovingHash = Animator.StringToHash("isMoving");
+    private readonly int MovementSpeedHash = Animator.StringToHash("movementSpeed");
+    
+    // Hareket dinamiği için değişkenler
+    private Vector2 currentVelocity;
+    private Vector2 targetVelocity;
+    private float velocitySmoothTime = 0.05f; // Daha hızlı tepki için düşürüldü
+    private float velocityStopThreshold = 0.02f; // Bu eşiğin altındaki hızlar sıfırlanacak
 
     void Awake()
     {
@@ -91,6 +102,16 @@ public class PlayerController : MonoBehaviour
             elementalAbilityManager = GetComponent<ElementalAbilityManager>();
         }
         
+        // Get animator if not already assigned
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+            if (animator == null)
+            {
+                Debug.LogWarning("No Animator component found on player!");
+            }
+        }
+        
         // OrbStackManager'ı initialize et
         InitializeOrbStackManager();
         
@@ -121,11 +142,43 @@ public class PlayerController : MonoBehaviour
         {
             // Stop all movement and actions when control is disabled
             theRB.linearVelocity = Vector2.zero;
+            UpdateAnimationState(Vector2.zero);
             return;
         }
 
-        // Handle movement with speed multiplier
-        theRB.linearVelocity = moveInput * (activeMoveSpeed * speedMultiplier);
+        // Cult of the Lamb tarzı dinamik hareket
+        // Hedef hızı hesapla
+        targetVelocity = moveInput * (activeMoveSpeed * speedMultiplier);
+        
+                 // Giriş olmadığında (durma durumu) - daha hassas hareket algılama
+         if (moveInput.sqrMagnitude < 0.005f) // Daha düşük eşik değeri
+         {
+             // Hızı daha çabuk azalt
+             currentVelocity = Vector2.Lerp(currentVelocity, Vector2.zero, Time.deltaTime * 12f); // Biraz daha yavaş durdurma
+            
+            // Eğer hız çok düşükse tamamen durdur
+            if (currentVelocity.sqrMagnitude < velocityStopThreshold)
+            {
+                currentVelocity = Vector2.zero;
+            }
+        }
+        else
+        {
+            // Mevcut hızı hedefe doğru yumuşak bir şekilde değiştir
+            Vector2 refVel = Vector2.zero; // SmoothDamp için referans
+            currentVelocity = Vector2.SmoothDamp(
+                currentVelocity,
+                targetVelocity,
+                ref refVel,
+                dashCounter > 0 ? velocitySmoothTime * 0.5f : velocitySmoothTime
+            );
+        }
+        
+        // Hesaplanan hızı uygula
+        theRB.linearVelocity = currentVelocity;
+        
+        // Update animation state based on current velocity
+        UpdateAnimationState(currentVelocity);
 
         // Handle gun arm rotation
         Vector3 screenPoint = theCam.WorldToScreenPoint(transform.localPosition);
@@ -258,17 +311,20 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnDash(InputAction.CallbackContext context)
-    {
-        if (!canControl) return;
-        if (dashCoolCounter <= 0 && dashCounter <= 0)
-        {
-            activeMoveSpeed = dashSpeed;
-            dashCounter = dashLenght;
-            PlayerHealthController.Instance.MakeInvincible(dashInvisiblity);
-            AudioManager.Instance.PlaySFX(8);
-        }
-    }
+         private void OnDash(InputAction.CallbackContext context)
+     {
+         if (!canControl) return;
+         if (dashCoolCounter <= 0 && dashCounter <= 0)
+         {
+             activeMoveSpeed = dashSpeed;
+             dashCounter = dashLenght;
+             PlayerHealthController.Instance.MakeInvincible(dashInvisiblity);
+             AudioManager.Instance.PlaySFX(8);
+             
+             // Dash sırasında animasyon hedefini belirle (direkt atama yapma)
+             // İlerideki Update döngüsünde MovementSpeed smooth bir şekilde hedefe ilerleyecek
+         }
+     }
 
     public void DisableControl()
     {
@@ -357,6 +413,101 @@ public class PlayerController : MonoBehaviour
         else
         {
             Debug.Log("❌ OrbStackManager not found");
+        }
+    }
+    
+    /// <summary>
+    /// Updates the animation state based on player velocity
+    /// </summary>
+    /// <param name="velocity">Current movement velocity</param>
+    private void UpdateAnimationState(Vector2 velocity)
+    {
+        if (animator == null) return;
+        
+                 // Determine if moving (daha hassas eşik değeri - hafif dokunuşları algıla)
+         bool isMoving = velocity.sqrMagnitude > 0.005f; // Daha düşük eşik değeri
+         animator.SetBool(IsMovingHash, isMoving);
+        
+        if (isMoving)
+        {
+            // Cult of the Lamb tarzı hareket için animasyon kontrolü
+            float velocityMagnitude = velocity.magnitude;
+            
+            // Yönü belirle (hareket yönü veya bakış yönü)
+            float direction = 0f;
+            if (Mathf.Abs(velocity.x) > 0.1f) // X yönünde anlamlı bir hareket varsa
+            {
+                direction = Mathf.Sign(velocity.x);
+            }
+            else // Yoksa karakterin bakış yönünü kullan
+            {
+                direction = transform.localScale.x;
+            }
+            
+            // Normalize hız: 0 = durma, 1 = maximum hız
+            float normalizedSpeed = Mathf.Clamp01(velocityMagnitude / (moveSpeed * speedMultiplier));
+            
+                         // Hız değeri için farklı bir eşik kullanıyoruz
+             float runThreshold = 0.8f; // %80 ve üstü hızda koşma - daha geniş yürüme aralığı
+            
+                         // Hedef animasyon değerini belirle, smooth geçiş sağla
+             float animValue;
+             if (dashCounter > 0) // Dash sırasında
+             {
+                 // Koşma animasyonuna hızlı geçiş - yöne göre 2 veya -2
+                 animValue = direction > 0 ? 2f : -2f;
+             }
+             else if (normalizedSpeed > runThreshold) // Normal koşma
+             {
+                 // Koşma animasyonu - aradaki değerlerden geçerek hedefe ulaşacak
+                 float targetValue = direction > 0 ? 2f : -2f;
+                 
+                 // Koşma durumundaki hedef değere göre kademeli olarak arttır
+                 if (direction > 0) // Sağa koşma
+                 {
+                     // 0'dan 2'ye doğru kademeli geçiş
+                     animValue = Mathf.Lerp(0f, targetValue, normalizedSpeed);
+                 }
+                 else // Sola koşma
+                 {
+                     // 0'dan -2'ye doğru kademeli geçiş
+                     animValue = Mathf.Lerp(0f, targetValue, normalizedSpeed);
+                 }
+             }
+             else 
+             {
+                 // Yürüme animasyonu (hedef hep 0)
+                 animValue = 0f;
+             }
+             
+             // Hareket varsa animasyon tetiklensin
+             if (isMoving && normalizedSpeed > 0.05f)
+             {
+                 // Yürüme animasyonunun aktifleştiğinden emin ol
+                 animator.SetBool(IsMovingHash, true);
+             }
+            
+                         // Çok küçük değerleri yuvarlayıp temizle (floating point hassasiyeti problemlerini önle)
+             if (Mathf.Abs(animValue) < 0.01f)
+                 animValue = 0f;
+                 
+             // Smooth animation değişimi için lerp kullan
+             float currentAnimValue = animator.GetFloat(MovementSpeedHash);
+             // Daha yavaş ve smooth geçiş için lerp hızını azalttık
+             float smoothAnimValue = Mathf.Lerp(currentAnimValue, animValue, Time.deltaTime * 5f); // Daha yavaş, smooth geçiş
+             
+             // Çok küçük değerleri temizle (sadece çok yakın olanlar)
+             if (Mathf.Abs(smoothAnimValue) < 0.01f) 
+             {
+                 smoothAnimValue = 0f;
+             }
+                
+            animator.SetFloat(MovementSpeedHash, smoothAnimValue);
+        }
+        else
+        {
+            // Hareket yoksa animasyon değerini hızla sıfıra getir
+            animator.SetFloat(MovementSpeedHash, 0f);
         }
     }
 }

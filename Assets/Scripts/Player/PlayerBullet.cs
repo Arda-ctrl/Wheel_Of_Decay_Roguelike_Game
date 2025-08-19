@@ -146,8 +146,35 @@ public class PlayerBullet : MonoBehaviour
         }
         else if (elementData is WindElementData wind)
         {
-            // Wind element için özel efekt (knockback zaten strike'da uygulanıyor)
+            // Wind elementi için knockback/itme efekti
+            var windEff = target.AddComponent<TempWindEffect>();
+            windEff.knockbackDistance = wind.knockbackDistance;
+            windEff.knockbackDuration = wind.knockbackDuration;
             Debug.Log($"💨 Wind element effect applied to {target.name}");
+        }
+        else if (elementData is LightningElementData lightning)
+        {
+            // Lightning elementi için elektrik şoku efekti
+            var lightningEff = target.AddComponent<TempLightningEffect>();
+            lightningEff.stunChance = lightning.stunChance;
+            lightningEff.stunDuration = lightning.stunDuration;
+            Debug.Log($"⚡ Lightning element effect applied to {target.name}");
+        }
+        else if (elementData is EarthElementData earth)
+        {
+            // Earth elementi için root/kök efekti
+            var earthEff = target.AddComponent<TempEarthEffect>();
+            earthEff.rootDuration = earth.rootDuration;
+            Debug.Log($"🌱 Earth element effect applied to {target.name}");
+        }
+        else if (elementData is VoidElementData voidData)
+        {
+            // Void elementi için görüş azaltma efekti
+            var voidEff = target.AddComponent<TempVoidEffect>();
+            voidEff.visionReduction = voidData.visionReductionPerStack;
+            voidEff.rangeReduction = voidData.rangeReductionPerStack;
+            voidEff.duration = voidData.voidEffectDuration;
+            Debug.Log($"🌀 Void element effect applied to {target.name}");
         }
     }
 

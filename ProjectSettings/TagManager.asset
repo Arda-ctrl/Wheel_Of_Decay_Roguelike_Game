@@ -8,6 +8,7 @@ TagManager:
   - Bullet
   - Box
   - Room
+  - FxTemporaire
   layers:
   - Default
   - TransparentFX
@@ -62,6 +63,9 @@ TagManager:
     locked: 0
   - name: NPC
     uniqueID: 1822571237
+    locked: 0
+  - name: PlayerWeapons
+    uniqueID: 159951431
     locked: 0
   - name: Player
     uniqueID: 2441681637
