@@ -32,7 +32,7 @@ public class WeaponController : MonoBehaviour
         {
             if (weaponData != null)
             {
-                if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle)
+                if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle || weaponData.weaponType == WeaponType.Wand)
                 {
                     ShootRanged();
                     nextFireTime = Time.time + weaponData.fireRate;
@@ -52,7 +52,7 @@ public class WeaponController : MonoBehaviour
         // İlk atışı hemen yap
         if (weaponData != null)
         {
-            if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle)
+            if (weaponData.weaponType == WeaponType.Pistol || weaponData.weaponType == WeaponType.Rifle || weaponData.weaponType == WeaponType.Wand)
             {
                 ShootRanged();
                 nextFireTime = Time.time + weaponData.fireRate;
@@ -155,4 +155,4 @@ public class WeaponController : MonoBehaviour
         
         return nearestEnemy;
     }
-} 
+}

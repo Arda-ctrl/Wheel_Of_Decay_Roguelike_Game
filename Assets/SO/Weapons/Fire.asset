@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a3a838e73ca7fd4982141340258c88f, type: 3}
-  m_Name: Pistol 3
+  m_Name: Fire
   m_EditorClassIdentifier: 
-  weaponName: Test
+  weaponName: Pistol
   weaponType: 1
-  elementType: 0
+  elementType: 1
   damage: 10
   fireRate: 0.5
-  weaponSprite: {fileID: -7900295659209866551, guid: 48d85d1ef51430e42b6aef57f02c863d, type: 3}
-  bulletPrefab: {fileID: 7060172690428923814, guid: d1b354578b2ef9540be4b2954fb56793, type: 3}
-  elementData: {fileID: 11400000, guid: a97f63cf3d6eb144ca76688689f426fd, type: 2}
+  weaponSprite: {fileID: 1095183646589785429, guid: 60a0c825e67fa6a4e9932ba16d296bdd, type: 3}
+  bulletPrefab: {fileID: 7060172690428923814, guid: e5be5b3b6be942846aeabf1008d61865, type: 3}
+  elementData: {fileID: 11400000, guid: 4f8a2cd5b26d3b4458b0449b2bf29c00, type: 2}

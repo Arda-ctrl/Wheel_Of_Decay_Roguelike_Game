@@ -206,3 +206,4 @@ public class TempLightningEffect : MonoBehaviour
         RemoveShockEffect();
     }
 }
+

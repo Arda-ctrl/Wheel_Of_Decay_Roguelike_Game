@@ -1,8 +1,5 @@
 using UnityEngine;
 
-public enum WeaponType { None, Pistol, Sword, Rifle }
-public enum WeaponElement { None, Fire, Ice, Poison }
-
 [CreateAssetMenu(fileName = "NewWeapon", menuName = "Game/Weapon Data")]
 public class WeaponData : ScriptableObject
 {
@@ -17,4 +14,4 @@ public class WeaponData : ScriptableObject
     [Header("Element Settings")]
     public ElementData elementData; // Assign FireElementData, IceElementData, PoisonElementData, etc.
     // Future: anim, special fx, etc.
-} 
+}

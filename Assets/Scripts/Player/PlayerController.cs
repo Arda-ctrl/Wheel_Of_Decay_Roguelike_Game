@@ -40,8 +40,16 @@ public class PlayerController : MonoBehaviour
     // Hareket dinamiği için değişkenler
     private Vector2 currentVelocity;
     private Vector2 targetVelocity;
-    private float velocitySmoothTime = 0.05f; // Daha hızlı tepki için düşürüldü
-    private float velocityStopThreshold = 0.02f; // Bu eşiğin altındaki hızlar sıfırlanacak
+    private float velocitySmoothTime = 0.05f; // Normal tepki hızı
+    private float velocityStopThreshold = 0.01f; // Bu eşiğin altındaki hızlar sıfırlanacak
+    
+    // Hareket hızı ve yön hafızası için değişkenler
+    private float lastSignificantSpeed = 0f;
+    private bool wasMovingSignificantly = false;
+    private float speedRetentionTime = 0.05f;  // Çok kısa hız korunma süresi (S-A geçişi sorununu çözecek)
+    private float lastMoveTime = 0f;          // Son hareket zamanı
+    private float accelerationMultiplier = 1f; // Hızlanma çarpanı (daha hızlı hareket için)
+    private Vector2 previousMoveInput = Vector2.zero; // Önceki hareket girişi (tuş değişimlerini takip için)
 
     void Awake()
     {
@@ -146,32 +154,59 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Cult of the Lamb tarzı dinamik hareket
-        // Hedef hızı hesapla
-        targetVelocity = moveInput * (activeMoveSpeed * speedMultiplier);
+                // Cult of the Lamb tarzı dinamik hareket - ama hız tam moveSpeed'e göre
+        // Hedef hızı hesapla - tam olarak moveSpeed değerini kullan
+        float effectiveSpeed = activeMoveSpeed * speedMultiplier; // Acceleration kullanma
+        targetVelocity = moveInput * effectiveSpeed;
         
-                 // Giriş olmadığında (durma durumu) - daha hassas hareket algılama
-         if (moveInput.sqrMagnitude < 0.005f) // Daha düşük eşik değeri
-         {
-             // Hızı daha çabuk azalt
-             currentVelocity = Vector2.Lerp(currentVelocity, Vector2.zero, Time.deltaTime * 12f); // Biraz daha yavaş durdurma
+        // Hareket hızını yönet - SADECE TUŞ YOKKEN DURDUR, tuş değişimlerinde HIZLA DEVAM ET
+        if (moveInput.sqrMagnitude < 0.005f) // Hiç tuş basılı değil (tam durma)
+        {
+            // Hiç tuş basılmadığında hızla dur
+            currentVelocity = Vector2.Lerp(currentVelocity, Vector2.zero, Time.deltaTime * 15f);
             
             // Eğer hız çok düşükse tamamen durdur
             if (currentVelocity.sqrMagnitude < velocityStopThreshold)
             {
                 currentVelocity = Vector2.zero;
+                wasMovingSignificantly = false; // Hareket hafızasını sıfırla
             }
         }
-        else
+        else // TUŞ BASILIYSA - BASİT VE DİREKT HAREKET
         {
-            // Mevcut hızı hedefe doğru yumuşak bir şekilde değiştir
-            Vector2 refVel = Vector2.zero; // SmoothDamp için referans
+            // PROBLEM ÇÖZÜMÜ: Karmaşık kontrolleri kaldır, basit ve hızlı hareket
+            Vector2 refVel = Vector2.zero;
+            
+            // Tuş basılıysa HIZLA hedef hıza ulaş (S-A geçişi gibi durumlar için)
+            float smoothTime = velocitySmoothTime * 0.3f; // Çok hızlı tepki
+            
+            // Eğer zaten hareket ediyorsa ve yön değiştiriyorsa
+            if (currentVelocity.sqrMagnitude > 0.3f)
+            {
+                // MEVCUT HIZI KORU - sadece yönü değiştir (S->A geçişi için kritik)
+                float currentSpeed = Mathf.Max(currentVelocity.magnitude, effectiveSpeed * 0.8f);
+                targetVelocity = moveInput.normalized * currentSpeed;
+                smoothTime = velocitySmoothTime * 0.2f; // Çok hızlı yön değişimi
+            }
+            else
+            {
+                // Hareket başlangıcı
+                targetVelocity = moveInput * effectiveSpeed;
+                smoothTime = velocitySmoothTime * 0.4f;
+            }
+            
+            // Hızlı ve direkt hareket
             currentVelocity = Vector2.SmoothDamp(
                 currentVelocity,
                 targetVelocity,
                 ref refVel,
-                dashCounter > 0 ? velocitySmoothTime * 0.5f : velocitySmoothTime
+                smoothTime
             );
+            
+            // Hareket durumunu güncelle
+            lastSignificantSpeed = currentVelocity.magnitude;
+            wasMovingSignificantly = true;
+            lastMoveTime = Time.time;
         }
         
         // Hesaplanan hızı uygula
@@ -236,8 +271,22 @@ public class PlayerController : MonoBehaviour
     private void OnMovement(InputAction.CallbackContext context)
     {
         if (!canControl) return;
+        
+        // Önceki değeri sakla
+        previousMoveInput = moveInput;
+        
+        // Yeni hareket değerini al ve normalize et
         moveInput = context.ReadValue<Vector2>();
-        moveInput.Normalize();
+        
+        // Basit kontrol: Eğer hareket varsa normalize et
+        if (moveInput.sqrMagnitude > 0.1f) 
+        {
+            moveInput = moveInput.normalized;
+            
+            // Hareket durumunu güncelle
+            wasMovingSignificantly = true;
+            lastMoveTime = Time.time;
+        }
     }
 
     private void OnLook(InputAction.CallbackContext context)
@@ -424,66 +473,136 @@ public class PlayerController : MonoBehaviour
     {
         if (animator == null) return;
         
-                 // Determine if moving (daha hassas eşik değeri - hafif dokunuşları algıla)
-         bool isMoving = velocity.sqrMagnitude > 0.005f; // Daha düşük eşik değeri
-         animator.SetBool(IsMovingHash, isMoving);
+                 // Fiziksel hareket ve animasyon senkronizasyonu için DAHA SIKI kontrol
+         // İdle animasyonu oynarken hareket etme sorununu çöz
+         bool isMoving = velocity.sqrMagnitude > 0.05f; // Eşiği yükselttik
+         
+         // Idle ve hareket arasında kesin çizgi için
+         bool isDefinitelyMoving = velocity.sqrMagnitude > 0.2f;
+         
+         // Mevcut animasyon durumunu kontrol et
+         bool wasMovingAnim = animator.GetBool(IsMovingHash);
+         
+         // Animasyon ve fiziksel hareket arasındaki uyumsuzluğu gidermek için kararlı geçişler
+         if (isDefinitelyMoving)
+         {
+             // Kesinlikle hareket ediyorsa animasyon da öyle olmalı
+             animator.SetBool(IsMovingHash, true);
+         }
+         else if (!isMoving && wasMovingAnim) 
+         {
+             // Hareket kesildiğinde animasyonu da durdur
+             animator.SetBool(IsMovingHash, false);
+         }
+         else if (isMoving && !wasMovingAnim)
+         {
+             // Hareket başladığında animasyon da başlasın
+             animator.SetBool(IsMovingHash, true);
+         }
         
         if (isMoving)
         {
             // Cult of the Lamb tarzı hareket için animasyon kontrolü
             float velocityMagnitude = velocity.magnitude;
             
-            // Yönü belirle (hareket yönü veya bakış yönü)
-            float direction = 0f;
-            if (Mathf.Abs(velocity.x) > 0.1f) // X yönünde anlamlı bir hareket varsa
-            {
-                direction = Mathf.Sign(velocity.x);
-            }
-            else // Yoksa karakterin bakış yönünü kullan
-            {
-                direction = transform.localScale.x;
-            }
+                         // Yönü belirle (hareket yönü veya bakış yönü)
+             float direction = 0f;
+             
+             // Öncelikle herhangi bir anlamlı hareket olup olmadığını kontrol et (x VEYA y yönünde)
+             bool hasSignificantMovement = velocity.sqrMagnitude > 0.05f;
+             
+             // Mevcut yönü sakla (yön değişimlerini takip etmek için)
+             float prevDirection = animator.GetFloat(MovementSpeedHash);
+             prevDirection = Mathf.Sign(prevDirection); // İşareti al (+ veya -)
+             if (Mathf.Approximately(prevDirection, 0)) // Eğer 0 ise
+                 prevDirection = transform.localScale.x; // Karakter bakış yönünü kullan
+             
+             // X yönünde anlamlı bir hareket varsa o yönü kullan
+             if (Mathf.Abs(velocity.x) > 0.1f) 
+             {
+                 direction = Mathf.Sign(velocity.x);
+             }
+             // Yoksa ama y yönünde hareket varsa veya çapraz hareket varsa mevcut yönü koru
+             else if (hasSignificantMovement)
+             {
+                 // Yön değişimini önlemek için mevcut animasyon yönünü koru
+                 direction = prevDirection != 0 ? prevDirection : transform.localScale.x;
+             }
+             // Hiç hareket yoksa karakter bakış yönünü kullan
+             else
+             {
+                 direction = transform.localScale.x;
+             }
             
-            // Normalize hız: 0 = durma, 1 = maximum hız
+                         // Normalize hız: 0 = durma, 1 = maximum hız
             float normalizedSpeed = Mathf.Clamp01(velocityMagnitude / (moveSpeed * speedMultiplier));
             
-                         // Hız değeri için farklı bir eşik kullanıyoruz
-             float runThreshold = 0.8f; // %80 ve üstü hızda koşma - daha geniş yürüme aralığı
+            // BASIT HIZ KONTROLÜ - karmaşık korumaları kaldır
+            // Eğer fiziksel olarak hareket ediyorsa, animasyon da hareket olsun
+            if (velocityMagnitude > 0.3f)
+            {
+                normalizedSpeed = Mathf.Clamp01(velocityMagnitude / (moveSpeed * speedMultiplier));
+            }
+            
+                         // Hız değerleri için eşikler
+             float jogThreshold = 0.08f; // %8 hız = jogging başlangıcı (daha kolay jog)
+             float runThreshold = 0.8f; // %80 hız = tam koşu
             
                          // Hedef animasyon değerini belirle, smooth geçiş sağla
              float animValue;
+             
              if (dashCounter > 0) // Dash sırasında
              {
                  // Koşma animasyonuna hızlı geçiş - yöne göre 2 veya -2
                  animValue = direction > 0 ? 2f : -2f;
              }
-             else if (normalizedSpeed > runThreshold) // Normal koşma
+             else if (normalizedSpeed > runThreshold) // Tam koşma (hızlı)
              {
-                 // Koşma animasyonu - aradaki değerlerden geçerek hedefe ulaşacak
+                 // Run animasyonu - hedef 2 veya -2
                  float targetValue = direction > 0 ? 2f : -2f;
                  
-                 // Koşma durumundaki hedef değere göre kademeli olarak arttır
-                 if (direction > 0) // Sağa koşma
-                 {
-                     // 0'dan 2'ye doğru kademeli geçiş
-                     animValue = Mathf.Lerp(0f, targetValue, normalizedSpeed);
-                 }
-                 else // Sola koşma
-                 {
-                     // 0'dan -2'ye doğru kademeli geçiş
-                     animValue = Mathf.Lerp(0f, targetValue, normalizedSpeed);
-                 }
+                 // Hız bazlı kademeli geçiş
+                 float speedRatio = Mathf.InverseLerp(runThreshold, 1f, normalizedSpeed);
+                 animValue = Mathf.Lerp(1f, targetValue, speedRatio);
+                 if (direction < 0) animValue = -animValue;
              }
-             else 
+             else if (normalizedSpeed > jogThreshold) // Jogging (yürümeden hızlı)
              {
-                 // Yürüme animasyonu (hedef hep 0)
+                 // Jog animasyonu - yöne göre 1 veya -1
+                 float jogValue = direction > 0 ? 1f : -1f;
+                 
+                 // Jog ile run arası geçiş
+                 float speedRatio = Mathf.InverseLerp(jogThreshold, runThreshold, normalizedSpeed);
+                 animValue = jogValue;
+             }
+             else if (normalizedSpeed > 0.01f) // Hafif hareket - yürüme
+             {
+                 // Yürüme animasyonu (hedef 0)
+                 animValue = 0f;
+             }
+             else // Çok düşük hız veya hareket yok
+             {
                  animValue = 0f;
              }
              
-             // Hareket varsa animasyon tetiklensin
-             if (isMoving && normalizedSpeed > 0.05f)
+             // Çapraz hareket sırasında da animasyonun doğru çalışması için
+             if (isMoving && velocity.sqrMagnitude > 0.01f)
              {
-                 // Yürüme animasyonunun aktifleştiğinden emin ol
+                 // Çaprazlama sırasında jog'da kalmayı sağla
+                 if (Mathf.Abs(animValue) < 0.8f && normalizedSpeed >= jogThreshold)
+                 {
+                     // Eğer animasyon değeri jog seviyesinin altındaysa ve yeterince hareket varsa
+                     // jogda kalması için değeri yön bazlı bir değere zorla
+                     float minJogValue = direction > 0 ? 1f : -1f;
+                     
+                     // Mevcut değer çok düşükse zorla
+                     if (Mathf.Abs(animValue) < 0.9f)
+                     {
+                         animValue = minJogValue;
+                     }
+                 }
+                 
+                 // Kesinlikle hareket olduğundan emin ol
                  animator.SetBool(IsMovingHash, true);
              }
             
@@ -491,10 +610,65 @@ public class PlayerController : MonoBehaviour
              if (Mathf.Abs(animValue) < 0.01f)
                  animValue = 0f;
                  
-             // Smooth animation değişimi için lerp kullan
+             // Smooth animation değişimi için lerp kullan - YÖN DEĞİŞİMİNDE ÖZEL İŞLEM
              float currentAnimValue = animator.GetFloat(MovementSpeedHash);
-             // Daha yavaş ve smooth geçiş için lerp hızını azalttık
-             float smoothAnimValue = Mathf.Lerp(currentAnimValue, animValue, Time.deltaTime * 5f); // Daha yavaş, smooth geçiş
+             float smoothAnimValue;
+             
+             // Yön değişimi kontrolü (pozitiften negatife veya negatiften pozitife geçiş)
+             bool isChangingDirection = (currentAnimValue > 0 && animValue < 0) || (currentAnimValue < 0 && animValue > 0);
+             
+             // Cult of the Lamb tarzı - daha hızlı ve daha kararlı animasyon değişimi
+             if (isChangingDirection)
+             {
+                 // Yön değişiminde mutlak değeri koru, işareti değiştir (0'dan geçmeden)
+                 float currentAbsValue = Mathf.Abs(currentAnimValue);
+                 float targetAbsValue = Mathf.Abs(animValue);
+                 
+                 // Cult of the Lamb tarzı çok hızlı yön değişimi (animasyon durmaları yok)
+                 float changeDirectionSpeed = Time.deltaTime * 25f; // Çok daha hızlı yön değişimi
+                 float absResult = Mathf.Lerp(currentAbsValue, targetAbsValue, changeDirectionSpeed);
+                 
+                 // İşaret kontrolü - hedef değerin işaretini kullan (animasyon sıfırlanmadan)
+                 smoothAnimValue = absResult * Mathf.Sign(animValue);
+                 
+                 // Koşu animasyonları arasında anlık değişim - Cult of the Lamb tarzı
+                 if (Mathf.Abs(currentAnimValue) > 0.9f && Mathf.Abs(animValue) > 0.9f) 
+                 {
+                     // Koşu durumlarında hızlı, neredeyse anlık geçiş
+                     smoothAnimValue = animValue;
+                 }
+             }
+             else
+             {
+                 // Normal geçişlerde de hızlı tepki - Cult of the Lamb tarzı
+                 float lerpSpeed;
+                 
+                 // Hareket durumuna göre geçiş hızını ayarla
+                 if (Mathf.Abs(animValue) > 1.5f) // Koşma (2/-2)
+                 {
+                     // Koşmaya geçiş çok hızlı olsun
+                     lerpSpeed = Time.deltaTime * 20f;
+                 }
+                 else if (Mathf.Abs(animValue) > 0.5f) // Jogging (1/-1)
+                 {
+                     // Jog'a geçiş de hızlı ama o kadar değil
+                     lerpSpeed = Time.deltaTime * 15f;
+                 }
+                 else // Yürüme veya durma (0)
+                 {
+                     // Daha yumuşak geçiş
+                     lerpSpeed = Time.deltaTime * 10f;
+                 }
+                 
+                 // Mevcut değere göre ekstra ayarlama (daha hızlı değişim için)
+                 if (Mathf.Abs(currentAnimValue - animValue) > 1.0f)
+                 {
+                     // Büyük değişimlerde daha hızlı tepki
+                     lerpSpeed *= 1.5f;
+                 }
+                 
+                 smoothAnimValue = Mathf.Lerp(currentAnimValue, animValue, lerpSpeed);
+             }
              
              // Çok küçük değerleri temizle (sadece çok yakın olanlar)
              if (Mathf.Abs(smoothAnimValue) < 0.01f) 

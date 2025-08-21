@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 
-public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffect
+public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffect, IEnemy
 {
     [Header("Enemy Data")]
     [SerializeField] protected KingdomEnemyData enemyData;
@@ -445,6 +445,36 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
 
     #endregion
 
+    #region IEnemy Implementation
+    
+    public virtual float GetDetectionRange()
+    {
+        return enemyData != null ? enemyData.detectionRange : 5f;
+    }
+    
+    public virtual void SetDetectionRange(float range)
+    {
+        if (enemyData != null)
+        {
+            enemyData.detectionRange = range;
+        }
+    }
+    
+    public virtual float GetAttackRange()
+    {
+        return enemyData != null ? enemyData.attackRange : 2f;
+    }
+    
+    public virtual void SetAttackRange(float range)
+    {
+        if (enemyData != null)
+        {
+            enemyData.attackRange = range;
+        }
+    }
+    
+    #endregion
+    
     #region Debug
 
     protected virtual void OnGUI()

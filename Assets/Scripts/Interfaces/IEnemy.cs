@@ -27,3 +27,4 @@ public interface IEnemy
     /// <param name="range">The new attack range</param>
     void SetAttackRange(float range);
 }
+
