@@ -75,5 +75,8 @@ public class SegmentListUI : MonoBehaviour
     {
         wheelManager.SelectSegmentForPlacement(segment);
         segmentSelectionUI?.SetActive(false);
+        
+        // UI Manager'a segment seçildiğini bildir
+        WheelUIManager.Instance?.OnSegmentSelected();
     }
 }
