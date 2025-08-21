@@ -16,19 +16,39 @@ public class SegmentOnRemoveEffectHandler : MonoBehaviour
     public void HandleOnRemoveEffect(SegmentData removedSegment, int startSlot)
     {
         if (removedSegment.effectType != SegmentEffectType.OnRemoveEffect) return;
+        
+        // CurseEffect türü ödül olarak çıkmasını engelle
+        if (removedSegment.rewardType == Type.CurseEffect)
+        {
+            Debug.LogWarning($"OnRemoveEffect '{removedSegment.segmentName}' tried to spawn CurseEffect rewards, which is not allowed. Skipping reward generation.");
+            return;
+        }
+        
         var allSegments = Resources.LoadAll<SegmentData>("Wheel/Segment SO");
         WheelManager wm = FindFirstObjectByType<WheelManager>();
         if (wm == null) return;
+        
         if (removedSegment.rewardFillMode == RewardFillMode.FillWithOnes)
         {
             List<SegmentData> candidates = new List<SegmentData>();
             foreach (var seg in allSegments)
             {
-                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.size == 1)
+                // CurseEffect segmentlerini adaylardan çıkar
+                if (seg.type == removedSegment.rewardType && 
+                    seg.rarity == removedSegment.rewardRarity && 
+                    seg.size == 1 && 
+                    seg.effectType != SegmentEffectType.CurseEffect) // ← Curse effect'leri engelle
                 {
                     candidates.Add(seg);
                 }
             }
+            
+            if (candidates.Count == 0)
+            {
+                Debug.LogWarning($"OnRemoveEffect '{removedSegment.segmentName}' found no valid candidates for reward generation (excluding CurseEffect).");
+                return;
+            }
+            
             for (int i = 0; i < removedSegment.size && candidates.Count > 0; i++)
             {
                 int idx = Random.Range(0, candidates.Count);
@@ -41,11 +61,22 @@ public class SegmentOnRemoveEffectHandler : MonoBehaviour
             List<SegmentData> candidates = new List<SegmentData>();
             foreach (var seg in allSegments)
             {
-                if (seg.type == removedSegment.rewardType && seg.rarity == removedSegment.rewardRarity && seg.size == removedSegment.size)
+                // CurseEffect segmentlerini adaylardan çıkar
+                if (seg.type == removedSegment.rewardType && 
+                    seg.rarity == removedSegment.rewardRarity && 
+                    seg.size == removedSegment.size && 
+                    seg.effectType != SegmentEffectType.CurseEffect) // ← Curse effect'leri engelle
                 {
                     candidates.Add(seg);
                 }
             }
+            
+            if (candidates.Count == 0)
+            {
+                Debug.LogWarning($"OnRemoveEffect '{removedSegment.segmentName}' found no valid candidates for reward generation (excluding CurseEffect).");
+                return;
+            }
+            
             if (candidates.Count > 0)
             {
                 int idx = Random.Range(0, candidates.Count);

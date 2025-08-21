@@ -15,7 +15,7 @@ MonoBehaviour:
   segmentID: selfbondingcurse
   segmentName: 
   size: 1
-  type: 0
+  type: 3
   rarity: 3
   description: "segmentleri kendine ba\u011Flar bu segment yok olunca ba\u011Fland\u0131\u011F\u0131
     segmentlerde yok olur."

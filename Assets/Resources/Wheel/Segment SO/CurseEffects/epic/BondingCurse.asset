@@ -15,7 +15,7 @@ MonoBehaviour:
   segmentID: bondingcurse
   segmentName: 
   size: 1
-  type: 0
+  type: 3
   rarity: 3
   description: "2 segmenti birbirine ba\u011Flar biri yok olunca di\u011Feride yok
     olur. Yeni ba\u011Flar yapar."

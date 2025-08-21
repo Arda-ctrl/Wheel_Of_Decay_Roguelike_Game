@@ -173,8 +173,20 @@ public class SegmentDataEditor : Editor
         else if (effectType == SegmentEffectType.OnRemoveEffect)
         {
             if (rewardRarity != null) EditorGUILayout.PropertyField(rewardRarity);
-            if (rewardType != null) EditorGUILayout.PropertyField(rewardType);
+            if (rewardType != null) 
+            {
+                EditorGUILayout.PropertyField(rewardType);
+                
+                // CurseEffect seçilirse uyarı göster
+                var currentRewardType = (Type)rewardType.enumValueIndex;
+                if (currentRewardType == Type.CurseEffect)
+                {
+                    EditorGUILayout.HelpBox("⚠️ UYARI: OnRemoveEffect'lerden CurseEffect çıkmamalı! Bu ayar göz ardı edilecek.", MessageType.Error);
+                }
+            }
             EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardFillMode"));
+            
+            EditorGUILayout.HelpBox("Bu segment silindiğinde belirtilen türde ödül segmentleri oluşturulur. CurseEffect türü otomatik olarak engellenir.", MessageType.Info);
         }
         else if (effectType == SegmentEffectType.CurseEffect)
         {

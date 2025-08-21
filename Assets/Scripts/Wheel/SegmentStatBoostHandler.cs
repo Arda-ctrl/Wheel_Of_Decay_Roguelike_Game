@@ -36,14 +36,17 @@ public class RandomStatStack
     public void SetStackCount(int newCount)
     {
         int currentCount = statStack.Count;
+        // Debug.Log($"[RandomStat] *** SET STACK COUNT *** from {currentCount} to {newCount} for segment {data.segmentName}");
         
         if (newCount > currentCount)
         {
             // Yeni slotlar eklendi, yeni statlar ekle
+            // Debug.Log($"[RandomStat] Adding {newCount - currentCount} new random stats to stack");
             for (int i = currentCount; i < newCount; i++)
             {
                 StatType randomStat = GetRandomStatType(data);
                 statStack.Add(new RandomStatEntry(randomStat, statAmount, i));
+                // Debug.Log($"[RandomStat] Added to stack: {randomStat} +{statAmount}");
             }
         }
         else if (newCount < currentCount)
@@ -178,7 +181,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 if (data.statBonusMode == StatBonusMode.DecayOverTime)
                 {
                     if (!decayGrowthValues.ContainsKey(inst))
-                        decayGrowthValues[inst] = data.decayStartValue;
+                        decayGrowthValues[inst] = data.statAmount; // statAmount'u başlangıç değeri olarak kullan
                     decayGrowthValues[inst] -= data.decayAmountPerSpin;
                     if (decayGrowthValues[inst] <= 0f && data.decayRemoveAtZero)
                     {
@@ -191,7 +194,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 else if (data.statBonusMode == StatBonusMode.GrowthOverTime)
                 {
                     if (!decayGrowthValues.ContainsKey(inst))
-                        decayGrowthValues[inst] = data.growthStartValue;
+                        decayGrowthValues[inst] = data.statAmount; // statAmount'u başlangıç değeri olarak kullan
                     decayGrowthValues[inst] += data.growthAmountPerSpin;
                 }
             }
@@ -203,6 +206,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
     // Yardımcı fonksiyonlar
     public void ApplyStat(SegmentInstance inst, float amount, StatType statType)
     {
+        // Debug.Log($"[RandomStat] *** APPLY STAT TO UI *** {inst.data.segmentName} {statType} +{amount}");
         if (StatsUI.Instance == null) return;
         switch (statType)
         {
@@ -225,6 +229,7 @@ public class SegmentStatBoostHandler : MonoBehaviour
     }
     public void RemoveStat(SegmentInstance inst, float amount, StatType statType)
     {
+        // Debug.Log($"[RandomStat] *** REMOVE STAT FROM UI *** {inst.data.segmentName} {statType} -{amount}");
         if (StatsUI.Instance == null)
         {
             return;
@@ -250,9 +255,26 @@ public class SegmentStatBoostHandler : MonoBehaviour
         }
     }
 
+    // Persistent segment'i initialize et
+    public void InitializePersistentSegment(SegmentInstance inst)
+    {
+        if (inst == null || inst.data == null || inst.data.statBonusMode != StatBonusMode.Persistent) return;
+        
+        // İlk kez yerleştiriliyorsa base değerleri ayarla
+        if (inst._baseStatAmount == 0f)
+        {
+            inst._baseStatAmount = inst.data.statAmount;
+            inst._currentStatAmount = inst.data.statAmount;
+        }
+    }
+    
     // Tüm stat boost segmentlerini yeniden hesapla
     public void RecalculateAllStatBoosts()
     {
+        // Debug.Log($"[RandomStat] ===== RECALCULATE ALL STAT BOOSTS STARTED =====");
+        // Debug.Log($"[RandomStat] Current persistent stacks: {persistentRandomStatStacks.Count}");
+        // Debug.Log($"[RandomStat] Current runtime stacks: {randomStatStacks.Count}");
+        
         var wheelManager = FindAnyObjectByType<WheelManager>();
         if (wheelManager == null) return;
         int slotCount = wheelManager.slots.Length;
@@ -300,30 +322,46 @@ public class SegmentStatBoostHandler : MonoBehaviour
             siblingMap[inst] = hasSibling;
         }
 
-        // 3. Tüm statları sıfırla (random stat'lar hariç)
+        // 3. Tüm statları sıfırla (random stat'lar DA DAHİL)
+        // Debug.Log($"[RandomStat] Step 3: Clearing ALL existing stat boosts (including random stats)...");
         foreach (var inst in allSegments)
         {
             StatType statType = inst.data.statType;
             if (inst._appliedStatBoost != 0f)
             {
+                // Debug.Log($"[RandomStat] REMOVING existing boost: {inst.data.segmentName} {statType} -{inst._appliedStatBoost}");
                 RemoveStat(inst, inst._appliedStatBoost, statType);
                 inst._appliedStatBoost = 0f;
             }
-            // Random stat'ları temizleme - onlar dinamik olarak güncelleniyor
+            
+            // Random stat'ları da temizle
+            if (statType == StatType.Random && randomStatStacks.ContainsKey(inst))
+            {
+                var stack = randomStatStacks[inst];
+                var allStats = stack.GetAllStats();
+                Debug.Log($"[RandomStat] CLEARING {allStats.Count} random stats from {inst.data.segmentName}");
+                foreach (var entry in allStats)
+                {
+                    RemoveStat(inst, entry.amount, entry.statType);
+                    Debug.Log($"[RandomStat] *** REMOVED FROM UI *** {entry.statType}: -{entry.amount}");
+                }
+            }
         }
 
         // 4. Tüm statları tekrar ekle
+        // Debug.Log($"[RandomStat] Step 4: Recalculating and applying all stat boosts...");
         foreach (var inst in allSegments)
         {
             StatType statType = inst.data.statType;
-            float boost = inst.data.statBonusMode == StatBonusMode.SiblingAdjacency
-                ? CalculateStatBoost(inst, wheelManager, siblingMap)
-                : CalculateStatBoost(inst, wheelManager);
+            // Debug.Log($"[RandomStat] Processing segment: {inst.data.segmentName} (Type: {statType})");
+            float boost = CalculateStatBoost(inst, wheelManager, siblingMap);
             inst._appliedStatBoost = boost;
+            // Debug.Log($"[RandomStat] Calculated boost for {inst.data.segmentName}: {boost}");
             
             // Random stat değilse normal uygula
             if (statType != StatType.Random)
             {
+                // Debug.Log($"[RandomStat] APPLYING normal stat: {inst.data.segmentName} {statType} +{boost}");
                 ApplyStat(inst, boost, statType);
             }
             else
@@ -333,47 +371,85 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 {
                     var stack = randomStatStacks[inst];
                     int currentCount = stack.GetAllStats().Count;
-                    int newCount = (int)boost;
+                    int newCount = CalculateRandomStatCount(inst, wheelManager, siblingMap);
+                    
+                    Debug.Log($"[RandomStat] *** EXISTING STACK *** for {inst.data.segmentName}: currentCount={currentCount}, newCount={newCount}");
+                    Debug.Log($"[RandomStat] Stack details: segmentID={inst.data.segmentID}, persistent exists={persistentRandomStatStacks.ContainsKey(inst.data.segmentID)}");
                     
                     if (newCount > currentCount)
                     {
                         // Yeni stat'lar ekle (LIFO - en üste ekle)
+                        Debug.Log($"[RandomStat] Adding {newCount - currentCount} stats to {inst.data.segmentName}");
                         for (int i = currentCount; i < newCount; i++)
                         {
                             StatType randomStat = GetRandomStatType(inst.data);
                             float statAmount = inst.data.statAmount;
                             stack.AddStatToTop(randomStat, statAmount);
                             ApplyStat(inst, statAmount, randomStat);
+                            Debug.Log($"[RandomStat] Added {randomStat}: +{statAmount}");
                         }
                     }
                     else if (newCount < currentCount)
                     {
                         // En üstten stat'ları çıkar (LIFO - en üstten çıkar)
+                        Debug.Log($"[RandomStat] Removing {currentCount - newCount} stats from {inst.data.segmentName}");
                         for (int i = 0; i < currentCount - newCount; i++)
                         {
                             var removedStat = stack.RemoveStatFromTop();
                             RemoveStat(inst, removedStat.amount, removedStat.statType);
+                            Debug.Log($"[RandomStat] Removed {removedStat.statType}: -{removedStat.amount}");
                         }
                     }
                     else
                     {
-                        // Count aynı, hiçbir şey yapılmıyor
+                        // Count aynı - recalculate sırasında tüm statları yeniden uygula
+                        Debug.Log($"[RandomStat] No change needed for {inst.data.segmentName} (count={newCount})");
+                        Debug.Log($"[RandomStat] Re-applying all stats after recalculate...");
+                        
+                        // Mevcut stack'teki tüm statları UI'a uygula (recalculate sonrası)
+                        var allStats = stack.GetAllStats();
+                        foreach (var entry in allStats)
+                        {
+                            ApplyStat(inst, entry.amount, entry.statType);
+                            Debug.Log($"[RandomStat] *** RE-APPLIED *** {entry.statType}: +{entry.amount}");
+                        }
                     }
                 }
                 else
                 {
                     // Yeni stack oluştur
-                    persistentRandomStatStacks[inst.data.segmentID] = new RandomStatStack(inst, inst.data, inst.data.statAmount);
-                    randomStatStacks[inst] = persistentRandomStatStacks[inst.data.segmentID];
+                    int newCount = CalculateRandomStatCount(inst, wheelManager, siblingMap);
+                    Debug.Log($"[RandomStat] *** CREATING NEW STACK *** for {inst.data.segmentName}: count={newCount}");
+                    
+                    // Persistent stack'te var mı kontrol et
+                    if (persistentRandomStatStacks.ContainsKey(inst.data.segmentID))
+                    {
+                        Debug.Log($"[RandomStat] WARNING: Persistent stack already exists for {inst.data.segmentID}!");
+                        randomStatStacks[inst] = persistentRandomStatStacks[inst.data.segmentID];
+                    }
+                    else
+                    {
+                        Debug.Log($"[RandomStat] Creating brand new persistent stack for {inst.data.segmentID}");
+                        persistentRandomStatStacks[inst.data.segmentID] = new RandomStatStack(inst, inst.data, inst.data.statAmount);
+                        randomStatStacks[inst] = persistentRandomStatStacks[inst.data.segmentID];
+                    }
+                    
                     var newStack = randomStatStacks[inst];
-                    newStack.SetStackCount((int)boost);
-                    foreach (var entry in newStack.GetAllStats())
+                    newStack.SetStackCount(newCount);
+                    Debug.Log($"[RandomStat] Stack set to count: {newCount}, actual entries: {newStack.GetAllStats().Count}");
+                    
+                    // Yeni stack'teki tüm statları UI'a uygula
+                    var newStackStats = newStack.GetAllStats();
+                    Debug.Log($"[RandomStat] Applying {newStackStats.Count} stats from new stack to UI...");
+                    foreach (var entry in newStackStats)
                     {
                         ApplyStat(inst, entry.amount, entry.statType);
+                        Debug.Log($"[RandomStat] *** APPLIED NEW *** {entry.statType}: +{entry.amount}");
                     }
                 }
             }
         }
+        // Debug.Log($"[RandomStat] ===== RECALCULATE ALL STAT BOOSTS FINISHED =====");
     }
 
     // Tüm stat boostları temizle (random stat stack'leri koru)
@@ -451,9 +527,114 @@ public class SegmentStatBoostHandler : MonoBehaviour
                     break;
                     
                 default:
-                    boost = data.statAmount;
+                    // Normal stat boost hesaplama
+                    boost = CalculateNormalStatBoost(inst, wheelManager, siblingMap);
                     break;
             }
+        }
+        
+        return boost;
+    }
+    
+    // Normal stat boost hesaplama (Random hariç tüm stat tipleri için)
+    private float CalculateNormalStatBoost(SegmentInstance inst, WheelManager wheelManager, Dictionary<SegmentInstance, bool> siblingMap = null)
+    {
+        if (inst == null || inst.data == null) return 0f;
+        
+        var data = inst.data;
+        float baseAmount = data.statAmount;
+        float boost = 0f;
+        
+        switch (data.statBonusMode)
+        {
+            case StatBonusMode.Fixed:
+                boost = baseAmount;
+                break;
+                
+            case StatBonusMode.EmptySlotCount:
+                int emptySlots = CountEmptySlots(wheelManager);
+                boost = baseAmount * emptySlots;
+                break;
+                
+            case StatBonusMode.FilledSlotCount:
+                int filledSlots = CountFilledSlots(wheelManager);
+                boost = baseAmount * filledSlots;
+                break;
+                
+            case StatBonusMode.SiblingAdjacency:
+                bool hasSibling = false;
+                if (siblingMap != null && siblingMap.ContainsKey(inst))
+                {
+                    hasSibling = siblingMap[inst];
+                }
+                else
+                {
+                    hasSibling = HasAdjacentSibling(inst, wheelManager);
+                }
+                boost = hasSibling ? baseAmount * 2 : baseAmount;
+                break;
+                
+            case StatBonusMode.DecayOverTime:
+                // Decay için runtime değer kullan
+                if (decayGrowthValues.ContainsKey(inst))
+                {
+                    boost = decayGrowthValues[inst];
+                }
+                else
+                {
+                    // İlk kez hesaplanıyor, başlangıç değerini kullan
+                    boost = baseAmount; // statAmount'u başlangıç değeri olarak kullan
+                    decayGrowthValues[inst] = boost;
+                }
+                break;
+                
+            case StatBonusMode.GrowthOverTime:
+                // Growth için runtime değer kullan
+                if (decayGrowthValues.ContainsKey(inst))
+                {
+                    boost = decayGrowthValues[inst];
+                }
+                else
+                {
+                    // İlk kez hesaplanıyor, başlangıç değerini kullan
+                    boost = baseAmount; // statAmount'u başlangıç değeri olarak kullan
+                    decayGrowthValues[inst] = boost;
+                }
+                break;
+                
+            case StatBonusMode.Isolated:
+                bool isIsolated = IsSegmentIsolated(inst, wheelManager);
+                boost = isIsolated ? baseAmount + data.isolatedBonusAmount : baseAmount;
+                break;
+                
+            case StatBonusMode.RarityAdjacency:
+                bool hasTargetRarityAdjacent = HasAdjacentSegmentWithRarity(inst, wheelManager, data.targetRarity);
+                boost = hasTargetRarityAdjacent ? baseAmount + data.rarityBonusAmount : baseAmount;
+                break;
+                
+            case StatBonusMode.FlankGuard:
+                bool isFlankGuarded = IsSegmentFlankGuarded(inst, wheelManager);
+                boost = isFlankGuarded ? baseAmount + data.flankGuardBonusAmount : baseAmount;
+                break;
+                
+            case StatBonusMode.SmallSegmentCount:
+                int smallSegmentCount = CountSmallSegments(wheelManager);
+                boost = baseAmount * smallSegmentCount;
+                break;
+                
+            case StatBonusMode.LargeSegmentCount:
+                int largeSegmentCount = CountLargeSegments(wheelManager);
+                boost = baseAmount * largeSegmentCount;
+                break;
+                
+            case StatBonusMode.Persistent:
+                // Persistent segment'ler için runtime boost değerini kullan
+                boost = inst._currentStatAmount;
+                break;
+                
+            default:
+                boost = baseAmount;
+                break;
         }
         
         return boost;
@@ -617,6 +798,8 @@ public class SegmentStatBoostHandler : MonoBehaviour
             return;
         }
         
+        // Debug.Log($"[RandomStat] *** REMOVE ALL RANDOM STATS *** for {inst.data.segmentName}");
+        
         if (Instance.randomStatStacks.ContainsKey(inst))
         {
             var stack = Instance.randomStatStacks[inst];
@@ -624,9 +807,11 @@ public class SegmentStatBoostHandler : MonoBehaviour
             {
                 // Stack'teki tüm statları kaldır
                 var allStats = stack.GetAllStats();
+                // Debug.Log($"[RandomStat] Removing {allStats.Count} random stats from {inst.data.segmentName}");
                 foreach (var entry in allStats)
                 {
                     Instance.RemoveStat(inst, entry.amount, entry.statType);
+                    // Debug.Log($"[RandomStat] Removed {entry.statType}: -{entry.amount}");
                 }
                 
                 // Stack'i temizle
@@ -634,11 +819,16 @@ public class SegmentStatBoostHandler : MonoBehaviour
                 Instance.randomStatStacks.Remove(inst);
             }
         }
+        else
+        {
+            // Debug.Log($"[RandomStat] No random stat stack found for {inst.data.segmentName}");
+        }
         
         // Persistent stack'i de temizle
         if (Instance.persistentRandomStatStacks.ContainsKey(inst.data.segmentID))
         {
             Instance.persistentRandomStatStacks.Remove(inst.data.segmentID);
+            // Debug.Log($"[RandomStat] Removed persistent stack for {inst.data.segmentID}");
         }
     }
 
@@ -675,33 +865,91 @@ public class SegmentStatBoostHandler : MonoBehaviour
         var data = inst.data;
         int count = 0;
         
+        // Debug.Log($"[RandomStat] CalculateRandomStatCount for {data.segmentName} (Mode: {data.statBonusMode})");
+        
         switch (data.statBonusMode)
         {
             case StatBonusMode.Fixed:
                 count = Mathf.RoundToInt(data.statAmount);
+                Debug.Log($"[RandomStat] Fixed mode: statAmount={data.statAmount}, count={count}");
                 break;
                 
             case StatBonusMode.EmptySlotCount:
-                count = 1; // Her boş slot için 1 stat
-                break;
-                
-            case StatBonusMode.SiblingAdjacency:
-                if (siblingMap != null && siblingMap.ContainsKey(inst))
-                {
-                    count = siblingMap[inst] ? 2 : 1;
-                }
-                else
-                {
-                    count = HasAdjacentSibling(inst, wheelManager) ? 2 : 1;
-                }
+                int emptySlots = CountEmptySlots(wheelManager);
+                count = emptySlots; // Toplam boş slot sayısı
+                Debug.Log($"[RandomStat] EmptySlotCount mode: emptySlots={emptySlots}, count={count}");
                 break;
                 
             case StatBonusMode.FilledSlotCount:
-                count = CountSegmentsInRange(inst, wheelManager, 1);
+                int filledSlots = CountFilledSlots(wheelManager);
+                count = filledSlots; // Toplam dolu slot sayısı
+                Debug.Log($"[RandomStat] FilledSlotCount mode: filledSlots={filledSlots}, count={count}");
+                break;
+                
+            case StatBonusMode.SiblingAdjacency:
+                bool hasSibling = false;
+                if (siblingMap != null && siblingMap.ContainsKey(inst))
+                {
+                    hasSibling = siblingMap[inst];
+                }
+                else
+                {
+                    hasSibling = HasAdjacentSibling(inst, wheelManager);
+                }
+                count = hasSibling ? 2 : 1;
+                Debug.Log($"[RandomStat] SiblingAdjacency mode: hasSibling={hasSibling}, count={count}");
+                break;
+                
+            case StatBonusMode.DecayOverTime:
+                // Decay için runtime değer kullan
+                if (decayGrowthValues.ContainsKey(inst))
+                {
+                    count = Mathf.RoundToInt(decayGrowthValues[inst]);
+                    Debug.Log($"[RandomStat] DecayOverTime mode: runtime value={decayGrowthValues[inst]}, count={count}");
+                }
+                else
+                {
+                    count = Mathf.RoundToInt(data.statAmount); // Başlangıç değeri
+                    decayGrowthValues[inst] = data.statAmount;
+                    Debug.Log($"[RandomStat] DecayOverTime mode: initial value={data.statAmount}, count={count}");
+                }
+                break;
+                
+            case StatBonusMode.GrowthOverTime:
+                // Growth için runtime değer kullan
+                if (decayGrowthValues.ContainsKey(inst))
+                {
+                    count = Mathf.RoundToInt(decayGrowthValues[inst]);
+                    Debug.Log($"[RandomStat] GrowthOverTime mode: runtime value={decayGrowthValues[inst]}, count={count}");
+                }
+                else
+                {
+                    count = Mathf.RoundToInt(data.statAmount); // Başlangıç değeri
+                    decayGrowthValues[inst] = data.statAmount;
+                    Debug.Log($"[RandomStat] GrowthOverTime mode: initial value={data.statAmount}, count={count}");
+                }
+                break;
+                
+            case StatBonusMode.SmallSegmentCount:
+                int smallSegmentCount = CountSmallSegments(wheelManager);
+                count = Mathf.RoundToInt(data.statAmount * smallSegmentCount);
+                // Debug.Log($"[RandomStat] SmallSegmentCount mode: smallSegments={smallSegmentCount}, statAmount={data.statAmount}, count={count}");
+                break;
+                
+            case StatBonusMode.LargeSegmentCount:
+                int largeSegmentCount = CountLargeSegments(wheelManager);
+                count = Mathf.RoundToInt(data.statAmount * largeSegmentCount);
+                // Debug.Log($"[RandomStat] LargeSegmentCount mode: largeSegments={largeSegmentCount}, statAmount={data.statAmount}, count={count}");
+                break;
+                
+            default:
+                Debug.LogWarning($"[RandomStat] Unknown statBonusMode: {data.statBonusMode} for {data.segmentName}");
                 break;
         }
         
-        return count;
+        int finalCount = Mathf.Max(0, count);
+        // Debug.Log($"[RandomStat] Final count for {data.segmentName}: {finalCount}");
+        return finalCount;
     }
 
     private int CountSegmentsInRange(SegmentInstance inst, WheelManager wheelManager, int range)
@@ -723,5 +971,183 @@ public class SegmentStatBoostHandler : MonoBehaviour
             }
         }
         return count;
+    }
+    
+    // Boş slot sayısını hesapla (WheelManager'ın slotOccupied array'ini kullanarak)
+    private int CountEmptySlots(WheelManager wheelManager)
+    {
+        int emptyCount = 0;
+        int slotCount = wheelManager.slots.Length;
+        
+        for (int i = 0; i < slotCount; i++)
+        {
+            if (!wheelManager.slotOccupied[i]) // WheelManager'ın slotOccupied array'ini kullan
+            {
+                emptyCount++;
+            }
+        }
+        
+        // Debug.Log($"[RandomStat] CountEmptySlots: {emptyCount}/{slotCount} slots are empty");
+        return emptyCount;
+    }
+    
+    // Dolu slot sayısını hesapla (WheelManager'ın slotOccupied array'ini kullanarak)
+    private int CountFilledSlots(WheelManager wheelManager)
+    {
+        int filledCount = 0;
+        int slotCount = wheelManager.slots.Length;
+        
+        for (int i = 0; i < slotCount; i++)
+        {
+            if (wheelManager.slotOccupied[i]) // WheelManager'ın slotOccupied array'ini kullan
+            {
+                filledCount++;
+            }
+        }
+        
+        // Debug.Log($"[RandomStat] CountFilledSlots: {filledCount}/{slotCount} slots are filled");
+        return filledCount;
+    }
+    
+    // Size = 1 olan segmentlerin sayısını say
+    private int CountSmallSegments(WheelManager wheelManager)
+    {
+        int smallCount = 0;
+        var allSegments = GetAllSegments(wheelManager);
+        
+        foreach (var segment in allSegments)
+        {
+            if (segment.data.size == 1)
+            {
+                smallCount++;
+            }
+        }
+        
+        return smallCount;
+    }
+    
+    // Size = 3 olan segmentlerin sayısını say
+    private int CountLargeSegments(WheelManager wheelManager)
+    {
+        int largeCount = 0;
+        var allSegments = GetAllSegments(wheelManager);
+        
+        foreach (var segment in allSegments)
+        {
+            if (segment.data.size == 3)
+            {
+                largeCount++;
+            }
+        }
+        
+        return largeCount;
+    }
+    
+    // Segmentin izole olup olmadığını kontrol et
+    private bool IsSegmentIsolated(SegmentInstance inst, WheelManager wheelManager)
+    {
+        int slotCount = wheelManager.slots.Length;
+        
+        // Segmentin kapladığı tüm slotların yanındaki slotları kontrol et
+        for (int s = 0; s < inst.data.size; s++)
+        {
+            int currentSlot = (inst.startSlotIndex + s) % slotCount;
+            int leftSlot = (currentSlot - 1 + slotCount) % slotCount;
+            int rightSlot = (currentSlot + 1) % slotCount;
+            
+            // Sol tarafı kontrol et
+            foreach (Transform child in wheelManager.slots[leftSlot])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != inst && child.gameObject.activeInHierarchy)
+                {
+                    return false; // Yanında segment var, izole değil
+                }
+            }
+            
+            // Sağ tarafı kontrol et
+            foreach (Transform child in wheelManager.slots[rightSlot])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != inst && child.gameObject.activeInHierarchy)
+                {
+                    return false; // Yanında segment var, izole değil
+                }
+            }
+        }
+        
+        return true; // Tüm yanlar boş, izole
+    }
+    
+    // Belirtilen nadirlikte komşu segment olup olmadığını kontrol et
+    private bool HasAdjacentSegmentWithRarity(SegmentInstance inst, WheelManager wheelManager, Rarity targetRarity)
+    {
+        int slotCount = wheelManager.slots.Length;
+        
+        for (int s = 0; s < inst.data.size; s++)
+        {
+            int currentSlot = (inst.startSlotIndex + s) % slotCount;
+            int leftSlot = (currentSlot - 1 + slotCount) % slotCount;
+            int rightSlot = (currentSlot + 1) % slotCount;
+            
+            // Sol tarafı kontrol et
+            foreach (Transform child in wheelManager.slots[leftSlot])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != inst && seg.data.rarity == targetRarity && child.gameObject.activeInHierarchy)
+                {
+                    return true;
+                }
+            }
+            
+            // Sağ tarafı kontrol et
+            foreach (Transform child in wheelManager.slots[rightSlot])
+            {
+                var seg = child.GetComponent<SegmentInstance>();
+                if (seg != null && seg != inst && seg.data.rarity == targetRarity && child.gameObject.activeInHierarchy)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    // Segmentin her iki yanının da dolu olup olmadığını kontrol et (FlankGuard)
+    private bool IsSegmentFlankGuarded(SegmentInstance inst, WheelManager wheelManager)
+    {
+        int slotCount = wheelManager.slots.Length;
+        
+        // Segmentin başındaki ve sonundaki slotların yanını kontrol et
+        int leftSlot = (inst.startSlotIndex - 1 + slotCount) % slotCount;
+        int rightSlot = (inst.startSlotIndex + inst.data.size) % slotCount;
+        
+        bool hasLeftSegment = false;
+        bool hasRightSegment = false;
+        
+        // Sol taraf kontrol
+        foreach (Transform child in wheelManager.slots[leftSlot])
+        {
+            var seg = child.GetComponent<SegmentInstance>();
+            if (seg != null && seg != inst && child.gameObject.activeInHierarchy)
+            {
+                hasLeftSegment = true;
+                break;
+            }
+        }
+        
+        // Sağ taraf kontrol
+        foreach (Transform child in wheelManager.slots[rightSlot])
+        {
+            var seg = child.GetComponent<SegmentInstance>();
+            if (seg != null && seg != inst && child.gameObject.activeInHierarchy)
+            {
+                hasRightSegment = true;
+                break;
+            }
+        }
+        
+        return hasLeftSegment && hasRightSegment; // Her iki yan da dolu olmalı
     }
 } 

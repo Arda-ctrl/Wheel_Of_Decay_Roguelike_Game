@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: ReArrangeCurse
   m_EditorClassIdentifier: 
   segmentID: rearrangecurse
+  segmentName: 
   size: 3
-  type: 0
+  type: 3
   rarity: 2
   description: "yok olaca\u011F\u0131 zaman \xE7arktaki b\xFCt\xFCn segmentlerin
     yerini rasgele de\u011Fi\u015Ftirir."
@@ -54,3 +55,6 @@ MonoBehaviour:
   rewardFillMode: 0
   curseEffectType: 1
   curseReSpinCount: 3
+  tooltipDisabled: 0
+  explosiveRange: 1
+  selfBondingCount: 2

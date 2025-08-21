@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Decay type Stat
   m_EditorClassIdentifier: 
   segmentID: decaytypestat
+  segmentName: 
   size: 1
   type: 0
   rarity: 3
@@ -21,10 +22,12 @@ MonoBehaviour:
   segmentColor: {r: 1, g: 0.16509432, b: 0.52926356, a: 1}
   effectType: 0
   statType: 0
-  statAmount: 0
+  statAmount: 10
   statBonusMode: 8
   isolatedBonusAmount: 0
-  adjacentBonusAmount: 0
+  targetRarity: 0
+  rarityBonusAmount: 0
+  flankGuardBonusAmount: 0
   decayStartValue: 10
   decayAmountPerSpin: 1
   decayRemoveAtZero: 1
@@ -39,6 +42,7 @@ MonoBehaviour:
   redirectDirection: 0
   blackHoleRange: 1
   repulsorRange: 1
+  reverseMirrorRedirectRange: 1
   commonRedirectorRange: 1
   commonRedirectorMinRarity: 0
   commonRedirectorMaxRarity: 0
@@ -48,3 +52,8 @@ MonoBehaviour:
   rewardRarity: 0
   rewardType: 0
   rewardFillMode: 0
+  curseEffectType: 0
+  curseReSpinCount: 3
+  tooltipDisabled: 0
+  explosiveRange: 1
+  selfBondingCount: 2

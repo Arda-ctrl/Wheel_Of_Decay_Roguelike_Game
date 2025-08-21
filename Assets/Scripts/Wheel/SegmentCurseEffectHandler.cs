@@ -105,9 +105,9 @@ public class SegmentCurseEffectHandler : MonoBehaviour
         {
             // Kendi slotuna gelirse tetikle
             if (landedSlot == mySlot)
-            {
-                // Queue'ya ekle
-                SegmentCurseEffectHandler.Instance.AddReSpinToQueue(spinCount);
+        {
+            // Queue'ya ekle
+            SegmentCurseEffectHandler.Instance.AddReSpinToQueue(spinCount);
                 return true;
             }
             return false;
@@ -115,49 +115,30 @@ public class SegmentCurseEffectHandler : MonoBehaviour
     }
 
     // RandomEscape Curse Effect - Tüm segmentleri rastgele dağıtır
-    public class RandomEscapeCurseEffect : ICurseEffect
+    public class RandomEscapeCurseEffect : BaseCurseEffect
     {
-        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
+        public override bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            // Kendi slotuna gelirse tetikle
-            if (landedSlot == mySlot)
+            if (!IsTriggered(landedSlot, mySlot)) return false;
+            
+            var wheelManager = GetWheelManager();
+            if (wheelManager == null) return false;
+            
+            if (SegmentCurseEffectHandler.Instance == null)
             {
-                var wheelManager = FindFirstObjectByType<WheelManager>();
-                if (wheelManager == null) 
-                {
-                    Debug.LogWarning("RandomEscapeCurse: WheelManager not found!");
-                    return false;
-                }
-                
-                if (SegmentCurseEffectHandler.Instance == null)
-                {
-                    Debug.LogWarning("RandomEscapeCurse: SegmentCurseEffectHandler.Instance is null!");
-                    return false;
-                }
-                
-                // Tüm segmentleri rastgele dağıt
-                SegmentCurseEffectHandler.Instance.StartCoroutine(RandomizeAllSegments(wheelManager));
-                return true;
+                Debug.LogWarning("RandomEscapeCurse: SegmentCurseEffectHandler.Instance is null!");
+                return false;
             }
-            return false;
+            
+            // Tüm segmentleri rastgele dağıt
+            SegmentCurseEffectHandler.Instance.StartCoroutine(RandomizeAllSegments(wheelManager));
+            return true;
         }
         
         private IEnumerator RandomizeAllSegments(WheelManager wheelManager)
         {
-            // Tüm segmentleri topla
-            List<SegmentInstance> allSegments = new List<SegmentInstance>();
-            
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (IsSlotOccupied(wheelManager, i))
-                {
-                    var segment = GetSegmentAtSlot(wheelManager, i);
-                    if (segment != null && segment.gameObject != null)
-                    {
-                        allSegments.Add(segment);
-                    }
-                }
-            }
+            // Tüm segmentleri topla (WheelSegmentUtils kullanarak)
+            var allSegments = FindSegments(wheelManager);
             
             // Segmentleri rastgele dağıt (silmeden, sadece pozisyon değiştirerek)
             foreach (var segment in allSegments)
@@ -166,25 +147,16 @@ public class SegmentCurseEffectHandler : MonoBehaviour
                 if (segment == null || segment.gameObject == null || !segment.gameObject.activeInHierarchy)
                     continue;
                 
-                int randomSlot = Random.Range(0, wheelManager.slotCount);
-                int attempts = 0;
-                const int maxAttempts = 50; // Infinite loop koruması
+                // Boş slot bul (güvenli method kullanarak)
+                int randomSlot = FindEmptySlot(wheelManager);
                 
-                // Boş slot bulana kadar dene (güvenli loop)
-                while (IsSlotOccupied(wheelManager, randomSlot) && attempts < maxAttempts)
-                {
-                    randomSlot = Random.Range(0, wheelManager.slotCount);
-                    attempts++;
-                }
-                
-                // Maksimum deneme aşılırsa skip et
-                if (attempts >= maxAttempts)
+                if (randomSlot == -1)
                 {
                     Debug.LogWarning($"RandomEscapeCurse: Could not find empty slot for {segment.data?.segmentName}, skipping...");
                     continue;
                 }
                 
-                // Segmenti yeni slot'a taşı (silmeden)
+                // Segmenti yeni slot'a taşı (WheelSegmentUtils kullanarak)
                 MoveSegmentToSlot(wheelManager, segment, randomSlot);
                 
                 yield return new WaitForSeconds(0.1f); // Animasyon için kısa bekleme
@@ -194,134 +166,31 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
         }
         
-        // Segmenti silmeden yeni slot'a taşı
-        private void MoveSegmentToSlot(WheelManager wheelManager, SegmentInstance segment, int newSlot)
-        {
-            // Null check'ler
-            if (segment == null || segment.gameObject == null || !segment.gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning("MoveSegmentToSlot: Segment is null or destroyed!");
-                return;
-            }
-            
-            if (segment.data == null)
-            {
-                Debug.LogWarning("MoveSegmentToSlot: Segment data is null!");
-                return;
-            }
-            
-            if (wheelManager == null || wheelManager.slots == null)
-            {
-                Debug.LogWarning("MoveSegmentToSlot: WheelManager or slots is null!");
-                return;
-            }
-            
-            // Eski slot'lardan çıkar (büyük segmentler için tüm slot'ları temizle)
-            int oldStartSlot = segment.startSlotIndex;
-            int segmentSize = segment.data.size;
-            for (int i = 0; i < segmentSize; i++)
-            {
-                int oldSlot = (oldStartSlot + i) % wheelManager.slotCount;
-                if (oldSlot >= 0 && oldSlot < wheelManager.slotOccupied.Length)
-                    wheelManager.slotOccupied[oldSlot] = false;
-            }
-            
-            // Yeni slot'a yerleştir
-            if (newSlot >= 0 && newSlot < wheelManager.slots.Length && wheelManager.slots[newSlot] != null)
-            {
-                segment.transform.SetParent(wheelManager.slots[newSlot]);
-                segment.transform.localPosition = Vector3.zero;
-                segment.transform.localRotation = Quaternion.identity;
-                segment.startSlotIndex = newSlot;
-                
-                // Yeni slot'ları işaretle (büyük segmentler için tüm slot'ları)
-                for (int i = 0; i < segmentSize; i++)
-                {
-                    int newSlotIndex = (newSlot + i) % wheelManager.slotCount;
-                    if (newSlotIndex >= 0 && newSlotIndex < wheelManager.slotOccupied.Length)
-                        wheelManager.slotOccupied[newSlotIndex] = true;
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"MoveSegmentToSlot: Invalid slot index {newSlot}!");
-            }
-        }
-        
-        // Slot durumu kontrol metodları
-        private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
-            
-            // GetSegmentAtSlot metodunu kullanarak slot'ta segment var mı kontrol et
-            return GetSegmentAtSlot(wheelManager, slotIndex) != null;
-        }
-        
-        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
-            
-            // WheelManager'daki RemoveSegmentAtSlot mantığını kullan
-            for (int offset = 0; offset < wheelManager.slotCount; offset++)
-            {
-                int i = (slotIndex - offset + wheelManager.slotCount) % wheelManager.slotCount;
-                Transform slot = wheelManager.slots[i];
-                foreach (Transform child in slot)
-                {
-                    if (child == null) continue;
-                    SegmentInstance inst = child.GetComponent<SegmentInstance>();
-                    if (inst != null && inst.data != null)
-                    {
-                        int segStart = inst.startSlotIndex;
-                        int segEnd = (segStart + inst.data.size - 1) % wheelManager.slotCount;
-                        int size = inst.data.size;
-                        bool inRange = false;
-                        if (segStart <= segEnd)
-                            inRange = (slotIndex >= segStart && slotIndex <= segEnd);
-                        else
-                            inRange = (slotIndex >= segStart || slotIndex <= segEnd);
-                        if (inRange)
-                        {
-                            return inst;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+
+
     }
 
     // BlurredMemory Curse Effect - Tooltip'leri kapatır
-    public class BlurredMemoryCurseEffect : ICurseEffect
+    public class BlurredMemoryCurseEffect : BaseCurseEffect
     {
-        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
+        public override bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            // Kendi slotuna gelirse tetikle
-            if (landedSlot == mySlot)
+            if (!IsTriggered(landedSlot, mySlot)) return false;
+            
+            // Global tooltip disable flag'ini kapat (tooltip'ler geri gelsin)
+            SetGlobalTooltipDisabled(false);
+            
+            var wheelManager = GetWheelManager();
+            if (wheelManager == null) return false;
+            
+            // Tüm segmentleri bul ve tooltip'lerini tekrar aç (WheelSegmentUtils kullanarak)
+            var allSegments = FindSegments(wheelManager);
+            foreach (var segment in allSegments)
             {
-                // Global tooltip disable flag'ini kapat (tooltip'ler geri gelsin)
-                SetGlobalTooltipDisabled(false);
-                
-                // Tüm segmentlerin tooltip'lerini tekrar aç
-                var wheelManager = FindFirstObjectByType<WheelManager>();
-                if (wheelManager == null) return false;
-                
-                // Tüm segmentleri bul ve tooltip'lerini tekrar aç
-                for (int i = 0; i < wheelManager.slotCount; i++)
-                {
-                    if (IsSlotOccupied(wheelManager, i))
-                    {
-                        var segment = GetSegmentAtSlot(wheelManager, i);
-                        if (segment != null)
-                        {
-                            // Segment'in tooltip'ini tekrar aç
-                            EnableSegmentTooltip(segment);
-                        }
-                    }
-                }
-                return true;
+                EnableSegmentTooltip(segment);
             }
-            return false;
+            
+            return true;
         }
         
         private void EnableSegmentTooltip(SegmentInstance segment)
@@ -339,160 +208,62 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             // Bu flag tüm yeni segmentler için de geçerli olacak
             PlayerPrefs.SetInt("GlobalTooltipDisabled", disabled ? 1 : 0);
         }
-        
-        // Slot durumu kontrol metodları (RandomEscapeCurse'den kopyalandı)
-        private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
-            return wheelManager.slotOccupied[slotIndex];
-        }
-        
-        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
-            if (!wheelManager.slotOccupied[slotIndex]) return null;
-            
-            foreach (Transform child in wheelManager.slots[slotIndex])
-            {
-                var segment = child.GetComponent<SegmentInstance>();
-                if (segment != null) return segment;
-            }
-            return null;
-        }
     }
 
     // TeleportEscape Curse Effect - Segment yok olmadan önce başka bir segmentle yer değiştirir
-    public class TeleportEscapeCurseEffect : ICurseEffect
+    public class TeleportEscapeCurseEffect : BaseCurseEffect
     {
-        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
+        public override bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            // Kendi slotuna gelirse tetikle
-            if (landedSlot == mySlot)
+            if (!IsTriggered(landedSlot, mySlot)) return false;
+            
+            var wheelManager = GetWheelManager();
+            if (wheelManager == null) return false;
+            
+            // Kaçmaya çalışan segmenti bul
+            SegmentInstance escapingSegment = GetSegmentAtSlot(wheelManager, mySlot);
+            if (escapingSegment == null || escapingSegment.gameObject == null || !escapingSegment.gameObject.activeInHierarchy) 
             {
-                var wheelManager = FindFirstObjectByType<WheelManager>();
-                if (wheelManager == null) 
-                {
-                    Debug.LogWarning("TeleportEscapeCurse: WheelManager not found!");
-                    return false;
-                }
-                
-                // Kaçmaya çalışan segmenti bul
-                SegmentInstance escapingSegment = GetSegmentAtSlot(wheelManager, mySlot);
-                if (escapingSegment == null || escapingSegment.gameObject == null || !escapingSegment.gameObject.activeInHierarchy) 
-                {
-                    Debug.LogWarning("TeleportEscapeCurse: Escaping segment not found or destroyed!");
-                    return false;
-                }
-                
-                // Rastgele başka bir segment bul
-                SegmentInstance targetSegment = FindRandomOtherSegment(wheelManager, escapingSegment);
-                if (targetSegment == null || targetSegment.gameObject == null || !targetSegment.gameObject.activeInHierarchy) 
-                {
-                    Debug.LogWarning("TeleportEscapeCurse: No valid target segment found!");
-                    return false;
-                }
-                
-                // İki segmenti yer değiştir
-                SwapSegments(wheelManager, escapingSegment, targetSegment);
-                
-                // Yer değiştirdikten sonra hedef segmenti normal silme sürecine yönlendir
-                // Hedef segmentin slot'unu bul ve normal silme işlemini başlat
-                int targetSlot = targetSegment.startSlotIndex;
-                wheelManager.StartCoroutine(wheelManager.SpinEndSequence());
-                
-                // Stat boostları yeniden hesapla
-                SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
-                return true;
+                Debug.LogWarning("TeleportEscapeCurse: Escaping segment not found or destroyed!");
+                return false;
             }
-            return false;
+            
+            // Rastgele başka bir segment bul (BaseCurseEffect method kullanarak)
+            SegmentInstance targetSegment = FindRandomOtherSegment(wheelManager, escapingSegment);
+            if (targetSegment == null || targetSegment.gameObject == null || !targetSegment.gameObject.activeInHierarchy) 
+            {
+                Debug.LogWarning("TeleportEscapeCurse: No valid target segment found!");
+                return false;
+            }
+            
+            // İki segmenti yer değiştir
+            SwapSegments(wheelManager, escapingSegment, targetSegment);
+            
+            // Yer değiştirdikten sonra hedef segmenti normal silme sürecine yönlendir
+            // Hedef segmentin slot'unu bul ve normal silme işlemini başlat
+            int targetSlot = targetSegment.startSlotIndex;
+            wheelManager.StartCoroutine(wheelManager.SpinEndSequence());
+            
+            // Stat boostları yeniden hesapla
+            SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
+            return true;
         }
-        
 
-        
-        private SegmentInstance FindRandomOtherSegment(WheelManager wheelManager, SegmentInstance excludeSegment)
-        {
-            var candidates = new List<SegmentInstance>();
-            
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (IsSlotOccupied(wheelManager, i))
-                {
-                    var segment = GetSegmentAtSlot(wheelManager, i);
-                    if (segment != null && segment != excludeSegment && 
-                        segment.gameObject != null && segment.gameObject.activeInHierarchy)
-                    {
-                        candidates.Add(segment);
-                    }
-                }
-            }
-            
-            if (candidates.Count > 0)
-            {
-                return candidates[Random.Range(0, candidates.Count)];
-            }
-            
-            Debug.LogWarning("FindRandomOtherSegment: No valid candidate segments found!");
-            return null;
-        }
         
         private void SwapSegments(WheelManager wheelManager, SegmentInstance segment1, SegmentInstance segment2)
         {
             int slot1 = segment1.startSlotIndex;
             int slot2 = segment2.startSlotIndex;
             
-            // İki segmenti yer değiştir
-            MoveSegmentToSlotWithoutDestroy(wheelManager, segment1, slot2);
-            MoveSegmentToSlotWithoutDestroy(wheelManager, segment2, slot1);
+            // İki segmenti yer değiştir (WheelSegmentUtils kullanarak)
+            MoveSegmentToSlot(wheelManager, segment1, slot2);
+            MoveSegmentToSlot(wheelManager, segment2, slot1);
         }
-        
-        private void MoveSegmentToSlotWithoutDestroy(WheelManager wheelManager, SegmentInstance segment, int newSlot)
-        {
-            // Eski slot'lardan çıkar
-            int oldStartSlot = segment.startSlotIndex;
-            int segmentSize = segment.data.size;
-            for (int i = 0; i < segmentSize; i++)
-            {
-                int oldSlot = (oldStartSlot + i) % wheelManager.slotCount;
-                wheelManager.slotOccupied[oldSlot] = false;
-            }
-            
-            // Yeni slot'a yerleştir
-            segment.transform.SetParent(wheelManager.slots[newSlot]);
-            segment.transform.localPosition = Vector3.zero;
-            segment.transform.localRotation = Quaternion.identity;
-            segment.startSlotIndex = newSlot;
-            
-            // Yeni slot'ları işaretle
-            for (int i = 0; i < segmentSize; i++)
-            {
-                int newSlotIndex = (newSlot + i) % wheelManager.slotCount;
-                wheelManager.slotOccupied[newSlotIndex] = true;
-            }
-        }
-        
-        // Slot durumu kontrol metodları
-        private bool IsSlotOccupied(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return false;
-            return wheelManager.slotOccupied[slotIndex];
-        }
-        
-        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
-            if (!wheelManager.slotOccupied[slotIndex]) return null;
-            
-            foreach (Transform child in wheelManager.slots[slotIndex])
-            {
-                var segment = child.GetComponent<SegmentInstance>();
-                if (segment != null) return segment;
-            }
-            return null;
-        }
+
     }
 
     // ExplosiveCurse Curse Effect - Segment yok olacağı zaman yanındaki segmentleri de siler
-    public class ExplosiveCurseEffect : ICurseEffect
+    public class ExplosiveCurseEffect : BaseCurseEffect
     {
         private int explosiveRange;
         
@@ -501,50 +272,43 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             this.explosiveRange = explosiveRange;
         }
         
-        public bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
+        public override bool OnNeedleLanded(int landedSlot, int mySlot, int slotCount)
         {
-            // Kendi slotuna gelirse tetikle
-            if (landedSlot == mySlot)
+            if (!IsTriggered(landedSlot, mySlot)) return false;
+            
+            var wheelManager = GetWheelManager();
+            if (wheelManager == null) return false;
+            
+            // Patlayan segmenti bul
+            SegmentInstance explosiveSegment = GetSegmentAtSlot(wheelManager, mySlot);
+            if (explosiveSegment == null || explosiveSegment.gameObject == null || !explosiveSegment.gameObject.activeInHierarchy) 
             {
-                var wheelManager = FindFirstObjectByType<WheelManager>();
-                if (wheelManager == null) 
-                {
-                    Debug.LogWarning("ExplosiveCurse: WheelManager not found!");
-                    return false;
-                }
-                
-                // Patlayan segmenti bul
-                SegmentInstance explosiveSegment = GetSegmentAtSlot(wheelManager, mySlot);
-                if (explosiveSegment == null || explosiveSegment.gameObject == null || !explosiveSegment.gameObject.activeInHierarchy) 
-                {
-                    Debug.LogWarning("ExplosiveCurse: Explosive segment not found or destroyed!");
-                    return false;
-                }
-                
-                // Patlama alanındaki tüm segmentleri bul ve sil
-                List<SegmentInstance> segmentsToDestroy = GetSegmentsInExplosionRange(wheelManager, mySlot, explosiveRange, slotCount);
-                
-                if (segmentsToDestroy.Count == 0)
-                {
-                    Debug.LogWarning("ExplosiveCurse: No segments found in explosion range!");
-                    return true; // Yine de tetiklenmiş sayılsın
-                }
-                
-                // Patlama alanındaki segmentleri sil
-                foreach (var segment in segmentsToDestroy)
-                {
-                    if (segment != null && segment.gameObject != null && segment.gameObject.activeInHierarchy)
-                    {
-                        // Segment'i sil (normal silme sürecini bypass et)
-                        DestroySegmentImmediately(wheelManager, segment);
-                    }
-                }
-                
-                // Stat boostları yeniden hesaplama işlemini SpinEndSequence'e bırak
-                // Burada çağırmıyoruz çünkü segmentler henüz tam olarak yok edilmemiş olabilir
-                return true;
+                Debug.LogWarning("ExplosiveCurse: Explosive segment not found or destroyed!");
+                return false;
             }
-            return false;
+            
+            // Patlama alanındaki tüm segmentleri bul ve sil
+            List<SegmentInstance> segmentsToDestroy = GetSegmentsInExplosionRange(wheelManager, mySlot, explosiveRange, slotCount);
+            
+            if (segmentsToDestroy.Count == 0)
+            {
+                Debug.LogWarning("ExplosiveCurse: No segments found in explosion range!");
+                return true; // Yine de tetiklenmiş sayılsın
+            }
+            
+            // Patlama alanındaki segmentleri sil
+            foreach (var segment in segmentsToDestroy)
+            {
+                if (segment != null && segment.gameObject != null && segment.gameObject.activeInHierarchy)
+                {
+                    // Segment'i sil (normal silme sürecini bypass et)
+                    DestroySegmentImmediately(wheelManager, segment);
+                }
+            }
+            
+            // Stat boostları yeniden hesaplama işlemini SpinEndSequence'e bırak
+            // Burada çağırmıyoruz çünkü segmentler henüz tam olarak yok edilmemiş olabilir
+            return true;
         }
         
         private List<SegmentInstance> GetSegmentsInExplosionRange(WheelManager wheelManager, int centerSlot, int range, int slotCount)
@@ -617,38 +381,6 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             return wheelManager.slotOccupied[slotIndex];
         }
         
-        private SegmentInstance GetSegmentAtSlot(WheelManager wheelManager, int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= wheelManager.slotCount) return null;
-            
-            // WheelManager'daki RemoveSegmentAtSlot mantığını kullan
-            for (int offset = 0; offset < wheelManager.slotCount; offset++)
-            {
-                int i = (slotIndex - offset + wheelManager.slotCount) % wheelManager.slotCount;
-                Transform slot = wheelManager.slots[i];
-                foreach (Transform child in slot)
-                {
-                    if (child == null) continue;
-                    SegmentInstance inst = child.GetComponent<SegmentInstance>();
-                    if (inst != null && inst.data != null)
-                    {
-                        int segStart = inst.startSlotIndex;
-                        int segEnd = (segStart + inst.data.size - 1) % wheelManager.slotCount;
-                        int size = inst.data.size;
-                        bool inRange = false;
-                        if (segStart <= segEnd)
-                            inRange = (slotIndex >= segStart && slotIndex <= segEnd);
-                        else
-                            inRange = (slotIndex >= segStart || slotIndex <= segEnd);
-                        if (inRange)
-                        {
-                            return inst;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
     }
 
     // BondingCurse Curse Effect - İki segmenti birbirine bağlar, biri silinince diğeri de silinir
@@ -800,68 +532,7 @@ public class SegmentCurseEffectHandler : MonoBehaviour
         // Belirli bir BondingCurse için yeni bond oluştur
         private static void CreateNewBondForSpecificCurse(SegmentInstance specificCurse)
         {
-            var wheelManager = FindFirstObjectByType<WheelManager>();
-            if (wheelManager == null) return;
-            
-            // Mevcut segment'lerden 2 tanesini bul (bond'lanmamış olanlar)
-            List<SegmentInstance> availableSegments = new List<SegmentInstance>();
-            
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (wheelManager.slotOccupied[i])
-                {
-                    foreach (Transform child in wheelManager.slots[i])
-                    {
-                        SegmentInstance segment = child.GetComponent<SegmentInstance>();
-                        if (segment != null && !bondedPairs.ContainsKey(segment) && !reverseBondedPairs.ContainsKey(segment))
-                        {
-                            // BondingCurse segment'lerini hariç tut - onlar sadece bond oluşturur, kendileri bond'a girmez
-                            bool isBondingCurse = segment.data.effectType == SegmentEffectType.CurseEffect && 
-                                                segment.data.curseEffectType == CurseEffectType.BondingCurse;
-                            
-                            if (!isBondingCurse)
-                            {
-                                availableSegments.Add(segment);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // En az 2 segment varsa yeni bond oluştur
-            if (availableSegments.Count >= 2)
-            {
-                // Rastgele 2 segment seç (infinite loop koruması ile)
-                int index1 = Random.Range(0, availableSegments.Count);
-                int index2 = Random.Range(0, availableSegments.Count);
-                int attempts = 0;
-                const int maxAttempts = 20; // Güvenlik için maksimum deneme
-                
-                while (index2 == index1 && attempts < maxAttempts)
-                {
-                    index2 = Random.Range(0, availableSegments.Count);
-                    attempts++;
-                }
-                
-                // Eğer farklı index bulunamadıysa, manuel olarak farklı bir index seç
-                if (index2 == index1)
-                {
-                    index2 = (index1 + 1) % availableSegments.Count;
-                }
-                
-                SegmentInstance segment1 = availableSegments[index1];
-                SegmentInstance segment2 = availableSegments[index2];
-                
-                // Yeni bond'u oluştur
-                bondedPairs[segment1] = segment2;
-                reverseBondedPairs[segment2] = segment1;
-                
-                // bondCreator'da bu bond'u oluşturan BondingCurse'ü kaydet
-                bondCreator[segment1] = specificCurse;
-                bondCreator[segment2] = specificCurse;
-                
-                Debug.Log($"New bond created by specific curse {specificCurse.data.segmentName}: {segment1.data.segmentName} (Slot {segment1.startSlotIndex}) <-> {segment2.data.segmentName} (Slot {segment2.startSlotIndex})");
-            }
+            CreateBondWithCurse(specificCurse);
         }
         
         // Yeni bond oluştur (genel)
@@ -870,78 +541,34 @@ public class SegmentCurseEffectHandler : MonoBehaviour
             var wheelManager = FindFirstObjectByType<WheelManager>();
             if (wheelManager == null) return;
             
-            // Aktif BondingCurse var mı kontrol et ve referansını al
-            SegmentInstance activeBondingCurse = null;
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (wheelManager.slotOccupied[i])
-                {
-                    foreach (Transform child in wheelManager.slots[i])
-                    {
-                        SegmentInstance segment = child.GetComponent<SegmentInstance>();
-                        if (segment != null && segment.data.effectType == SegmentEffectType.CurseEffect && 
-                            segment.data.curseEffectType == CurseEffectType.BondingCurse)
-                        {
-                            activeBondingCurse = segment;
-                            break;
-                        }
-                    }
-                    if (activeBondingCurse != null) break;
-                }
-            }
+            // Aktif BondingCurse'ü bul (WheelSegmentUtils kullanarak)
+            var activeBondingCurse = WheelSegmentUtils.FindActiveBondingCurse(wheelManager);
             
-            // Aktif BondingCurse yoksa yeni bond oluşturma
             if (activeBondingCurse == null)
             {
                 Debug.Log("No active BondingCurse found, skipping new bond creation");
                 return;
             }
             
-            // Mevcut segment'lerden 2 tanesini bul (bond'lanmamış olanlar)
-            List<SegmentInstance> availableSegments = new List<SegmentInstance>();
+            CreateBondWithCurse(activeBondingCurse);
+        }
+        
+        // Ortak bond oluşturma metodu (tekrarları önlemek için)
+        private static void CreateBondWithCurse(SegmentInstance curseSegment)
+        {
+            var wheelManager = FindFirstObjectByType<WheelManager>();
+            if (wheelManager == null) return;
             
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (wheelManager.slotOccupied[i])
-                {
-                    foreach (Transform child in wheelManager.slots[i])
-                    {
-                        SegmentInstance segment = child.GetComponent<SegmentInstance>();
-                        if (segment != null && !bondedPairs.ContainsKey(segment) && !reverseBondedPairs.ContainsKey(segment))
-                        {
-                            // BondingCurse segment'lerini hariç tut - onlar sadece bond oluşturur, kendileri bond'a girmez
-                            bool isBondingCurse = segment.data.effectType == SegmentEffectType.CurseEffect && 
-                                                segment.data.curseEffectType == CurseEffectType.BondingCurse;
-                            
-                            if (!isBondingCurse)
-                            {
-                                availableSegments.Add(segment);
-                            }
-                        }
-                    }
-                }
-            }
+            // Bond'lanmamış segmentleri bul (WheelSegmentUtils kullanarak)
+            var availableSegments = WheelSegmentUtils.FindUnbondedSegments(wheelManager, true);
             
             // En az 2 segment varsa yeni bond oluştur
             if (availableSegments.Count >= 2)
             {
-                // Rastgele 2 segment seç (infinite loop koruması ile)
-                int index1 = Random.Range(0, availableSegments.Count);
-                int index2 = Random.Range(0, availableSegments.Count);
-                int attempts = 0;
-                const int maxAttempts = 20; // Güvenlik için maksimum deneme
+                // Rastgele 2 segment seç (WheelSegmentUtils kullanarak)
+                var (index1, index2) = WheelSegmentUtils.GetTwoRandomIndices(availableSegments.Count);
                 
-                while (index2 == index1 && attempts < maxAttempts)
-                {
-                    index2 = Random.Range(0, availableSegments.Count);
-                    attempts++;
-                }
-                
-                // Eğer farklı index bulunamadıysa, manuel olarak farklı bir index seç
-                if (index2 == index1)
-                {
-                    index2 = (index1 + 1) % availableSegments.Count;
-                }
+                if (index1 == -1 || index2 == -1) return;
                 
                 SegmentInstance segment1 = availableSegments[index1];
                 SegmentInstance segment2 = availableSegments[index2];
@@ -951,10 +578,10 @@ public class SegmentCurseEffectHandler : MonoBehaviour
                 reverseBondedPairs[segment2] = segment1;
                 
                 // bondCreator'da bu bond'u oluşturan BondingCurse'ü kaydet
-                bondCreator[segment1] = activeBondingCurse;
-                bondCreator[segment2] = activeBondingCurse;
+                bondCreator[segment1] = curseSegment;
+                bondCreator[segment2] = curseSegment;
                 
-                Debug.Log($"New bond auto-created by {activeBondingCurse.data.segmentName}: {segment1.data.segmentName} (Slot {segment1.startSlotIndex}) <-> {segment2.data.segmentName} (Slot {segment2.startSlotIndex})");
+                Debug.Log($"New bond created by {curseSegment.data.segmentName}: {segment1.data.segmentName} (Slot {segment1.startSlotIndex}) <-> {segment2.data.segmentName} (Slot {segment2.startSlotIndex})");
             }
         }
         
@@ -1153,24 +780,8 @@ public class SegmentCurseEffectHandler : MonoBehaviour
                 return;
             }
             
-            // Mevcut segment'lerden bond'lanmamış olanları bul
-            List<SegmentInstance> availableSegments = new List<SegmentInstance>();
-            
-            for (int i = 0; i < wheelManager.slotCount; i++)
-            {
-                if (wheelManager.slotOccupied[i])
-                {
-                    foreach (Transform child in wheelManager.slots[i])
-                    {
-                        SegmentInstance segment = child.GetComponent<SegmentInstance>();
-                        if (segment != null && segment != curseSegment && 
-                            !reverseSelfBondedSegments.ContainsKey(segment))
-                        {
-                            availableSegments.Add(segment);
-                        }
-                    }
-                }
-            }
+            // Mevcut segment'lerden bond'lanmamış olanları bul (WheelSegmentUtils kullanarak)
+            var availableSegments = WheelSegmentUtils.FindUnSelfBondedSegments(wheelManager, curseSegment);
             
             // Yeni bağlantılar yap
             int actualNewBonds = Mathf.Min(neededBonds, availableSegments.Count);

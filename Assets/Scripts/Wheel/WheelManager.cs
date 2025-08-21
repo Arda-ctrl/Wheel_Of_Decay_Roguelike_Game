@@ -162,11 +162,14 @@ public class WheelManager : MonoBehaviour
             ActivateSelfBondingCurse(inst);
         }
         
-        // Segment yerleştirildikten sonra stat boostları güncelle (RandomEscapeCurse için kaldırıldı)
-        // SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
-        
         // Yeni segment eklendikten sonra curse'lerin eksik bond'larını kontrol et
         CheckAndUpdateCurseBonds();
+        
+        // Persistent segment ise initialize et
+        SegmentStatBoostHandler.Instance?.InitializePersistentSegment(inst);
+        
+        // Segment tamamen yerleştirildikten sonra stat boostları güncelle
+        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
     
     private void DisableAllTooltips()
@@ -679,8 +682,8 @@ public class WheelManager : MonoBehaviour
     {
         if (data == null || data.segmentPrefab == null) return;
         PlaceSegment(data, slotIndex);
-        // AddSegmentToSlot sonrası stat boostları güncelle
-        SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
+        // PlaceSegment içinde zaten RecalculateAllStatBoosts çağrılıyor, tekrar çağırma
+        // SegmentStatBoostHandler.Instance?.RecalculateAllStatBoosts();
     }
 
     public void ClearWheel()
