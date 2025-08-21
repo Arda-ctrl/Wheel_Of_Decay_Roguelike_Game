@@ -641,8 +641,8 @@ public class WheelManager : MonoBehaviour
                             // Sadece silinme sırasında tetiklenen effect'ler (ReSpin, RandomEscape, BlurredMemory)
                             else if (inst.data.curseEffectType != CurseEffectType.TeleportEscapeCurse)
                             {
-                                // SelfBondingCurse processing sırasında tekrar curse effect'leri tetikleme
-                                if (!isProcessingSelfBondingCurse)
+                                // SelfBondingCurse ve BondingCurse processing sırasında tekrar curse effect'leri tetikleme
+                                if (!isProcessingSelfBondingCurse && !isProcessingBondingCurse)
                                 {
                                     SegmentCurseEffectHandler.Instance.HandleCurseEffect(inst.data, segStart, segStart, slotCount);
                                 }
