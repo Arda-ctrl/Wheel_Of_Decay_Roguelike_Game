@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 853dcef7894b18f4ca11415e880de630, type: 3}
+  m_Name: PrizeWheelConfig
+  m_EditorClassIdentifier: 
+  statAngles:
+    common: 120
+    uncommon: 80
+    rare: 60
+    epic: 30
+    legendary: 20
+  wheelAngles:
+    common: 100
+    uncommon: 80
+    rare: 50
+    epic: 30
+    legendary: 20
+  curseAngles:
+    common: 50
+    uncommon: 40
+    rare: 30
+    epic: 20
+    legendary: 10
+  onRemoveAngles:
+    common: 100
+    uncommon: 80
+    rare: 60
+    epic: 30
+    legendary: 20
+  generationRules:
+    minSegmentCount: 4
+    maxSegmentCount: 8
+    maxCurseSegments: 1
+    maxOnRemoveSegments: 1
+    minStatSegments: 2
+    commonChance: 50
+    uncommonChance: 30
+    rareChance: 15
+    epicChance: 4
+    legendaryChance: 1
+    guaranteeAtLeastOneGoodSegment: 1
+    avoidAllCurseWheels: 1
+    balanceWheelSize: 1
+    addResourceSegmentForRemainder: 1
+    minResourceSegmentAngle: 10
+    resourceSegmentColor: {r: 1, g: 0.8, b: 0, a: 1}
+  defaultLineColor: {r: 0, g: 0, b: 0, a: 1}
+  defaultLineWidth: 0.02
