@@ -37,21 +37,24 @@ MonoBehaviour:
     epic: 30
     legendary: 20
   generationRules:
-    minSegmentCount: 4
-    maxSegmentCount: 8
+    minSegmentCount: 3
+    maxSegmentCount: 10
+    segmentCountPreset: 4
     maxCurseSegments: 1
     maxOnRemoveSegments: 1
-    minStatSegments: 2
-    commonChance: 50
-    uncommonChance: 30
-    rareChance: 15
-    epicChance: 4
-    legendaryChance: 1
     guaranteeAtLeastOneGoodSegment: 1
     avoidAllCurseWheels: 1
     balanceWheelSize: 1
+    preventDuplicateSegments: 1
     addResourceSegmentForRemainder: 1
     minResourceSegmentAngle: 10
     resourceSegmentColor: {r: 1, g: 0.8, b: 0, a: 1}
   defaultLineColor: {r: 0, g: 0, b: 0, a: 1}
   defaultLineWidth: 0.02
+  rarityPreset: 1
+  commonChance: 70
+  uncommonChance: 20
+  rareChance: 8
+  epicChance: 2
+  legendaryChance: 0
+  totalRarityPercentage: 100

@@ -269,19 +269,17 @@ public class OnRemoveAngles
 public class PrizeWheelRules
 {
     [Header("Segment Count Rules")]
-    [Range(3, 10)]
-    public int minSegmentCount = 4;
-    [Range(4, 12)]
+    [Range(3, 6)]
+    public int minSegmentCount = 3;
+    [Range(3, 6)]
     public int maxSegmentCount = 6;
-    public SegmentCountPreset segmentCountPreset = SegmentCountPreset.Small;
+    public SegmentCountPreset segmentCountPreset = SegmentCountPreset.Tiny;
     
     [Header("Type Limits")]
     [Range(0, 5)]
     public int maxCurseSegments = 1;
     [Range(0, 3)]
     public int maxOnRemoveSegments = 1;
-    [Range(1, 8)]
-    public int minStatSegments = 2;
     
     [Header("Special Rules")]
     public bool guaranteeAtLeastOneGoodSegment = true;

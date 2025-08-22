@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class PrizeSegmentTooltip : MonoBehaviour
 {
@@ -70,11 +71,29 @@ public class PrizeSegmentTooltip : MonoBehaviour
             // 90 derece offset ekle (yukarıyı 0° yapmak için)
             mouseAngle = (mouseAngle + 90f) % 360f;
             
+            // Çarkın mevcut rotasyonunu hesaba kat - BU ÇOK ÖNEMLİ!
+            if (wheelManager != null && wheelManager.wheelTransform != null)
+            {
+                float wheelRotation = wheelManager.wheelTransform.eulerAngles.z;
+                // Çarkın rotasyonunu mouse açısından çıkar (çünkü çark döndüğünde segmentler de döner)
+                mouseAngle = (mouseAngle - wheelRotation + 360f) % 360f;
+            }
+            
             // Hangi segment'te olduğumuzu bul
             PrizeSegment hoveredSegment = null;
+            
+            // Çarkın mevcut rotasyonunu hesaba kat - tooltip için önemli!
+            float adjustedMouseAngle = mouseAngle;
+            if (wheelManager != null && wheelManager.wheelTransform != null)
+            {
+                float wheelRotation = wheelManager.wheelTransform.eulerAngles.z;
+                // Çarkın rotasyonunu mouse açısına ekle (çünkü tooltip çarkın açısına göre çalışmalı)
+                adjustedMouseAngle = (mouseAngle + wheelRotation) % 360f;
+            }
+            
             foreach (var segment in wheelManager.segments)
             {
-                if (segment.ContainsAngle(mouseAngle))
+                if (segment.ContainsAngle(adjustedMouseAngle))
                 {
                     hoveredSegment = segment;
                     break;
@@ -190,5 +209,24 @@ public class PrizeSegmentTooltip : MonoBehaviour
     public void SetWheelRadius(float radius)
     {
         // Dinamik radius ayarı için kullanılabilir
+    }
+    
+    // Segment verilerini güncelle - çark döndükten sonra çağrılır
+    public void UpdateSegmentData(List<PrizeSegment> newSegments)
+    {
+        // Mevcut hover'ı temizle
+        if (isHovering)
+        {
+            OnMouseExit();
+        }
+        
+        // Segment verilerini yenile
+        currentSegment = null;
+        
+        // Debug: Güncellenen segment sayısını göster
+        if (newSegments != null)
+        {
+            Debug.Log($"🔄 Tooltip güncellendi: {newSegments.Count} segment");
+        }
     }
 }

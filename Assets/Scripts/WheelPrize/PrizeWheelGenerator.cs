@@ -92,12 +92,22 @@ public class PrizeWheelGenerator : MonoBehaviour
             
             if (duplicates.Any())
             {
-                Debug.LogWarning($"Duplicate segments found: {string.Join(", ", duplicates)}");
+                Debug.LogWarning($"❌ Duplicate segments found: {string.Join(", ", duplicates)}");
             }
             else
             {
                 Debug.Log("✅ No duplicate segments - all unique!");
             }
+        }
+        
+        // Debug: Segment sayısı kontrolü
+        Debug.Log($"🎯 Generated {prizeSegments.Count} segments (Target: {targetSegmentCount}, Rules: {rules.minSegmentCount}-{rules.maxSegmentCount})");
+        
+        // Debug: Segment türleri dağılımı
+        var typeDistribution = prizeSegments.GroupBy(s => s.segmentReward?.effectType).ToDictionary(g => g.Key?.ToString() ?? "Unknown", g => g.Count());
+        foreach (var kvp in typeDistribution)
+        {
+            Debug.Log($"📊 {kvp.Key}: {kvp.Value} segments");
         }
         
         return prizeSegments;
@@ -108,31 +118,38 @@ public class PrizeWheelGenerator : MonoBehaviour
         var plan = new List<PlannedSegment>();
         var rules = config.generationRules;
         
-        // Zorunlu segmentleri ekle
-        for (int i = 0; i < rules.minStatSegments; i++)
-        {
-            plan.Add(new PlannedSegment 
-            { 
-                type = SegmentEffectType.StatBoost,
-                rarity = config.GetRandomRarity(),
-                angle = 0 // Sonra hesaplanacak
-            });
-        }
+        // Tüm slotları rastgele doldur - Duplicate kontrolü ile
+        int maxAttempts = 50; // Sonsuz döngüyü önle
         
-        // Kalan slotları doldur
-        int remainingSlots = targetCount - plan.Count;
-        
-        for (int i = 0; i < remainingSlots; i++)
+        for (int i = 0; i < targetCount && maxAttempts > 0; i++)
         {
             SegmentEffectType randomType = GetRandomSegmentType(plan);
             Rarity randomRarity = config.GetRandomRarity();
             
-            plan.Add(new PlannedSegment 
-            { 
-                type = randomType,
-                rarity = randomRarity,
-                angle = 0 // Sonra hesaplanacak
-            });
+            // Bu tür ve rarity'de segment var mı kontrol et
+            if (CanCreateSegment(randomType, randomRarity))
+            {
+                plan.Add(new PlannedSegment 
+                { 
+                    type = randomType,
+                    rarity = randomRarity,
+                    angle = 0 // Sonra hesaplanacak
+                });
+            }
+            else
+            {
+                // Bu slot'u atla, bir sonraki deneme
+                i--; // Aynı slot'u tekrar dene
+                maxAttempts--;
+            }
+        }
+        
+        // Eğer yeterli segment bulunamadıysa, plan'ı temizle
+        if (plan.Count < rules.minSegmentCount)
+        {
+            Debug.LogWarning($"Could not create enough segments! Created: {plan.Count}, Required: {rules.minSegmentCount}");
+            plan.Clear();
+            return plan;
         }
         
         // Açıları hesapla
@@ -189,6 +206,25 @@ public class PrizeWheelGenerator : MonoBehaviour
         }
     }
     
+    // Yeni metod: Bu tür ve rarity'de segment oluşturulabilir mi?
+    bool CanCreateSegment(SegmentEffectType type, Rarity rarity)
+    {
+        // Bu tür ve rarity'de kullanılmamış segment var mı?
+        var availableSegments = allSegments.Where(s => s.effectType == type && s.rarity == rarity).ToArray();
+        
+        if (availableSegments.Length == 0)
+            return false;
+            
+        // Duplicate kontrolü aktifse, kullanılmamış segment var mı?
+        if (config.generationRules.preventDuplicateSegments)
+        {
+            var unusedSegments = availableSegments.Where(s => !usedSegments.Contains(s)).ToArray();
+            return unusedSegments.Length > 0;
+        }
+        
+        return true;
+    }
+    
     float GetAngleForTypeAndRarity(SegmentEffectType type, Rarity rarity)
     {
         switch (type)
@@ -222,22 +258,17 @@ public class PrizeWheelGenerator : MonoBehaviour
             return null;
         }
         
-        // Duplicate kontrolü
+        // Duplicate kontrolü - ÇOK ÖNEMLİ!
         if (config.generationRules.preventDuplicateSegments)
         {
             // Kullanılmamış segment'leri filtrele
             candidates = candidates.Where(s => !usedSegments.Contains(s)).ToArray();
             
-            // Eğer tüm segment'ler kullanılmışsa, warning ver ama en azından bir tane seç
+            // Eğer tüm segment'ler kullanılmışsa, duplicate'e izin verme!
             if (candidates.Length == 0)
             {
-                Debug.LogWarning($"All segments of type {type} already used, allowing duplicate");
-                candidates = allSegments.Where(s => s.effectType == type && s.rarity == rarity).ToArray();
-                
-                if (candidates.Length == 0)
-                {
-                    candidates = allSegments.Where(s => s.effectType == type).ToArray();
-                }
+                Debug.LogWarning($"All segments of type {type} already used! Skipping this segment type.");
+                return null; // Duplicate'e izin verme!
             }
         }
         

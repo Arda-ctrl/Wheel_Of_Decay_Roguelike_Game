@@ -162,6 +162,10 @@ public class PrizeWheelManager : MonoBehaviour
     {
         isSpinning = true;
         
+        // Debug: Başlangıç rotasyonunu kontrol et
+        float startRotation = wheelTransform != null ? wheelTransform.eulerAngles.z : 0f;
+        Debug.Log($"🚀 DEBUG: Spin başlangıcı - Çark rotasyonu: {startRotation:F1}°");
+        
         // Basit ve mantıklı yaklaşım
         // Rastgele dönüş miktarı
         float randomRotations = Random.Range(minSpinRotations, maxSpinRotations);
@@ -170,6 +174,8 @@ public class PrizeWheelManager : MonoBehaviour
         // Rastgele hedef açı (0-360)
         float targetAngle = Random.Range(0f, 360f);
         totalRotation += targetAngle;
+        
+        Debug.Log($"🎯 DEBUG: Hedef açı: {targetAngle:F1}°, Toplam dönüş: {totalRotation:F1}°");
         
         // DOTween ile döndür - normal yönde
         wheelTransform.DORotate(new Vector3(0, 0, totalRotation), spinDuration, RotateMode.LocalAxisAdd)
@@ -181,11 +187,15 @@ public class PrizeWheelManager : MonoBehaviour
     {
         isSpinning = false;
         
-        // Basit mantık: İğne üstte (0 derece), çark döndüğü açıya göre segment bul
-        // finalAngle = çarkın döndüğü açı (0-360)
-        float needleAngle = finalAngle; // İğne üstte olduğu için çarkın açısı = iğnenin gösterdiği açı
+        // Debug: Çarkın mevcut rotasyonunu kontrol et
+        float currentWheelRotation = wheelTransform != null ? wheelTransform.eulerAngles.z : 0f;
+        Debug.Log($"🔍 DEBUG: Çark rotasyonu: {currentWheelRotation:F1}°, Final angle: {finalAngle:F1}°");
         
-        Debug.Log($"🎲 Wheel stopped at: {finalAngle}°, Needle pointing at: {needleAngle}°");
+        // DÜZELTME: İğnenin gösterdiği açıyı hesapla
+        // İğne üstte (0 derece) olduğu için, çarkın mevcut rotasyonu = iğnenin gösterdiği açı
+        float needleAngle = currentWheelRotation;
+        
+        Debug.Log($"🎲 Wheel stopped at: {finalAngle}°, Çark rotasyonu: {currentWheelRotation:F1}°, İğne gösteriyor: {needleAngle:F1}°");
         
         // Hangi segment kazandı?
         PrizeSegment winningSegment = GetSegmentAtAngle(needleAngle);
@@ -199,15 +209,37 @@ public class PrizeWheelManager : MonoBehaviour
         {
             Debug.LogWarning($"No segment found at needle angle {needleAngle}");
         }
+        
+        // Tooltip sistemini güncelle - çark döndükten sonra tooltip'in doğru çalışması için
+        if (tooltipHandler != null)
+        {
+            // Tooltip handler'ı yeniden başlat
+            DestroyImmediate(tooltipHandler.gameObject);
+            tooltipHandler = null;
+        }
+        
+        // Yeni tooltip handler oluştur
+        SetupTooltipSystem();
+        
+        // Tooltip handler'ı güncelle - segment bilgilerini yenile
+        if (tooltipHandler != null)
+        {
+            tooltipHandler.UpdateSegmentData(segments);
+        }
     }
     
     PrizeSegment GetSegmentAtAngle(float angle)
     {
+        Debug.Log($"🔍 DEBUG: Açı {angle:F1}° için segment aranıyor...");
+        
         foreach (var segment in segments)
         {
+            Debug.Log($"  - {segment.segmentName}: {segment.startAngle:F1}° - {segment.endAngle:F1}° (Contains {angle:F1}°: {segment.ContainsAngle(angle)})");
             if (segment.ContainsAngle(angle))
                 return segment;
         }
+        
+        Debug.LogWarning($"❌ DEBUG: Açı {angle:F1}° için hiçbir segment bulunamadı!");
         return null;
     }
     
@@ -307,8 +339,8 @@ public class PrizeWheelManager : MonoBehaviour
     {
         if (tooltipHandler != null)
         {
-            // Tooltip handler artık dinamik olarak segment'leri buluyor
-            // SetSegmentData'ya gerek yok, otomatik çalışıyor
+            // Tooltip handler'ı güncelle - segment verilerini yenile
+            tooltipHandler.UpdateSegmentData(segments);
         }
     }
     
