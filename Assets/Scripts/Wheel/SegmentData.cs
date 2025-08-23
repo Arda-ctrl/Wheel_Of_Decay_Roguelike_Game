@@ -4,7 +4,7 @@ public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 public enum Type { StatBoost, WheelManipulation, OnRemoveEffect, CurseEffect }
 public enum StatType { Attack, Defence, AttackSpeed, MovementSpeed, CriticalChance, Random }
 public enum SegmentEffectType { StatBoost, WheelManipulation, OnRemoveEffect, CurseEffect }
-public enum CurseEffectType { ReSpinCurse }
+public enum CurseEffectType { ReSpinCurse, RandomEscapeCurse, BlurredMemoryCurse, TeleportEscapeCurse, ExplosiveCurse, BondingCurse, SelfBondingCurse }
 public enum WheelManipulationType { BlackHole, Redirector, Repulsor, MirrorRedirect, ReverseMirrorRedirect, CommonRedirector, SafeEscape, ExplosiveEscape, SegmentSwapper }
 public enum RedirectDirection { LeftToRight, RightToLeft, BothSides }
 public enum RewardFillMode { FillWithOnes, FillWithLargest }
@@ -14,6 +14,7 @@ public enum StatBonusMode { Fixed, EmptySlotCount, FilledSlotCount, SmallSegment
 public class SegmentData : ScriptableObject
 {
     public string segmentID;
+    public string segmentName; // Debug için segment ismi
     [Range(1, 3)] public int size = 1;
     public Type type;
     public Rarity rarity;
@@ -89,4 +90,10 @@ public class SegmentData : ScriptableObject
     public CurseEffectType curseEffectType;
     // ReSpinCurse için
     public int curseReSpinCount = 3;
+    // BlurredMemoryCurse için
+    public bool tooltipDisabled = false;
+    // ExplosiveCurse için
+    [Range(1, 3)] public int explosiveRange = 1;
+    // SelfBondingCurse için
+    [Range(1, 5)] public int selfBondingCount = 2;
 }

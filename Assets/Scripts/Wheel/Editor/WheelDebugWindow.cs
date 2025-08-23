@@ -127,7 +127,7 @@ public class WheelDebugWindow : EditorWindow
         
         // Kategori seçimi
         EditorGUILayout.LabelField("Segment Tipi:", GUILayout.Height(20));
-        int newCategoryIndex = EditorGUILayout.Popup(showAllCategories ? 0 : (int)selectedCategory + 1, categoryNames, GUILayout.Height(40)); // 30'dan 40'a büyüttük, genişlik sınırsız
+        int newCategoryIndex = EditorGUILayout.Popup(showAllCategories ? 0 : (int)selectedCategory + 1, categoryNames, GUILayout.Height(25));
         
         if (newCategoryIndex == 0)
         {
@@ -139,11 +139,11 @@ public class WheelDebugWindow : EditorWindow
             selectedCategory = (SegmentEffectType)(newCategoryIndex - 1);
         }
         
-        EditorGUILayout.Space(10);
+        EditorGUILayout.Space(5);
         
         // Rarity seçimi
         EditorGUILayout.LabelField("Nadir Seviye:", GUILayout.Height(20));
-        int newRarityIndex = EditorGUILayout.Popup(showAllRarities ? 0 : (int)selectedRarity + 1, rarityNames, GUILayout.Height(40)); // 30'dan 40'a büyüttük, genişlik sınırsız
+        int newRarityIndex = EditorGUILayout.Popup(showAllRarities ? 0 : (int)selectedRarity + 1, rarityNames, GUILayout.Height(25));
         
         if (newRarityIndex == 0)
         {
@@ -155,19 +155,19 @@ public class WheelDebugWindow : EditorWindow
             selectedRarity = (Rarity)(newRarityIndex - 1);
         }
         
-        EditorGUILayout.Space(10);
+        EditorGUILayout.Space(5);
         
         // Arama kutusu
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Arama:", GUILayout.Width(50), GUILayout.Height(20)); // 40'tan 20'ye küçülttük
-        searchText = EditorGUILayout.TextField(searchText, GUILayout.Height(20)); // 40'tan 20'ye küçülttük
+        EditorGUILayout.LabelField("Arama:", GUILayout.Width(50), GUILayout.Height(20));
+        searchText = EditorGUILayout.TextField(searchText, GUILayout.Height(20));
         EditorGUILayout.EndHorizontal();
         
         // Segment sayısını arama kutusunun altına ekle
         int segmentCount = GetFilteredSegmentCount();
-        EditorGUILayout.LabelField($"Listelenen: {segmentCount} segment", EditorStyles.miniLabel, GUILayout.Height(30)); // 25'ten 30'a büyüttük
+        EditorGUILayout.LabelField($"Listelenen: {segmentCount} segment", EditorStyles.miniLabel, GUILayout.Height(20));
         
-        EditorGUILayout.Space(10);
+        EditorGUILayout.Space(5);
         
         // Seçili segment bilgisi
         if (selectedSegment != null)
