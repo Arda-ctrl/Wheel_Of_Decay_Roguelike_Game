@@ -1590,6 +1590,8 @@ MonoBehaviour:
   lineWidth: 0.002
   dividerInnerRadius: 0.1
   dividerOuterRadius: 0.5
+  wheelRadius: 2.5
+  hoverDelay: 0.5
   spinKey: 32
 --- !u!1 &945165676
 GameObject:
@@ -3441,7 +3443,10 @@ MonoBehaviour:
   showAnimationDuration: 1
   hideAnimationDuration: 1
   slideEase: 12
-  wheelOffsetX: -1600
+  wheelShowDuration: 1.2
+  wheelHideDuration: 1.6
+  wheelEase: 12
+  wheelOffsetY: -15
   rightPanelOffsetX: 600
   toggleKey: 9
 --- !u!4 &2139809253

@@ -12,10 +12,15 @@ public class WheelUIAnimator : MonoBehaviour
     [SerializeField] private RectTransform buttonsPanel;
     
     [Header("Animation Settings")]
-    [SerializeField] private float showAnimationDuration = 0.5f; // Gelme hızı
-    [SerializeField] private float hideAnimationDuration = 0.3f; // Gitme hızı
-    [SerializeField] private Ease slideEase = Ease.OutQuart;
-    [SerializeField] private float wheelOffsetX = -1000f; // Sol taraftan gelecek
+    [SerializeField] private float showAnimationDuration = 0.5f; // Paneller için gelme hızı
+    [SerializeField] private float hideAnimationDuration = 0.3f; // Paneller için gitme hızı
+    [SerializeField] private Ease slideEase = Ease.OutQuart; // Paneller için easing
+    
+    [Header("Wheel Animation Settings")]
+    [SerializeField] private float wheelShowDuration = 2.0f; // Çark için gelme hızı - çok daha yavaş
+    [SerializeField] private float wheelHideDuration = 1.8f; // Çark için gitme hızı - çok daha yavaş
+    [SerializeField] private Ease wheelEase = Ease.OutBack; // Çark için daha doğal easing (hafif geri tepme ile)
+    [SerializeField] private float wheelOffsetY = 300f; // Yukarıdan gelecek - pozitif değer yukarı, negatif değer aşağı
     [SerializeField] private float rightPanelOffsetX = 1000f; // Sağ taraftan gelecek
     
     [Header("Input Settings")]
@@ -61,7 +66,8 @@ public class WheelUIAnimator : MonoBehaviour
         if (wheelManagerObject != null)
         {
             wheelOriginalPos = wheelManagerObject.position;
-            wheelHiddenPos = new Vector3(wheelOriginalPos.x + (wheelOffsetX * 0.01f), wheelOriginalPos.y, wheelOriginalPos.z); // World space için küçük değer
+            // Debug.Log("Original position: " + wheelOriginalPos + ", Offset: " + wheelOffsetY);
+            wheelHiddenPos = new Vector3(wheelOriginalPos.x, wheelOriginalPos.y - wheelOffsetY, wheelOriginalPos.z); // Yukarıdan gelecek - offset negatif olmalı
         }
         
         if (statsPanel != null)
@@ -97,12 +103,12 @@ public class WheelUIAnimator : MonoBehaviour
         // Sequence oluştur - panellerin sırayla gelmesi için
         Sequence showSequence = DOTween.Sequence();
         
-        // Önce wheel manager'ı soldan gelsin
+        // Önce wheel manager'ı yukarıdan gelsin
         if (wheelManagerObject != null)
         {
             wheelManagerObject.gameObject.SetActive(true);
-            showSequence.Append(wheelManagerObject.DOMove(wheelOriginalPos, showAnimationDuration)
-                .SetEase(slideEase));
+            showSequence.Append(wheelManagerObject.DOMove(wheelOriginalPos, wheelShowDuration)
+                .SetEase(wheelEase));
         }
         
         // Sonra sağ taraftaki paneller gelsin (paralel olarak)
@@ -155,9 +161,8 @@ public class WheelUIAnimator : MonoBehaviour
         // Son olarak wheel manager gitsin
         if (wheelManagerObject != null)
         {
-            hideSequence.Join(wheelManagerObject.DOMove(wheelHiddenPos, hideAnimationDuration)
-                .SetEase(slideEase)
-                .SetDelay(0.1f));
+            hideSequence.Join(wheelManagerObject.DOMove(wheelHiddenPos, wheelHideDuration)
+                .SetEase(wheelEase)); // Gecikme olmadan direkt geri dönüş
         }
         
         hideSequence.OnComplete(() => {
