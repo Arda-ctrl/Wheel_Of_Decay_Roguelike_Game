@@ -37,8 +37,8 @@ MonoBehaviour:
     epic: 30
     legendary: 20
   generationRules:
-    minSegmentCount: 3
-    maxSegmentCount: 10
+    minSegmentCount: 4
+    maxSegmentCount: 6
     segmentCountPreset: 4
     maxCurseSegments: 1
     maxOnRemoveSegments: 1

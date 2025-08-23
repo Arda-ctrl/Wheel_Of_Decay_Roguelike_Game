@@ -57,7 +57,7 @@ public class WheelUIManager : MonoBehaviour
         {
             backgroundOverlay.color = Color.clear;
             backgroundOverlay.gameObject.SetActive(false);
-            backgroundOverlay.raycastTarget = true; // Background tıklamaları engellesin
+            backgroundOverlay.raycastTarget = false; // Background tıklamaları engellemesin
         }
         
         // Audio source ayarla
@@ -74,11 +74,7 @@ public class WheelUIManager : MonoBehaviour
     {
         if (!isInitialized) return;
         
-        // ESC tuşu ile de kapatabilsin
-        if (Input.GetKeyDown(KeyCode.Escape) && animator.IsWheelUIVisible && !animator.IsAnimating)
-        {
-            HideWheelUI();
-        }
+        // Sadece Tab tuşu ile açılıp kapanabilir - başka kapatma yöntemi yok
     }
     
     public void ShowWheelUI()
@@ -141,35 +137,15 @@ public class WheelUIManager : MonoBehaviour
         }
     }
     
-    // Background tıklaması ile kapatma
-    public void OnBackgroundClicked()
-    {
-        if (animator.IsWheelUIVisible && !animator.IsAnimating)
-        {
-            HideWheelUI();
-        }
-    }
+
     
     // Public properties
     public bool IsWheelUIVisible => animator?.IsWheelUIVisible ?? false;
     public bool IsAnimating => animator?.IsAnimating ?? false;
     
-    // Segment seçildiğinde çağrılacak
-    public void OnSegmentSelected()
-    {
-        // Segment seçildikten sonra UI'ı kapatmak istersen
-        // HideWheelUI();
-    }
+
     
-    // Wheel spin başladığında çağrılacak
-    public void OnWheelSpinStarted()
-    {
-        // Spin sırasında UI'ı kapatmak istersen
-        if (IsWheelUIVisible)
-        {
-            HideWheelUI();
-        }
-    }
+
     
     // Debug için
     [System.Diagnostics.Conditional("UNITY_EDITOR")]

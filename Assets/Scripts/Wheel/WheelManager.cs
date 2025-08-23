@@ -249,9 +249,6 @@ public class WheelManager : MonoBehaviour
     {
         if (!isSpinning && !wheelEffectInProgress && !isDestroyed)
         {
-            // UI Manager'a spin başladığını bildir
-            WheelUIManager.Instance?.OnWheelSpinStarted();
-            
             isSpinning = true;
             spinCoroutine = StartCoroutine(SpinWheelCoroutine(onSpinComplete));
         }

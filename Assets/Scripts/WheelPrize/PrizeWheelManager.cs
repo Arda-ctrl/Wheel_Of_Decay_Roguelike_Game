@@ -204,6 +204,12 @@ public class PrizeWheelManager : MonoBehaviour
         {
             Debug.Log($"🎉 Won: {winningSegment.segmentName} (Range: {winningSegment.startAngle}°-{winningSegment.endAngle}°)");
             onSpinComplete?.Invoke(winningSegment);
+            
+            // Eğer kazanılan segment çarka yerleştirilebilir bir segment ise segment placement sistemini başlat
+            if (IsSegmentPlaceable(winningSegment))
+            {
+                StartSegmentPlacementSystem(winningSegment);
+            }
         }
         else
         {
@@ -381,6 +387,96 @@ public class PrizeWheelManager : MonoBehaviour
             Debug.LogWarning("PrizeWheelGenerator not found! Using test segments");
             CreateTestSegments(); // Fallback
         }
+    }
+    
+    // Segment Placement System
+    private PrizeSegment pendingSegment = null;
+    private bool isInPlacementMode = false;
+    
+    // Event delegates
+    public System.Action<PrizeSegment> OnSegmentWon;
+    
+    bool IsSegmentPlaceable(PrizeSegment segment)
+    {
+        // Sadece SegmentReward tipindeki segmentler yerleştirilebilir
+        return segment.prizeType == PrizeType.SegmentReward && segment.segmentReward != null;
+    }
+    
+    void StartSegmentPlacementSystem(PrizeSegment wonSegment)
+    {
+        // Debug.Log($"🔧 Starting segment placement system for: {wonSegment.segmentName}");
+        
+        // Kazanılan segmenti sakla
+        pendingSegment = wonSegment;
+        isInPlacementMode = true;
+        
+        // Event'i tetikle - UI sistemine bildir
+        OnSegmentWon?.Invoke(wonSegment);
+        
+        // Prize wheel'i gizle ve normal wheel UI'ını göster
+        HidePrizeWheelAndShowWheelUI();
+    }
+    
+    void HidePrizeWheelAndShowWheelUI()
+    {
+        // Prize wheel'i gizle
+        gameObject.SetActive(false);
+        
+        // Indicator'ı da gizle
+        if (indicatorTransform != null)
+        {
+            indicatorTransform.gameObject.SetActive(false);
+        }
+        
+        // WheelUIAnimator'ı bul ve wheel UI'ını göster
+        WheelUIAnimator wheelUIAnimator = FindFirstObjectByType<WheelUIAnimator>();
+        if (wheelUIAnimator != null)
+        {
+            // Tab tuşuna basmış gibi wheel UI'ını göster
+            wheelUIAnimator.ShowWheelUI();
+        }
+        
+        // Segment placement UI'ını başlat
+        StartSegmentPlacementUI();
+    }
+    
+    void StartSegmentPlacementUI()
+    {
+        // Segment placement manager'ı oluştur veya aktifleştir
+        SegmentPlacementManager placementManager = FindFirstObjectByType<SegmentPlacementManager>();
+        if (placementManager == null)
+        {
+            GameObject placementObj = new GameObject("SegmentPlacementManager");
+            placementManager = placementObj.AddComponent<SegmentPlacementManager>();
+        }
+        
+        // Placement sistemini başlat
+        placementManager.StartPlacement(pendingSegment);
+    }
+    
+    // Public methods for external access
+    public PrizeSegment GetPendingSegment() => pendingSegment;
+    public bool IsInPlacementMode() => isInPlacementMode;
+    
+    public void CompletePlacement()
+    {
+        pendingSegment = null;
+        isInPlacementMode = false;
+        // Debug.Log("🎯 Segment placement completed!");
+    }
+    
+    // Prize wheel'i tekrar göstermek için (opsiyonel)
+    public void ShowPrizeWheelAgain()
+    {
+        gameObject.SetActive(true);
+        
+        // Indicator'ı da tekrar göster
+        if (indicatorTransform != null)
+        {
+            indicatorTransform.gameObject.SetActive(true);
+        }
+        
+        // Debug.Log("🎡 Prize wheel shown again!");
     }
     
     // Public properties
