@@ -17,7 +17,7 @@ public abstract class VerdantEnemy : BaseEnemy
         base.InitializeEnemy();
         
         // Verdant Hollow specific initialization
-        if (enemyData.kingdomType != KingdomType.NatureKingdom)
+        if (enemyData.kingdomType != KingdomType.VerdantHallow)
         {
             Debug.LogWarning($"VerdantEnemy {gameObject.name} has wrong kingdom type: {enemyData.kingdomType}");
         }

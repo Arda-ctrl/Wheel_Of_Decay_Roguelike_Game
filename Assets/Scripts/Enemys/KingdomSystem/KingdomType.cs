@@ -1,8 +1,8 @@
 public enum KingdomType
 {
     None,
-    FireKingdom,      // Ateş Krallığı
-    IceKingdom,       // Buz Krallığı  
-    NatureKingdom,    // Doğa Krallığı
-    ShadowKingdom     // Gölge Krallığı
+    VerdantHallow,    // Verdant Hallow
+    Aeralithia,       // Aeralithia
+    ObsidianDomion,   // Obsidian Domion
+    CelestiumHeight   // Celestium Height
 } 

@@ -107,7 +107,7 @@ public class TrapperGoblin : GoblinController
         }
     }
     
-    // Basit animasyon kontrolü
+    // Basit animasyon kontrolü - mevcut animasyonlara göre
     private void UpdateAnimation()
     {
         if (animator != null)
@@ -116,21 +116,13 @@ public class TrapperGoblin : GoblinController
             float currentSpeed = rb.linearVelocity.magnitude;
             animator.SetFloat("Speed", currentSpeed);
             
-            // Durum parametreleri - sadece gerekli olanları set et
+            // Durum parametreleri - mevcut animasyonlara göre ayarla
             animator.SetBool("IsChasing", currentState == GoblinState.Chasing);
             animator.SetBool("IsPlacingTrap", isPlacingTrap);
-            animator.SetBool("IsAttacking", currentState == GoblinState.Attacking);
-            animator.SetBool("IsFleeing", currentState == GoblinState.Fleeing);
             animator.SetBool("IsDead", currentState == GoblinState.Dead);
             
             // Can durumu
             animator.SetFloat("Health", currentHealth);
-            
-            // Debug için pozisyon kontrolü
-            if (currentState == GoblinState.Idle)
-            {
-                Debug.Log($"Idle pozisyon: {transform.position}, Velocity: {rb.linearVelocity}");
-            }
         }
     }
     
@@ -235,10 +227,10 @@ public class TrapperGoblin : GoblinController
         isPlacingTrap = true;
         rb.linearVelocity = Vector2.zero;
         
-        // Tuzak koyma animasyonunu başlat
+        // Trap Placement animasyonunu başlat
         if (animator != null)
         {
-            animator.SetTrigger("PlaceTrap");
+            animator.SetBool("IsPlacingTrap", true);
         }
         
         // Find placement position
@@ -274,6 +266,12 @@ public class TrapperGoblin : GoblinController
         
         lastTrapTime = Time.time;
         isPlacingTrap = false;
+        
+        // Reset animation state to prevent freezing
+        if (animator != null)
+        {
+            animator.SetBool("IsPlacingTrap", false);
+        }
         
         // Return to chasing
         ChangeState(GoblinState.Chasing);
