@@ -4,16 +4,16 @@ using System.Collections.Generic;
 public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
 {
     [Header("Stats")]
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float baseSpeed = 5f;
+    [SerializeField] protected float maxHealth = 100f;
+    [SerializeField] protected float baseSpeed = 5f;
 
     [Header("Detection Settings")]
-    [SerializeField] private float detectionRange = 8f;
-    [SerializeField] private float stopDistance = 2f;
-    [SerializeField] private bool showDetectionGizmo = true;
+    [SerializeField] protected float detectionRange = 8f;
+    [SerializeField] protected float stopDistance = 2f;
+    [SerializeField] protected bool showDetectionGizmo = true;
 
     [Header("References")]
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] protected SpriteRenderer spriteRenderer;
     [SerializeField] private bool facingRightByDefault = true; // Sprite varsayılan olarak sağa mı bakıyor?
 
     [Header("UI Settings")]
@@ -21,17 +21,17 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     [SerializeField] private float lineSpacing = 20f;
     [SerializeField] private bool showDebugStats = true;
 
-    private float currentHealth;
-    private float speedMultiplier = 1f;
-    private Dictionary<StatusEffectType, float> activeStatusEffects = new Dictionary<StatusEffectType, float>();
+    protected float currentHealth;
+    protected float speedMultiplier = 1f;
+    protected Dictionary<StatusEffectType, float> activeStatusEffects = new Dictionary<StatusEffectType, float>();
     
-    private Transform playerTransform;
-    private Rigidbody2D rb;
+    protected Transform playerTransform;
+    protected Rigidbody2D rb;
     private Vector2 moveDirection;
     private bool isPlayerInRange = false;
     private bool isFacingRight;
 
-    private void Start()
+    protected virtual void Start()
     {
         currentHealth = maxHealth;
         rb = GetComponent<Rigidbody2D>();
@@ -70,7 +70,7 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         activeStatusEffects.Clear();
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         // Update status effects
         List<StatusEffectType> expiredEffects = new List<StatusEffectType>();
@@ -150,7 +150,7 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         }
     }
 
-    private void OnDrawGizmosSelected()
+    protected virtual void OnDrawGizmosSelected()
     {
         if (showDetectionGizmo)
         {
@@ -165,7 +165,7 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     }
 
     // IHealth Implementation
-    public void TakeDamage(float amount)
+    public virtual void TakeDamage(float amount)
     {
         currentHealth -= amount;
 
@@ -209,7 +209,7 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
         return activeStatusEffects.ContainsKey(statusType);
     }
 
-    private void Die()
+    protected virtual void Die()
     {
         // ElementalArea için ölüm event'ini tetikle
         if (EventManager.Instance != null && gameObject != null)
