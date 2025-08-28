@@ -207,22 +207,53 @@ public class BigMyceloid : BaseSlimeController
         // Wait for animation wind-up
         yield return new WaitForSeconds(0.4f);
         
-        if (playerTransform != null)
+        if (playerTransform != null && mudProjectilePrefab != null)
         {
-            // Calculate target position with prediction
+            // Calculate target position with improved prediction
             Vector2 targetPos = PredictPlayerPosition();
             
+            // Improved spawn position - higher up for better arc
+            Vector3 spawnPos;
+            if (projectileSpawnPoint != null)
+            {
+                spawnPos = projectileSpawnPoint.position;
+            }
+            else
+            {
+                // Default spawn position above the slime center
+                spawnPos = transform.position + Vector3.up * 1.5f;
+            }
+            
             // Spawn larger mud projectile
-            Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position + Vector3.up * 1f;
             GameObject mudProj = Instantiate(mudProjectilePrefab, spawnPos, Quaternion.identity);
             
             // Scale up the projectile for big slime
             mudProj.transform.localScale = Vector3.one * 1.3f;
             
+            // Ensure the mud projectile has required components
+            Rigidbody2D mudRb = mudProj.GetComponent<Rigidbody2D>();
+            if (mudRb == null)
+            {
+                mudRb = mudProj.AddComponent<Rigidbody2D>();
+            }
+            
+            Collider2D mudCollider = mudProj.GetComponent<Collider2D>();
+            if (mudCollider == null)
+            {
+                mudCollider = mudProj.AddComponent<CircleCollider2D>();
+                mudCollider.isTrigger = true;
+            }
+            
             MudProjectile mudScript = mudProj.GetComponent<MudProjectile>();
+            if (mudScript == null)
+            {
+                mudScript = mudProj.AddComponent<MudProjectile>();
+            }
+            
             if (mudScript != null)
             {
                 mudScript.Initialize(targetPos, mudProjectileSpeed, mudDamage, gameObject, MudType.Normal);
+                Debug.Log($"Big Myceloid launched mud from {spawnPos} to {targetPos}");
             }
             
             // Play attack sound
@@ -231,23 +262,52 @@ public class BigMyceloid : BaseSlimeController
                 AudioSource.PlayClipAtPoint(enemyData.attackSound, transform.position);
             }
         }
+        else
+        {
+            Debug.LogWarning("BigMyceloid: Cannot attack - missing player or mud projectile prefab");
+        }
     }
 
     private Vector2 PredictPlayerPosition()
     {
         if (playerTransform == null) return Vector2.zero;
         
-        Vector2 playerPos = playerTransform.position;
+        Vector2 currentPlayerPos = playerTransform.position;
+        Vector2 slimePos = transform.position;
         
-        // Predict player movement
+        // Get player velocity for prediction
         Rigidbody2D playerRb = playerTransform.GetComponent<Rigidbody2D>();
+        Vector2 playerVelocity = Vector2.zero;
+        
         if (playerRb != null)
         {
-            float timeToTarget = Vector2.Distance(transform.position, playerPos) / mudProjectileSpeed;
-            playerPos += playerRb.linearVelocity * timeToTarget * 0.6f; // Better prediction for big slime
+            playerVelocity = playerRb.linearVelocity;
         }
         
-        return playerPos;
+        // Calculate approximate flight time for mud projectile
+        float initialDistance = Vector2.Distance(slimePos, currentPlayerPos);
+        float approximateFlightTime = initialDistance / mudProjectileSpeed;
+        
+        // Account for gravity affecting flight time (arc trajectory takes longer)
+        approximateFlightTime *= 1.3f; // Multiply by 1.3 to account for arc
+        
+        // Predict where player will be
+        Vector2 predictedPlayerPos = currentPlayerPos + (playerVelocity * approximateFlightTime);
+        
+        // Add some randomization to make dodging possible but not too easy
+        float predictionAccuracy = 0.8f; // 80% accuracy
+        Vector2 inaccuracy = Random.insideUnitCircle * (1f - predictionAccuracy) * 2f;
+        predictedPlayerPos += inaccuracy;
+        
+        // Clamp prediction to reasonable range
+        Vector2 maxPredictionOffset = Vector2.one * 5f; // Maximum 5 units prediction offset
+        Vector2 predictionOffset = predictedPlayerPos - currentPlayerPos;
+        predictionOffset = Vector2.ClampMagnitude(predictionOffset, maxPredictionOffset.magnitude);
+        predictedPlayerPos = currentPlayerPos + predictionOffset;
+        
+        Debug.Log($"Player at {currentPlayerPos}, predicted at {predictedPlayerPos}, velocity: {playerVelocity}, flight time: {approximateFlightTime:F2}s");
+        
+        return predictedPlayerPos;
     }
 
     protected override void OnSlimeDeath()

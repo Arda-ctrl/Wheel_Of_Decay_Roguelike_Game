@@ -37,7 +37,21 @@ public class MudProjectile : MonoBehaviour
         if (rb == null)
         {
             rb = gameObject.AddComponent<Rigidbody2D>();
-            rb.gravityScale = 0.3f; // Slight gravity for arc
+        }
+        
+        // Initial physics setup - will be configured properly in Initialize()
+        rb.gravityScale = 1f;
+        rb.linearDamping = 0f;
+        rb.angularDamping = 0f;
+        rb.freezeRotation = false; // Allow rotation for visual effect
+        
+        // Add collider if missing
+        Collider2D collider = GetComponent<Collider2D>();
+        if (collider == null)
+        {
+            CircleCollider2D circleCollider = gameObject.AddComponent<CircleCollider2D>();
+            circleCollider.isTrigger = true;
+            circleCollider.radius = 0.3f; // Small radius for mud projectile
         }
     }
 
@@ -48,21 +62,97 @@ public class MudProjectile : MonoBehaviour
         damage = projectileDamage;
         mudType = type;
         
-        // Calculate direction and add arc
+        // Calculate proper trajectory to hit target
         Vector2 startPos = transform.position;
-        direction = (targetPosition - startPos).normalized;
+        Vector2 targetDirection = targetPosition - startPos;
+        float distance = targetDirection.magnitude;
         
-        // Add upward velocity for arc trajectory
-        Vector2 velocity = direction * speed;
-        velocity.y += 3f; // Add upward component for arc
+        // Calculate trajectory with arc physics
+        Vector2 velocity = CalculateTrajectoryVelocity(startPos, targetPosition, projectileSpeed);
         
         if (rb != null)
         {
             rb.linearVelocity = velocity;
+            
+            // Ensure physics is set up correctly
+            rb.gravityScale = 1f; // Normal gravity for realistic arc
+            rb.linearDamping = 0f; // No air resistance for predictable trajectory
+            rb.angularDamping = 0f;
         }
+        
+        // Store direction for reference (normalized)
+        direction = targetDirection.normalized;
 
         // Destroy after lifetime
         Destroy(gameObject, lifetime);
+        
+        Debug.Log($"Mud projectile launched to {targetPosition} with velocity {velocity}, distance: {distance}");
+    }
+    
+    private Vector2 CalculateTrajectoryVelocity(Vector2 startPos, Vector2 targetPos, float launchSpeed)
+    {
+        // Calculate the displacement
+        Vector2 displacement = targetPos - startPos;
+        float horizontalDistance = displacement.x;
+        float verticalDistance = displacement.y;
+        
+        // Use physics to calculate trajectory
+        // For projectile motion: v = sqrt(g * d / sin(2θ))
+        // We'll use a fixed launch angle for consistent arc
+        float launchAngle = 45f * Mathf.Deg2Rad; // 45 degrees for optimal range
+        
+        // If target is above us, use a steeper angle
+        if (verticalDistance > 0)
+        {
+            launchAngle = 60f * Mathf.Deg2Rad;
+        }
+        // If target is below us, use a shallower angle
+        else if (verticalDistance < -2f)
+        {
+            launchAngle = 30f * Mathf.Deg2Rad;
+        }
+        
+        float gravity = Physics2D.gravity.magnitude;
+        if (gravity == 0) gravity = 9.81f; // Fallback if gravity is disabled
+        
+        // Calculate required velocity for the trajectory
+        float distance = displacement.magnitude;
+        float velocityMagnitude = Mathf.Sqrt(gravity * distance / Mathf.Sin(2 * launchAngle));
+        
+        // Clamp the velocity to reasonable values
+        velocityMagnitude = Mathf.Clamp(velocityMagnitude, launchSpeed * 0.5f, launchSpeed * 2f);
+        
+        // Calculate velocity components
+        Vector2 velocityDirection = displacement.normalized;
+        
+        // For more accurate targeting, calculate exact velocity needed
+        float timeToTarget = distance / launchSpeed;
+        Vector2 velocityNeeded = displacement / timeToTarget;
+        
+        // Add gravity compensation
+        velocityNeeded.y += 0.5f * gravity * timeToTarget;
+        
+        // Ensure minimum upward velocity for arc effect
+        if (velocityNeeded.y < 2f)
+        {
+            velocityNeeded.y = 2f + Mathf.Abs(velocityNeeded.x) * 0.2f;
+        }
+        
+        return velocityNeeded;
+    }
+    
+    private void Update()
+    {
+        // Rotate the projectile based on its velocity for visual effect
+        if (rb != null && !hasHit)
+        {
+            Vector2 velocity = rb.linearVelocity;
+            if (velocity.magnitude > 0.1f)
+            {
+                float angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
+                transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            }
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)

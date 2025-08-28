@@ -260,3 +260,5 @@ public class BrainlessForestSprite : VerdantEnemy
         Gizmos.DrawRay(transform.position, currentDirection * 2f);
     }
 }
+
+

@@ -103,33 +103,37 @@ public class MediumMyceloid : BaseSlimeController
         // Wait for animation wind-up
         yield return new WaitForSeconds(0.3f);
         
-        if (playerTransform != null)
+        if (playerTransform != null && mudProjectilePrefab != null)
         {
             // Calculate target position with prediction
             Vector2 targetPos = PredictPlayerPosition();
             
-            // Spawn mud projectile
+            // Determine spawn position
+            Vector3 spawnPos;
             if (projectileSpawnPoint != null)
             {
-                GameObject mudProj = Instantiate(mudProjectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
-                MudProjectile mudScript = mudProj.GetComponent<MudProjectile>();
-                
-                if (mudScript != null)
-                {
-                    mudScript.Initialize(targetPos, mudProjectileSpeed, mudDamage, gameObject, MudType.Normal);
-                }
+                spawnPos = projectileSpawnPoint.position;
             }
             else
             {
                 // Fallback to slime position if no spawn point set
-                Vector3 spawnPos = transform.position + Vector3.up * 0.5f;
-                GameObject mudProj = Instantiate(mudProjectilePrefab, spawnPos, Quaternion.identity);
-                MudProjectile mudScript = mudProj.GetComponent<MudProjectile>();
-                
-                if (mudScript != null)
-                {
-                    mudScript.Initialize(targetPos, mudProjectileSpeed, mudDamage, gameObject, MudType.Normal);
-                }
+                spawnPos = transform.position + Vector3.up * 0.8f; // Slightly higher for better arc
+            }
+            
+            // Spawn mud projectile
+            GameObject mudProj = Instantiate(mudProjectilePrefab, spawnPos, Quaternion.identity);
+            
+            // Ensure components exist
+            MudProjectile mudScript = mudProj.GetComponent<MudProjectile>();
+            if (mudScript == null)
+            {
+                mudScript = mudProj.AddComponent<MudProjectile>();
+            }
+            
+            if (mudScript != null)
+            {
+                mudScript.Initialize(targetPos, mudProjectileSpeed, mudDamage, gameObject, MudType.Normal);
+                Debug.Log($"Medium Myceloid launched mud from {spawnPos} to {targetPos}");
             }
             
             // Play attack sound
@@ -138,23 +142,50 @@ public class MediumMyceloid : BaseSlimeController
                 AudioSource.PlayClipAtPoint(enemyData.attackSound, transform.position);
             }
         }
+        else
+        {
+            Debug.LogWarning("MediumMyceloid: Cannot attack - missing player or mud projectile prefab");
+        }
     }
 
     private Vector2 PredictPlayerPosition()
     {
         if (playerTransform == null) return Vector2.zero;
         
-        Vector2 playerPos = playerTransform.position;
+        Vector2 currentPlayerPos = playerTransform.position;
+        Vector2 slimePos = transform.position;
         
-        // Simple prediction based on player movement
+        // Get player velocity for prediction
         Rigidbody2D playerRb = playerTransform.GetComponent<Rigidbody2D>();
+        Vector2 playerVelocity = Vector2.zero;
+        
         if (playerRb != null)
         {
-            float timeToTarget = Vector2.Distance(transform.position, playerPos) / mudProjectileSpeed;
-            playerPos += playerRb.linearVelocity * timeToTarget * 0.5f; // Predict 50% of movement
+            playerVelocity = playerRb.linearVelocity;
         }
         
-        return playerPos;
+        // Calculate approximate flight time for mud projectile
+        float initialDistance = Vector2.Distance(slimePos, currentPlayerPos);
+        float approximateFlightTime = initialDistance / mudProjectileSpeed;
+        
+        // Account for gravity affecting flight time (arc trajectory takes longer)
+        approximateFlightTime *= 1.2f; // Medium slime has slightly less arc than big slime
+        
+        // Predict where player will be
+        Vector2 predictedPlayerPos = currentPlayerPos + (playerVelocity * approximateFlightTime);
+        
+        // Add some randomization for medium slime (less accurate than big slime)
+        float predictionAccuracy = 0.7f; // 70% accuracy for medium slime
+        Vector2 inaccuracy = Random.insideUnitCircle * (1f - predictionAccuracy) * 2.5f;
+        predictedPlayerPos += inaccuracy;
+        
+        // Clamp prediction to reasonable range
+        Vector2 maxPredictionOffset = Vector2.one * 4f; // Slightly less than big slime
+        Vector2 predictionOffset = predictedPlayerPos - currentPlayerPos;
+        predictionOffset = Vector2.ClampMagnitude(predictionOffset, maxPredictionOffset.magnitude);
+        predictedPlayerPos = currentPlayerPos + predictionOffset;
+        
+        return predictedPlayerPos;
     }
 
     protected override void OnSlimeDeath()
