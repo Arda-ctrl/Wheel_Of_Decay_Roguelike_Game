@@ -167,13 +167,26 @@ public class SegmentDataEditor : Editor
                 case WheelManipulationType.SegmentSwapper:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("swapperRange"));
                     break;
+
             }
         }
         else if (effectType == SegmentEffectType.OnRemoveEffect)
         {
             if (rewardRarity != null) EditorGUILayout.PropertyField(rewardRarity);
-            if (rewardType != null) EditorGUILayout.PropertyField(rewardType);
+            if (rewardType != null) 
+            {
+                EditorGUILayout.PropertyField(rewardType);
+                
+                // CurseEffect seçilirse uyarı göster
+                var currentRewardType = (Type)rewardType.enumValueIndex;
+                if (currentRewardType == Type.CurseEffect)
+                {
+                    EditorGUILayout.HelpBox("⚠️ UYARI: OnRemoveEffect'lerden CurseEffect çıkmamalı! Bu ayar göz ardı edilecek.", MessageType.Error);
+                }
+            }
             EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardFillMode"));
+            
+            EditorGUILayout.HelpBox("Bu segment silindiğinde belirtilen türde ödül segmentleri oluşturulur. CurseEffect türü otomatik olarak engellenir.", MessageType.Info);
         }
         else if (effectType == SegmentEffectType.CurseEffect)
         {
@@ -185,6 +198,27 @@ public class SegmentDataEditor : Editor
                 case CurseEffectType.ReSpinCurse:
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("curseReSpinCount"));
                     EditorGUILayout.HelpBox("Segment silinince çarkı belirtilen sayıda tekrar döndürür.", MessageType.Warning);
+                    break;
+                case CurseEffectType.RandomEscapeCurse:
+                    EditorGUILayout.HelpBox("Segment silinince tüm segmentleri rastgele farklı yerlere yerleştirir.", MessageType.Warning);
+                    break;
+                case CurseEffectType.BlurredMemoryCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("tooltipDisabled"));
+                    EditorGUILayout.HelpBox("Segment silinince tüm segmentlerin tooltip'lerini kapatır. Oyuncu segment özelliklerini göremez.", MessageType.Warning);
+                    break;
+                case CurseEffectType.TeleportEscapeCurse:
+                    EditorGUILayout.HelpBox("Segment yok olmadan önce başka bir segmentle yer değiştirir ve kaçar. Diğer segment yok olur.", MessageType.Warning);
+                    break;
+                case CurseEffectType.ExplosiveCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("explosiveRange"));
+                    EditorGUILayout.HelpBox("Segment yok olacağı zaman yanındaki segmentleri de siler. Range: 1-3 slot mesafesi.", MessageType.Warning);
+                    break;
+                case CurseEffectType.SelfBondingCurse:
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("selfBondingCount"));
+                    EditorGUILayout.HelpBox("Kendini belirtilen sayıda segment'e bağlar. Kendisi silinince bağlı segment'ler de silinir. Bağlı segment'lerden biri silinirse yeni bağlantı yaparak sayıyı korur.", MessageType.Warning);
+                    break;
+                case CurseEffectType.BondingCurse:
+                    EditorGUILayout.HelpBox("İki segment'i birbirine bağlar. Biri silinirse diğeri de silinir. Kendisi silinirse bağlantı kaybolur.", MessageType.Warning);
                     break;
                 default:
                     EditorGUILayout.HelpBox("CurseEffect parametreleri daha sonra eklenecek.", MessageType.Info);

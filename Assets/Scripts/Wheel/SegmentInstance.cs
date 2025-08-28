@@ -36,10 +36,29 @@ public class SegmentInstance : MonoBehaviour
     private void ShowTooltip()
     {
         if (data == null || TooltipUI.Instance == null) return;
+        
+        // Global tooltip disable kontrolü
+        if (IsGlobalTooltipDisabled())
+        {
+            return;
+        }
+        
+        // BlurredMemory curse aktifse tooltip'i gösterme
+        if (data.tooltipDisabled)
+        {
+            return;
+        }
+        
         string title = data.segmentID;
         string description = data.description;
         string typeAndRarity = $"Type: {data.type} | Rarity: {data.rarity}";
         TooltipUI.Instance.ShowTooltip(title, description, typeAndRarity, Input.mousePosition);
+    }
+    
+    private bool IsGlobalTooltipDisabled()
+    {
+        // Global tooltip disable flag'ini kontrol et
+        return PlayerPrefs.GetInt("GlobalTooltipDisabled", 0) == 1;
     }
     private void OnMouseEnter() { isHovering = true; hoverTimer = 0f; }
     private void OnMouseExit() { isHovering = false; hoverTimer = 0f; TooltipUI.Instance?.HideTooltip(); }
