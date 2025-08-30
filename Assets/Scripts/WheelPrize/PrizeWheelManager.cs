@@ -29,9 +29,15 @@ public class PrizeWheelManager : MonoBehaviour
     
     [Header("Input Settings")]
     public KeyCode spinKey = KeyCode.Space;
+    public KeyCode acceptResultKey = KeyCode.Return;
+    
+    [Header("Ability System")]
+    public PrizeWheelAbilityHandler abilityHandler;
     
     private Material wheelMaterial;
     private bool isSpinning = false;
+    private bool isWaitingForAcceptance = false; // Çark sonucunu kabul etmeyi bekliyor mu?
+    private PrizeSegment pendingWinningSegment = null; // Kazanılan segment (kabul edilmeyi bekliyor)
     private System.Action<PrizeSegment> onSpinComplete;
     private List<PrizeWheelDivider> dividers = new List<PrizeWheelDivider>();
     private PrizeSegmentTooltip tooltipHandler;
@@ -40,6 +46,11 @@ public class PrizeWheelManager : MonoBehaviour
     {
         InitializeWheel();
         SetupShader();
+        
+        // Ability handler'ı bul
+        if (abilityHandler == null)
+            abilityHandler = FindFirstObjectByType<PrizeWheelAbilityHandler>();
+            
         // Bir frame bekle ki diğer objeler de initialize olsun
         StartCoroutine(GenerateRandomWheelDelayed());
     }
@@ -53,9 +64,15 @@ public class PrizeWheelManager : MonoBehaviour
     void Update()
     {
         // Tuş kontrolü
-        if (Input.GetKeyDown(spinKey) && !isSpinning)
+        if (Input.GetKeyDown(spinKey) && !isSpinning && !isWaitingForAcceptance)
         {
             SpinWheel();
+        }
+        
+        // Enter tuşu ile çark sonucunu kabul etme
+        if (Input.GetKeyDown(acceptResultKey) && isWaitingForAcceptance)
+        {
+            AcceptWheelResult();
         }
     }
     
@@ -123,7 +140,7 @@ public class PrizeWheelManager : MonoBehaviour
         wheelMaterial.SetFloat("_LineWidth", lineWidth);
     }
     
-    void UpdateShaderProperties()
+    public void UpdateShaderProperties()
     {
         if (wheelMaterial == null || segments.Count == 0) return;
         
@@ -205,11 +222,14 @@ public class PrizeWheelManager : MonoBehaviour
             Debug.Log($"🎉 Won: {winningSegment.segmentName} (Range: {winningSegment.startAngle}°-{winningSegment.endAngle}°)");
             onSpinComplete?.Invoke(winningSegment);
             
-            // Eğer kazanılan segment çarka yerleştirilebilir bir segment ise segment placement sistemini başlat
-            if (IsSegmentPlaceable(winningSegment))
-            {
-                StartSegmentPlacementSystem(winningSegment);
-            }
+            // Post-spin ability'leri tetikle
+            OnWheelSpinComplete?.Invoke();
+            
+            // Çark sonucunu kabul etmeyi bekle
+            pendingWinningSegment = winningSegment;
+            isWaitingForAcceptance = true;
+            
+            Debug.Log("⏳ Press ENTER to accept the wheel result and continue...");
         }
         else
         {
@@ -395,6 +415,7 @@ public class PrizeWheelManager : MonoBehaviour
     
     // Event delegates
     public System.Action<PrizeSegment> OnSegmentWon;
+    public System.Action OnWheelSpinComplete; // Post-spin ability'ler için
     
     bool IsSegmentPlaceable(PrizeSegment segment)
     {
@@ -479,7 +500,31 @@ public class PrizeWheelManager : MonoBehaviour
         // Debug.Log("🎡 Prize wheel shown again!");
     }
     
+    // Enter tuşu ile çark sonucunu kabul etme
+    public void AcceptWheelResult()
+    {
+        if (!isWaitingForAcceptance || pendingWinningSegment == null) return;
+        
+        Debug.Log("✅ Wheel result accepted! Processing...");
+        
+        // Eğer kazanılan segment çarka yerleştirilebilir bir segment ise segment placement sistemini başlat
+        if (IsSegmentPlaceable(pendingWinningSegment))
+        {
+            StartSegmentPlacementSystem(pendingWinningSegment);
+        }
+        else
+        {
+            Debug.Log($"🎁 Non-placeable segment won: {pendingWinningSegment.segmentName}");
+            // Burada resource veya custom reward işlemi yapılabilir
+        }
+        
+        // State'i temizle
+        isWaitingForAcceptance = false;
+        pendingWinningSegment = null;
+    }
+    
     // Public properties
     public bool IsSpinning => isSpinning;
+    public bool IsWaitingForAcceptance => isWaitingForAcceptance;
     public int SegmentCount => segments.Count;
 }
