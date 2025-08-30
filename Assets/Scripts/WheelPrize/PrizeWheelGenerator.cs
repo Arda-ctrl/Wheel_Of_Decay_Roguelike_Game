@@ -113,6 +113,17 @@ public class PrizeWheelGenerator : MonoBehaviour
         return prizeSegments;
     }
     
+    // Mevcut tüm segmentleri döndür (4. ability için)
+    public List<SegmentData> GetAvailableSegments()
+    {
+        if (allSegments == null || allSegments.Length == 0)
+        {
+            LoadAllSegments();
+        }
+        
+        return allSegments.ToList();
+    }
+    
     List<PlannedSegment> CreateSegmentPlan(int targetCount)
     {
         var plan = new List<PlannedSegment>();

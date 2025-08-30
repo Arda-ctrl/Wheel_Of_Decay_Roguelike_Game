@@ -24,23 +24,32 @@ public class SegmentPlacementManager : MonoBehaviour
     private bool isInPreviewMode = false;
     private int hoveredSlotIndex = -1;
     
+    // Double Spin için 2 slot sistemi
+    private PrizeSegment firstPrizeSlot = null;  // 1. Prize (çarkı açar)
+    private PrizeSegment secondPrizeSlot = null; // 2. Prize (bekleyen)
+    
     // Tooltip tarzı açıklama için metin
     private readonly string tooltipInstructions = "Çarkın üzerine gelerek segmenti yerleştirebilirsiniz.\nYerleştirmek için tıklayın.";
     
     private void Awake()
     {
+        // Camera'yı bul
         mainCamera = Camera.main;
         if (mainCamera == null)
+        {
             mainCamera = FindFirstObjectByType<Camera>();
-            
+        }
+        
+        // WheelManager'ı bul
         wheelManager = FindFirstObjectByType<WheelManager>();
         
+        // UI'ı kur
         SetupUI();
     }
     
     private void SetupUI()
     {
-        // UI panelini oluştur veya bul
+        // Hierarchy'de UI referansları var mı kontrol et
         if (segmentPreviewPanel == null)
         {
             CreateSegmentPreviewUI();
@@ -48,7 +57,9 @@ public class SegmentPlacementManager : MonoBehaviour
         
         // Başlangıçta UI'ı gizle
         if (segmentPreviewPanel != null)
+        {
             segmentPreviewPanel.SetActive(false);
+        }
     }
     
     private void CreateSegmentPreviewUI()
@@ -161,13 +172,73 @@ public class SegmentPlacementManager : MonoBehaviour
     {
         currentSegment = segment;
         
-        // Debug.Log($"🎯 Starting placement for segment: {segment.segmentName}");
-        
         // UI'ı göster ve güncelle
         ShowSegmentPreviewUI();
         
         // Preview modu başlat
         isInPreviewMode = true;
+    }
+    
+    // 1. Prize slot'a segment ekle
+    public void SetFirstPrize(PrizeSegment segment)
+    {
+        firstPrizeSlot = segment;
+    }
+    
+    // 2. Prize slot'a segment ekle
+    public void SetSecondPrize(PrizeSegment segment)
+    {
+        secondPrizeSlot = segment;
+    }
+    
+    // 1. Prize'ı 2. Prize'a taşı
+    public void MoveFirstToSecondPrize()
+    {
+        if (firstPrizeSlot != null)
+        {
+            Debug.Log($"🔄 MoveFirstToSecondPrize: {firstPrizeSlot.segmentName} → 2. Prize slot'a taşınıyor");
+            secondPrizeSlot = firstPrizeSlot;
+            firstPrizeSlot = null;
+            Debug.Log($"✅ MoveFirstToSecondPrize tamamlandı. 2. Prize slot'ta: {secondPrizeSlot.segmentName}");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ MoveFirstToSecondPrize: 1. Prize slot boş! Taşınacak bir şey yok.");
+        }
+    }
+    
+    // 1. Prize slot'ta segment var mı?
+    public bool HasFirstPrize()
+    {
+        return firstPrizeSlot != null;
+    }
+    
+    // 2. Prize slot'ta segment var mı?
+    public bool HasSecondPrize()
+    {
+        return secondPrizeSlot != null;
+    }
+    
+    // 1. Prize slot'u temizle (Double Spin için)
+    public void ClearFirstPrizeSlot()
+    {
+        firstPrizeSlot = null;
+    }
+    
+    // 1. Prize'ı al ve slot'u temizle
+    public PrizeSegment GetFirstPrize()
+    {
+        PrizeSegment prize = firstPrizeSlot;
+        firstPrizeSlot = null;
+        return prize;
+    }
+    
+    // 2. Prize'ı al ve slot'u temizle
+    public PrizeSegment GetSecondPrize()
+    {
+        PrizeSegment prize = secondPrizeSlot;
+        secondPrizeSlot = null;
+        return prize;
     }
     
     private void ShowSegmentPreviewUI()
@@ -233,22 +304,17 @@ public class SegmentPlacementManager : MonoBehaviour
         Vector3 mousePos = Input.mousePosition;
         Ray ray = mainCamera.ScreenPointToRay(mousePos);
         
-        // Debug: Ray casting durumunu kontrol et
-        RaycastHit hit;
-        bool hitSomething = Physics.Raycast(ray, out hit, Mathf.Infinity, wheelLayerMask);
-        
-        if (hitSomething)
-        {
-            // Debug: Neye hit ettiğimizi kontrol et
-            Debug.Log($"Hit object: {hit.transform.name}, Parent: {hit.transform.parent?.name}");
+                    // Ray casting ile slot tespiti
+            RaycastHit hit;
+            bool hitSomething = Physics.Raycast(ray, out hit, Mathf.Infinity, wheelLayerMask);
             
-            // Hit ettiğimiz nesnenin slot olup olmadığını kontrol et
-            Transform hitTransform = hit.transform;
-            
-            // Slot index'ini bul
-            int slotIndex = GetSlotIndexFromTransform(hitTransform);
-            
-            Debug.Log($"Slot Index found: {slotIndex}");
+            if (hitSomething)
+            {
+                // Hit ettiğimiz nesnenin slot olup olmadığını kontrol et
+                Transform hitTransform = hit.transform;
+                
+                // Slot index'ini bul
+                int slotIndex = GetSlotIndexFromTransform(hitTransform);
             
             if (slotIndex != -1 && slotIndex != hoveredSlotIndex)
             {
@@ -270,12 +336,10 @@ public class SegmentPlacementManager : MonoBehaviour
                 {
                     hoveredSlotIndex = slotIndex;
                     ShowPreviewSegment(slotIndex);
-                    Debug.Log($"Switched to slot {slotIndex}");
                 }
                 else
                 {
                     hoveredSlotIndex = -1; // Dolu slot - preview gösterme
-                    Debug.Log($"Slot {slotIndex} dolu - preview gösterilmiyor");
                 }
             }
         }
@@ -318,14 +382,10 @@ public class SegmentPlacementManager : MonoBehaviour
                         angle = (angle + 360f) % 360f;
                     }
                     
-                    Debug.Log($"Raw angle: {Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg}, Adjusted angle: {angle}");
-                    
                     // Açıya göre slot index'i hesapla
                     int slotCount = wheelManager.slotCount;
                     float slotAngle = 360f / slotCount;
                     int slotIndex = Mathf.FloorToInt(angle / slotAngle);
-                    
-                    Debug.Log($"Alternative method - Angle: {angle}, Slot: {slotIndex}");
                     
                     if (slotIndex != hoveredSlotIndex)
                     {
@@ -364,7 +424,6 @@ public class SegmentPlacementManager : MonoBehaviour
         // Mouse click kontrolü
         if (Input.GetMouseButtonDown(0) && hoveredSlotIndex != -1)
         {
-            Debug.Log($"Clicked on slot {hoveredSlotIndex}");
             PlaceSegmentAtSlot(hoveredSlotIndex);
         }
     }
@@ -409,14 +468,12 @@ public class SegmentPlacementManager : MonoBehaviour
             int half = segmentSize / 2;
             startSlot = (slotIndex - half + wheelManager.slotCount) % wheelManager.slotCount;
             
-            // Debug için
-            Debug.Log($"Segment boyutu: {segmentSize}, Tıklanan slot: {slotIndex}, Başlangıç slot: {startSlot}");
+
         }
         
         // Slot'ların boş olup olmadığını kontrol et
         if (!AreSlotsAvailableForSegment(startSlot, segmentSize))
         {
-            Debug.Log($"⚠️ Bu slotlara segment yerleştirilemez - dolu slotlar var. Start: {startSlot}, Size: {segmentSize}");
             return; // Dolu slotlarda preview gösterme
         }
         
@@ -431,8 +488,6 @@ public class SegmentPlacementManager : MonoBehaviour
         
         // Yarı saydam yap
         MakeSegmentTransparent(previewSegmentInstance);
-        
-        Debug.Log($"👻 Preview segment created at slot {startSlot}, Size: {segmentSize}");
     }
     
     // Belirli bir segment için gerekli slotların boş olup olmadığını kontrol et
@@ -446,7 +501,6 @@ public class SegmentPlacementManager : MonoBehaviour
             int slotIndex = (startSlot + i) % wheelManager.slotCount;
             if (wheelManager.slotOccupied[slotIndex])
             {
-                Debug.Log($"❌ Slot {slotIndex} dolu - segment yerleştirilemez");
                 return false;
             }
         }
@@ -508,13 +562,12 @@ public class SegmentPlacementManager : MonoBehaviour
             int half = segmentSize / 2;
             startSlot = (slotIndex - half + wheelManager.slotCount) % wheelManager.slotCount;
             
-            Debug.Log($"🔧 Placing segment - Size: {segmentSize}, Clicked slot: {slotIndex}, Start slot: {startSlot}");
+
         }
         
         // Slot'ların boş olup olmadığını kontrol et
         if (!AreSlotsAvailableForSegment(startSlot, segmentSize))
         {
-            Debug.LogWarning($"⚠️ Bu slotlara segment yerleştirilemez - dolu slotlar var. Start: {startSlot}, Size: {segmentSize}");
             return; // Dolu slotlarda yerleştirme yapma
         }
         
@@ -531,6 +584,26 @@ public class SegmentPlacementManager : MonoBehaviour
 
     private void CompletePlacement()
     {
+        // 2. Prize slot'ta segment var mı kontrol et (UI'ı kapatmadan önce)
+        if (HasSecondPrize())
+        {
+            Debug.Log($"🔄 2. Prize bulundu, UI kapatılmıyor...");
+            
+            // 2. Prize'ı 1. Prize'a taşı
+            PrizeSegment secondPrize = GetSecondPrize();
+            SetFirstPrize(secondPrize);
+            
+            // 2. Prize'ı yerleştir - tekrar yerleştirme ekranını aç
+            StartPlacement(secondPrize);
+            Debug.Log($"🔄 2. Prize yerleştiriliyor: {secondPrize.segmentName}");
+            
+            // UI'ı kapatma, 2. segment için yerleştirme ekranı açıldı
+            return;
+        }
+        
+        // 2. Prize yoksa UI'ı kapat ve temizle
+        Debug.Log("🎯 2. Prize yok, UI kapatılıyor...");
+        
         // Preview'ı temizle
         RemovePreviewSegment();
         
@@ -557,14 +630,15 @@ public class SegmentPlacementManager : MonoBehaviour
         hoveredSlotIndex = -1;
         currentSegment = null;
         
+        // Tüm prize'lar yerleştirildi
+        Debug.Log("🎉 Tüm prize'lar yerleştirildi!");
+        
         // PrizeWheelManager'a bildir
         PrizeWheelManager prizeWheelManager = FindFirstObjectByType<PrizeWheelManager>();
         if (prizeWheelManager != null)
         {
             prizeWheelManager.CompletePlacement();
         }
-        
-        // Debug.Log("🎯 Segment placement completed!");
     }
     
     private void OnDestroy()
