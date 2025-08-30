@@ -29,9 +29,21 @@ public class PrizeWheelManager : MonoBehaviour
     
     [Header("Input Settings")]
     public KeyCode spinKey = KeyCode.Space;
+    public KeyCode acceptResultKey = KeyCode.Return;
+    
+    [Header("Ability System")]
+public PrizeWheelAbilityHandler abilityHandler;
+
+[Header("Segment Placement System")]
+public SegmentPlacementManager segmentPlacementManager; // Hierarchy'den atanacak
     
     private Material wheelMaterial;
     private bool isSpinning = false;
+    private bool isWaitingForAcceptance = false; // Çark sonucunu kabul etmeyi bekliyor mu?
+    private PrizeSegment pendingWinningSegment = null; // Kazanılan segment (kabul edilmeyi bekliyor)
+    
+    // Public properties for Ability Handler access
+    public PrizeSegment PendingWinningSegment => pendingWinningSegment;
     private System.Action<PrizeSegment> onSpinComplete;
     private List<PrizeWheelDivider> dividers = new List<PrizeWheelDivider>();
     private PrizeSegmentTooltip tooltipHandler;
@@ -40,6 +52,11 @@ public class PrizeWheelManager : MonoBehaviour
     {
         InitializeWheel();
         SetupShader();
+        
+        // Ability handler'ı bul
+        if (abilityHandler == null)
+            abilityHandler = FindFirstObjectByType<PrizeWheelAbilityHandler>();
+            
         // Bir frame bekle ki diğer objeler de initialize olsun
         StartCoroutine(GenerateRandomWheelDelayed());
     }
@@ -53,9 +70,15 @@ public class PrizeWheelManager : MonoBehaviour
     void Update()
     {
         // Tuş kontrolü
-        if (Input.GetKeyDown(spinKey) && !isSpinning)
+        if (Input.GetKeyDown(spinKey) && !isSpinning && !isWaitingForAcceptance)
         {
             SpinWheel();
+        }
+        
+        // Enter tuşu ile çark sonucunu kabul etme
+        if (Input.GetKeyDown(acceptResultKey) && isWaitingForAcceptance)
+        {
+            AcceptWheelResult();
         }
     }
     
@@ -123,7 +146,7 @@ public class PrizeWheelManager : MonoBehaviour
         wheelMaterial.SetFloat("_LineWidth", lineWidth);
     }
     
-    void UpdateShaderProperties()
+    public void UpdateShaderProperties()
     {
         if (wheelMaterial == null || segments.Count == 0) return;
         
@@ -205,11 +228,14 @@ public class PrizeWheelManager : MonoBehaviour
             Debug.Log($"🎉 Won: {winningSegment.segmentName} (Range: {winningSegment.startAngle}°-{winningSegment.endAngle}°)");
             onSpinComplete?.Invoke(winningSegment);
             
-            // Eğer kazanılan segment çarka yerleştirilebilir bir segment ise segment placement sistemini başlat
-            if (IsSegmentPlaceable(winningSegment))
-            {
-                StartSegmentPlacementSystem(winningSegment);
-            }
+            // Post-spin ability'leri tetikle
+            OnWheelSpinComplete?.Invoke();
+            
+            // Çark sonucunu kabul etmeyi bekle
+            pendingWinningSegment = winningSegment;
+            isWaitingForAcceptance = true;
+            
+            Debug.Log("⏳ Press ENTER to accept the wheel result and continue...");
         }
         else
         {
@@ -395,6 +421,7 @@ public class PrizeWheelManager : MonoBehaviour
     
     // Event delegates
     public System.Action<PrizeSegment> OnSegmentWon;
+    public System.Action OnWheelSpinComplete; // Post-spin ability'ler için
     
     bool IsSegmentPlaceable(PrizeSegment segment)
     {
@@ -402,7 +429,7 @@ public class PrizeWheelManager : MonoBehaviour
         return segment.prizeType == PrizeType.SegmentReward && segment.segmentReward != null;
     }
     
-    void StartSegmentPlacementSystem(PrizeSegment wonSegment)
+    public void StartSegmentPlacementSystem(PrizeSegment wonSegment)
     {
         // Debug.Log($"🔧 Starting segment placement system for: {wonSegment.segmentName}");
         
@@ -416,6 +443,8 @@ public class PrizeWheelManager : MonoBehaviour
         // Prize wheel'i gizle ve normal wheel UI'ını göster
         HidePrizeWheelAndShowWheelUI();
     }
+    
+
     
     void HidePrizeWheelAndShowWheelUI()
     {
@@ -441,18 +470,35 @@ public class PrizeWheelManager : MonoBehaviour
     }
     
     void StartSegmentPlacementUI()
+{
+    // Önce inspector'dan atanan referansı kontrol et
+    if (segmentPlacementManager != null)
     {
-        // Segment placement manager'ı oluştur veya aktifleştir
-        SegmentPlacementManager placementManager = FindFirstObjectByType<SegmentPlacementManager>();
-        if (placementManager == null)
-        {
-            GameObject placementObj = new GameObject("SegmentPlacementManager");
-            placementManager = placementObj.AddComponent<SegmentPlacementManager>();
-        }
+        Debug.Log("🎯 Inspector'dan SegmentPlacementManager bulundu!");
         
         // Placement sistemini başlat
-        placementManager.StartPlacement(pendingSegment);
+        segmentPlacementManager.StartPlacement(pendingSegment);
     }
+    else
+    {
+        Debug.LogError("❌ Inspector'da SegmentPlacementManager atanmamış! Lütfen atayın.");
+        
+        // Fallback: Otomatik bul (ama bu önerilmez)
+        SegmentPlacementManager foundManager = FindFirstObjectByType<SegmentPlacementManager>();
+        if (foundManager != null)
+        {
+            Debug.LogWarning("⚠️ SegmentPlacementManager otomatik bulundu, ama inspector'a atamanız önerilir!");
+            segmentPlacementManager = foundManager; // Referansı kaydet
+            
+            // Placement sistemini başlat
+            segmentPlacementManager.StartPlacement(pendingSegment);
+        }
+        else
+        {
+            Debug.LogError("❌ Hiçbir SegmentPlacementManager bulunamadı! Lütfen hierarchy'ye ekleyin.");
+        }
+    }
+}
     
     // Public methods for external access
     public PrizeSegment GetPendingSegment() => pendingSegment;
@@ -462,7 +508,7 @@ public class PrizeWheelManager : MonoBehaviour
     {
         pendingSegment = null;
         isInPlacementMode = false;
-        // Debug.Log("🎯 Segment placement completed!");
+        Debug.Log("🎯 Segment placement completed!");
     }
     
     // Prize wheel'i tekrar göstermek için (opsiyonel)
@@ -479,7 +525,136 @@ public class PrizeWheelManager : MonoBehaviour
         // Debug.Log("🎡 Prize wheel shown again!");
     }
     
+    // Enter tuşu ile çark sonucunu kabul etme
+public void AcceptWheelResult()
+{
+    if (!isWaitingForAcceptance || pendingWinningSegment == null) return;
+    
+    Debug.Log("✅ Wheel result accepted! Processing...");
+    
+            // Önce inspector'dan atanan referansı kontrol et
+        if (segmentPlacementManager != null)
+        {
+            Debug.Log($"🎯 Inspector'dan SegmentPlacementManager bulundu! 1. Prize slot'a ekleniyor: {pendingWinningSegment.segmentName}");
+            
+            // Debug: Slot'larda ne var kontrol et
+            Debug.Log($"🔍 1. Prize slot'ta segment var mı? {segmentPlacementManager.HasFirstPrize()}");
+            Debug.Log($"🔍 2. Prize slot'ta segment var mı? {segmentPlacementManager.HasSecondPrize()}");
+            
+            if (segmentPlacementManager.HasSecondPrize())
+            {
+                Debug.Log($"🔄 2. Prize slot'ta segment bulundu! Double Spin modu aktif.");
+                
+                // Mevcut sonucu 1. Prize slot'a ekle
+                segmentPlacementManager.SetFirstPrize(pendingWinningSegment);
+                
+                // 1. Prize'ı prize sistemine ekle (çarkı açacak)
+                StartSegmentPlacementSystem(pendingWinningSegment);
+                
+                Debug.Log($"🎯 {pendingWinningSegment.segmentName} 1. Prize slot'a eklendi ve prize sistemi başlatıldı!");
+            }
+            else
+            {
+                // Normal mod - sadece 1. Prize
+                Debug.Log("🎯 Normal mod - sadece 1. Prize işleniyor.");
+                
+                // Mevcut sonucu 1. Prize slot'a ekle
+                segmentPlacementManager.SetFirstPrize(pendingWinningSegment);
+                
+                // 1. Prize'ı prize sistemine ekle (çarkı açacak)
+                StartSegmentPlacementSystem(pendingWinningSegment);
+                
+                Debug.Log($"🎯 {pendingWinningSegment.segmentName} 1. Prize slot'a eklendi ve prize sistemi başlatıldı!");
+            }
+        }
+    else
+    {
+        Debug.LogError("❌ Inspector'da SegmentPlacementManager atanmamış! Prize slot sistemi çalışamıyor.");
+        
+        // Fallback: Otomatik bul
+        SegmentPlacementManager foundManager = FindFirstObjectByType<SegmentPlacementManager>();
+        if (foundManager != null)
+        {
+            Debug.LogWarning("⚠️ SegmentPlacementManager otomatik bulundu, ama inspector'a atamanız önerilir!");
+            segmentPlacementManager = foundManager; // Referansı kaydet
+            
+            // Debug: Slot'larda ne var kontrol et
+            Debug.Log($"🔍 1. Prize slot'ta segment var mı? {foundManager.HasFirstPrize()}");
+            Debug.Log($"🔍 2. Prize slot'ta segment var mı? {foundManager.HasSecondPrize()}");
+            
+            // 2. Prize slot'ta segment var mı kontrol et (6. ability kullanıldıysa)
+            if (foundManager.HasSecondPrize())
+            {
+                Debug.Log($"🔄 2. Prize slot'ta segment bulundu! Double Spin modu aktif.");
+                
+                // Mevcut sonucu 1. Prize slot'a ekle
+                foundManager.SetFirstPrize(pendingWinningSegment);
+                
+                // 1. Prize'ı prize sistemine ekle (çarkı açacak)
+                StartSegmentPlacementSystem(pendingWinningSegment);
+                
+                Debug.Log($"🎯 {pendingWinningSegment.segmentName} 1. Prize slot'a eklendi ve prize sistemi başlatıldı!");
+            }
+            else
+            {
+                // Normal mod - sadece 1. Prize
+                Debug.Log("🎯 Normal mod - sadece 1. Prize işleniyor.");
+                
+                // Mevcut sonucu 1. Prize slot'a ekle
+                foundManager.SetFirstPrize(pendingWinningSegment);
+                
+                // 1. Prize'ı prize sistemine ekle (çarkı açacak)
+                StartSegmentPlacementSystem(pendingWinningSegment);
+                
+                Debug.Log($"🎯 {pendingWinningSegment.segmentName} 1. Prize slot'a eklendi ve prize sistemi başlatıldı!");
+            }
+        }
+        else
+        {
+            Debug.LogError("❌ SegmentPlacementManager bulunamadı! Prize slot sistemi çalışamıyor.");
+            
+            // Fallback: Normal prize sistemi
+            if (IsSegmentPlaceable(pendingWinningSegment))
+            {
+                StartSegmentPlacementSystem(pendingWinningSegment);
+                Debug.Log($"🎯 Fallback: {pendingWinningSegment.segmentName} normal prize sistemi ile işleniyor.");
+            }
+        }
+    }
+    
+    // State'i temizle
+    isWaitingForAcceptance = false;
+    pendingWinningSegment = null;
+}
+    
+    // Double Spin için pending result'ı resetle
+    public void ResetPendingResult()
+    {
+        pendingWinningSegment = null;
+        isWaitingForAcceptance = false;
+        
+        // SegmentPlacementManager'daki 1. Prize slot'u da temizle
+        if (segmentPlacementManager != null)
+        {
+            segmentPlacementManager.ClearFirstPrizeSlot();
+            Debug.Log("🔄 SegmentPlacementManager'daki 1. Prize slot da temizlendi.");
+        }
+        
+        Debug.Log("🔄 Pending result resetlendi, çark tekrar döndürülebilir.");
+    }
+    
+    // Çarkı 0°'ye döndür (1. ability ve 6. ability için)
+    public void ResetWheelToZero()
+    {
+        if (wheelTransform != null)
+        {
+            wheelTransform.DORotate(Vector3.zero, 1f);
+            Debug.Log("🔄 Çark 0°'ye döndürülüyor...");
+        }
+    }
+    
     // Public properties
     public bool IsSpinning => isSpinning;
+    public bool IsWaitingForAcceptance => isWaitingForAcceptance;
     public int SegmentCount => segments.Count;
 }

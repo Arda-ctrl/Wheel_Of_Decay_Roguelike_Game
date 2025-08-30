@@ -1289,6 +1289,9 @@ MonoBehaviour:
   wheelRadius: 2.5
   hoverDelay: 0.5
   spinKey: 32
+  acceptResultKey: 13
+  abilityHandler: {fileID: 1857240276}
+  segmentPlacementManager: {fileID: 1307298497}
 --- !u!1 &945165676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1681,6 +1684,8 @@ Transform:
   m_Children:
   - {fileID: 874044247}
   - {fileID: 360633483}
+  - {fileID: 1857240275}
+  - {fileID: 1307298496}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1031696662
@@ -1969,6 +1974,59 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1071024943}
   m_CullTransparentMesh: 1
+--- !u!1 &1307298495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1307298496}
+  - component: {fileID: 1307298497}
+  m_Layer: 0
+  m_Name: SegmentPlacementManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1307298496
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1307298495}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1031696661}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1307298497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1307298495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e9989164afd0254bb6d85fffcc7b1bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  segmentPreviewPanel: {fileID: 0}
+  segmentPreviewImage: {fileID: 0}
+  segmentNameText: {fileID: 0}
+  segmentDescriptionText: {fileID: 0}
+  previewMaterial: {fileID: 0}
+  previewAlpha: 0.5
+  wheelLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1324887364
 GameObject:
   m_ObjectHideFlags: 0
@@ -2307,6 +2365,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1651481819}
   m_CullTransparentMesh: 1
+--- !u!1 &1857240274
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1857240275}
+  - component: {fileID: 1857240276}
+  m_Layer: 0
+  m_Name: WheelPrizeHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1857240275
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1857240274}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1031696661}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1857240276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1857240274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39332957ddeaaed458f2ab53a0b3f918, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prizeWheelManager: {fileID: 874044248}
+  wheelGenerator: {fileID: 1031696662}
+  abilityKeys: 31000000320000003300000034000000350000003600000037000000
+  currentActiveAbility: -1
+  abilityUI: {fileID: 0}
 --- !u!1 &1982074715
 GameObject:
   m_ObjectHideFlags: 0
