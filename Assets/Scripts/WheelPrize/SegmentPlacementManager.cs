@@ -328,8 +328,8 @@ public class SegmentPlacementManager : MonoBehaviour
                 int startSlot = slotIndex;
                 if (segmentSize > 1)
                 {
-                    int half = segmentSize / 2;
-                    startSlot = (slotIndex - half + wheelManager.slotCount) % wheelManager.slotCount;
+                    // Segment'i tıklanan slot'tan başlat, ileriye doğru hesapla
+                    startSlot = slotIndex;
                 }
                 
                 if (AreSlotsAvailableForSegment(startSlot, segmentSize))
@@ -398,8 +398,8 @@ public class SegmentPlacementManager : MonoBehaviour
                         int startSlot = slotIndex;
                         if (segmentSize > 1)
                         {
-                            int half = segmentSize / 2;
-                            startSlot = (slotIndex - half + wheelManager.slotCount) % wheelManager.slotCount;
+                            // Segment'i tıklanan slot'tan başlat, ileriye doğru hesapla
+                            startSlot = slotIndex;
                         }
                         
                         if (AreSlotsAvailableForSegment(startSlot, segmentSize))
@@ -559,10 +559,8 @@ public class SegmentPlacementManager : MonoBehaviour
         int startSlot = slotIndex;
         if (segmentSize > 1)
         {
-            int half = segmentSize / 2;
-            startSlot = (slotIndex - half + wheelManager.slotCount) % wheelManager.slotCount;
-            
-
+            // Segment'i tıklanan slot'tan başlat, ileriye doğru hesapla
+            startSlot = slotIndex;
         }
         
         // Slot'ların boş olup olmadığını kontrol et
