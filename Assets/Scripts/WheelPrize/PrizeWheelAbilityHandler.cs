@@ -86,6 +86,14 @@ public class PrizeWheelAbilityHandler : MonoBehaviour
                 }
                 break;
                 
+            case 2: // 3. Direct Selection - Çark dönmeden önce kullanılabilir
+                if (isWheelSpinned)
+                {
+                    Debug.Log("⚠️ Direct Selection Ability çark döndükten sonra kullanılamaz! Önce Enter ile sonucu kabul edin.");
+                    return false;
+                }
+                break;
+                
             case 6: // 7. New Wheel - Çark dönmeden önce kullanılabilir
                 if (isWheelSpinned)
                 {
@@ -194,9 +202,111 @@ public class PrizeWheelAbilityHandler : MonoBehaviour
     void ActivateDirectSelectionAbility()
     {
         Debug.Log("🎯 Direct Selection Ability: İstediğin segmenti seç ve al");
-        // Bu ability için segment seçimi gerekli
-        // Şimdilik basit bir implementasyon
-        DeactivateAbility();
+        Debug.Log("🖱️ Mouse ile istediğin segmenti tıkla!");
+        
+        // Ability'yi aktif tut, mouse tıklamasını bekle
+        isAbilityActive = true;
+        currentActiveAbility = 2;
+        
+        // Mouse input'unu dinlemeye başla
+        StartCoroutine(WaitForSegmentSelection());
+    }
+    
+    // Mouse ile segment seçimini bekle
+    IEnumerator WaitForSegmentSelection()
+    {
+        while (isAbilityActive && currentActiveAbility == 2)
+        {
+            // Mouse tıklamasını bekle
+            if (Input.GetMouseButtonDown(0)) // Sol tık
+            {
+                // Mouse pozisyonunu al
+                Vector3 mousePos = Input.mousePosition;
+                mousePos.z = 10f; // Camera'dan uzaklık
+                
+                // Mouse pozisyonunu dünya koordinatına çevir
+                Vector3 worldPos = Camera.main.ScreenToWorldPoint(mousePos);
+                
+                // Çark üzerinde tıklanan segmenti bul
+                PrizeSegment selectedSegment = FindSegmentAtPosition(worldPos);
+                
+                if (selectedSegment != null)
+                {
+                    // Segment seçildi, ödülü ver
+                    GiveSegmentReward(selectedSegment);
+                    Debug.Log($"🎁 {selectedSegment.segmentName} seçildi ve ödülü verildi!");
+                    
+                    // Ability'yi deaktive et
+                    DeactivateAbility();
+                    yield break;
+                }
+                else
+                {
+                    Debug.Log("⚠️ Çark üzerinde segment bulunamadı! Tekrar dene.");
+                }
+            }
+            
+            // ESC tuşu ile iptal et
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Debug.Log("❌ Direct Selection Ability iptal edildi.");
+                DeactivateAbility();
+                yield break;
+            }
+            
+            yield return null;
+        }
+    }
+    
+    // Mouse pozisyonunda segment bul
+    PrizeSegment FindSegmentAtPosition(Vector3 worldPos)
+    {
+        if (prizeWheelManager == null || prizeWheelManager.segments == null) return null;
+        
+        // Mouse pozisyonunu çark merkezine göre açıya çevir
+        Vector3 wheelCenter = prizeWheelManager.wheelTransform.position;
+        Vector3 direction = (worldPos - wheelCenter).normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        
+        // Unity koordinat sistemine uyarla (0° üst, 90° sağ)
+        angle = (90f - angle + 360f) % 360f;
+        
+        // Hangi segment'e denk geldiğini bul
+        foreach (var segment in prizeWheelManager.segments)
+        {
+            if (segment.ContainsAngle(angle))
+            {
+                return segment;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Segment ödülünü ver
+    void GiveSegmentReward(PrizeSegment segment)
+    {
+        if (segment.segmentReward != null)
+        {
+            Debug.Log($"🎁 Segment ödülü verildi: {segment.segmentReward.segmentID}");
+            // Burada gerçek ödül sistemi entegre edilebilir
+        }
+        else
+        {
+            Debug.Log($"🎁 Segment ödülü verildi: {segment.segmentName}");
+        }
+        
+        // 3. Ability kullanıldıktan sonra çark dönmüş gibi davran
+        isWheelSpinned = true;
+        Debug.Log("🎯 Çark sonucu kabul edildi! Artık Enter ile devam edebilir veya 1 ile tekrar döndürebilirsiniz.");
+        
+        // Direkt çarkın prize alma sistemini aktifleştir
+        if (prizeWheelManager != null)
+        {
+            // Seçilen segmenti prize olarak ekle ve çarkı aç
+            prizeWheelManager.StartSegmentPlacementSystem(segment);
+            Debug.Log("🎁 Prize sistemi aktifleştirildi! Çark açıldı.");
+        }
     }
     
     // 4. Segment rerolla

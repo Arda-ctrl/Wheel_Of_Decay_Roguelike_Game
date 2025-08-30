@@ -423,7 +423,7 @@ public class PrizeWheelManager : MonoBehaviour
         return segment.prizeType == PrizeType.SegmentReward && segment.segmentReward != null;
     }
     
-    void StartSegmentPlacementSystem(PrizeSegment wonSegment)
+    public void StartSegmentPlacementSystem(PrizeSegment wonSegment)
     {
         // Debug.Log($"🔧 Starting segment placement system for: {wonSegment.segmentName}");
         
