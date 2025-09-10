@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6879dd3cd099e34db922c3eaad426f1, type: 3}
+  m_Name: Trapper Goblin
+  m_EditorClassIdentifier: 
+  overrideGoblinType: 0
+  goblinType: 2
+  stats:
+    health: 100
+    speed: 6
+    attackDamage: 15
+    attackRange: 1.5
+    attackCooldown: 1.5
+    canFlee: 1
+    fleeHealthThreshold: 0.3
+    minAlliesForFlee: 1
+    explosionDamage: 25
+    explosionRadius: 2

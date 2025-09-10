@@ -15,11 +15,15 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
     [Header("Debug")]
     [SerializeField] protected bool showDebugInfo = true;
     [SerializeField] protected bool showDetectionGizmo = true;
+    
+    [Header("Death Settings")]
+    [SerializeField] protected float destroyOnDeathDelay = 0.1f;
 
     // Protected fields
     protected float currentHealth;
     protected float speedMultiplier = 1f;
     protected Dictionary<StatusEffectType, float> activeStatusEffects = new Dictionary<StatusEffectType, float>();
+    protected bool isDead = false;
     
     // Movement and AI
     protected Transform playerTransform;
@@ -52,6 +56,7 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
 
     protected virtual void Update()
     {
+        if (isDead) return;
         UpdateStatusEffects();
         UpdateAI();
         UpdateAnimations();
@@ -303,8 +308,10 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
 
     public virtual void TakeDamage(float amount)
     {
+        if (isDead) return;
         float finalDamage = amount / currentDefense;
         currentHealth -= finalDamage;
+        if (currentHealth < 0f) currentHealth = 0f;
 
         // Play hurt sound
         if (enemyData.hurtSound != null)
@@ -312,10 +319,18 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
             AudioSource.PlayClipAtPoint(enemyData.hurtSound, transform.position);
         }
 
-        // Trigger hurt animation
+        // Trigger hurt animation (only if Hurt parameter exists)
         if (animator != null)
         {
-            animator.SetTrigger("Hurt");
+            // Check if Hurt parameter exists before setting it
+            foreach (AnimatorControllerParameter param in animator.parameters)
+            {
+                if (param.name == "Hurt" && param.type == AnimatorControllerParameterType.Trigger)
+                {
+                    animator.SetTrigger("Hurt");
+                    break;
+                }
+            }
         }
 
         OnEnemyDamaged(finalDamage);
@@ -371,6 +386,23 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
 
     protected virtual void Die()
     {
+        if (isDead) return;
+        isDead = true;
+
+        // Stop activity immediately
+        StopAllCoroutines();
+        isAttacking = false;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+        // Disable colliders to block further hits during death handling
+        var colliders = GetComponentsInChildren<Collider2D>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = false;
+        }
+
         // Play death sound
         if (enemyData.deathSound != null)
         {
@@ -392,10 +424,11 @@ public abstract class BaseEnemy : MonoBehaviour, IHealth, IMoveable, IStatusEffe
             EventManager.Instance.TriggerEnemyDeath(gameObject);
         }
 
+        // Call OnEnemyDeath - let derived classes handle death animation and extra logic
         OnEnemyDeath();
 
-        // Destroy the enemy
-        Destroy(gameObject);
+        // Ensure object is destroyed shortly
+        Destroy(gameObject, destroyOnDeathDelay);
     }
 
     protected virtual void GiveRewards()

@@ -91,10 +91,23 @@ public class MudProjectile : MonoBehaviour
     
     private Vector2 CalculateTrajectoryVelocity(Vector2 startPos, Vector2 targetPos, float launchSpeed)
     {
+        // Guard against invalid inputs
+        if (launchSpeed <= 0.01f)
+        {
+            launchSpeed = Mathf.Max(launchSpeed, 0.1f);
+        }
+
         // Calculate the displacement
         Vector2 displacement = targetPos - startPos;
         float horizontalDistance = displacement.x;
         float verticalDistance = displacement.y;
+        float distance = displacement.magnitude;
+
+        // If too close, return a small safe upward-forward velocity
+        if (distance < 0.001f)
+        {
+            return new Vector2(launchSpeed, 2f);
+        }
         
         // Use physics to calculate trajectory
         // For projectile motion: v = sqrt(g * d / sin(2θ))
@@ -115,9 +128,10 @@ public class MudProjectile : MonoBehaviour
         float gravity = Physics2D.gravity.magnitude;
         if (gravity == 0) gravity = 9.81f; // Fallback if gravity is disabled
         
-        // Calculate required velocity for the trajectory
-        float distance = displacement.magnitude;
-        float velocityMagnitude = Mathf.Sqrt(gravity * distance / Mathf.Sin(2 * launchAngle));
+        // Calculate required velocity for the trajectory (kept for reference, but we use velocityNeeded below)
+        float sinTwoTheta = Mathf.Sin(2 * launchAngle);
+        if (Mathf.Abs(sinTwoTheta) < 0.0001f) sinTwoTheta = 0.5f; // avoid division by zero
+        float velocityMagnitude = Mathf.Sqrt(Mathf.Max(0.0001f, gravity * distance / sinTwoTheta));
         
         // Clamp the velocity to reasonable values
         velocityMagnitude = Mathf.Clamp(velocityMagnitude, launchSpeed * 0.5f, launchSpeed * 2f);
@@ -126,7 +140,7 @@ public class MudProjectile : MonoBehaviour
         Vector2 velocityDirection = displacement.normalized;
         
         // For more accurate targeting, calculate exact velocity needed
-        float timeToTarget = distance / launchSpeed;
+        float timeToTarget = distance / Mathf.Max(launchSpeed, 0.1f);
         Vector2 velocityNeeded = displacement / timeToTarget;
         
         // Add gravity compensation
@@ -167,18 +181,15 @@ public class MudProjectile : MonoBehaviour
         {
             DealDamageToPlayer(other);
         }
-        
-        // Hit ground or obstacles
-        if (other.CompareTag("Ground") || other.CompareTag("Wall") || other.CompareTag("Obstacle"))
+        else
         {
+            // Any other collision (non-owner) will splash
             CreateSplash();
         }
     }
 
     private void DealDamageToPlayer(Collider2D player)
     {
-        hasHit = true;
-        
         // Deal damage
         var playerHealth = player.GetComponent<IHealth>();
         if (playerHealth != null)
@@ -223,6 +234,9 @@ public class MudProjectile : MonoBehaviour
 
     private void CreateSplash()
     {
+        if (hasHit) return;
+        hasHit = true;
+
         // Create splash effect
         if (splashEffect != null)
         {

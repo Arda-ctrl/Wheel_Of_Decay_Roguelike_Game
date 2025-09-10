@@ -34,6 +34,8 @@ public class TrapperGoblinBombs : TrapperGoblin
         goblinStats.minAlliesForFlee = 0;
         
         base.Start();
+
+        // Locomotion booleans are driven by base from speed
     }
     
     protected override IEnumerator GoblinAI()
@@ -78,6 +80,26 @@ public class TrapperGoblinBombs : TrapperGoblin
             }
             
             yield return new WaitForFixedUpdate();
+        }
+    }
+
+    // Trapper Bomber için saldırı kullanılmıyor, Attacking yerine Throw/PlacingTrap tercih edilir
+    protected override IEnumerator AttackBehavior()
+    {
+        // Eğer bomba atılabiliyorsa onu yap, aksi halde hızla Chasing'e dön
+        if (ShouldThrowBomb())
+        {
+            yield return StartCoroutine(ThrowBombBehavior());
+        }
+        else
+        {
+            rb.linearVelocity = Vector2.zero;
+            yield return null;
+        }
+
+        if (currentState == GoblinState.Attacking)
+        {
+            ChangeState(GoblinState.Chasing);
         }
     }
     
@@ -140,6 +162,9 @@ public class TrapperGoblinBombs : TrapperGoblin
         
         isThrowing = true;
         rb.linearVelocity = Vector2.zero;
+        
+        // unified: trigger Throw animation
+        if (animator != null) animator.SetTrigger(AnimThrow);
         
         // Wind-up animation time
         yield return new WaitForSeconds(0.8f);
@@ -244,19 +269,7 @@ public class TrapperGoblinBombs : TrapperGoblin
         }
     }
     
-    protected override IEnumerator AttackBehavior()
-    {
-        // If close enough for bomb throw, prefer that over melee
-        if (ShouldThrowBomb())
-        {
-            yield return StartCoroutine(ThrowBombBehavior());
-        }
-        else
-        {
-            // Use base class melee attack
-            yield return base.AttackBehavior();
-        }
-    }
+    
     
     protected override void OnDrawGizmosSelected()
     {

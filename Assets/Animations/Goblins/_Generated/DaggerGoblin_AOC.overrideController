@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DaggerGoblin_AOC
+  m_Controller: {fileID: 9100000, guid: 347642d125e064a41b5a0321e05c202e, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 988f74c296d902c4299e9a726e3a2cd2, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 35f3b3d22b724584da9683a97c024094, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 96e81df2a4700324b8f432d2b2d49965, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: f249036d212692b47982c51a56e2aed4, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 0c7ea11177c1c924b9264a83efb4b0ba, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: a9d98fb2607b1d243a1cf3c5e4c9442d, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 7624bffba89a1ff4bac1e265ffa88d3a, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 866aedf5367f8be4e99721b20c1643fa, type: 2}

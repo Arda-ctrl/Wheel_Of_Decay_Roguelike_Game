@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12af364881b7b1e4e9d19192d208c19f, type: 3}
+  m_Name: Ates Eden Rotkins
+  m_EditorClassIdentifier: 
+  enemyName: RangedRotkins
+  description: Tanka göre daha zayıf, kafasının üstündeki kristalleri fırlatır.
+  enemySprite: {fileID: 0}
+  kingdomType: 1
+  enemyType: 0
+  maxHealth: 120
+  baseSpeed: 2.5
+  baseDamage: 25
+  attackRange: 8
+  attackCooldown: 2
+  detectionRange: 10
+  stopDistance: 6
+  chaseSpeed: 3
+  damageMultiplier: 1
+  defenseMultiplier: 0.8
+  canUseAbilities: 1
+  isRanged: 1
+  projectileSpeed: 12
+  experienceReward: 15
+  goldReward: 6
+  possibleDrops: []
+  hasSpecialAbility: 1
+  specialAbilityCooldown: 4
+  specialAbilityRange: 3
+  deathEffect: {fileID: 0}
+  deathSound: {fileID: 0}
+  attackSound: {fileID: 0}
+  hurtSound: {fileID: 0}

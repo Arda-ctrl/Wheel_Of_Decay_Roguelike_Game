@@ -84,10 +84,18 @@ public class SmallMyceloid : BaseSlimeController
                 FlipSprite();
             }
             
-            // Trigger bounce animation
+            // Trigger bounce animation (if Bounce trigger exists)
             if (animator != null)
             {
-                animator.SetTrigger("Bounce");
+                // Check if Bounce parameter exists before setting it
+                foreach (AnimatorControllerParameter param in animator.parameters)
+                {
+                    if (param.name == "Bounce" && param.type == AnimatorControllerParameterType.Trigger)
+                    {
+                        animator.SetTrigger("Bounce");
+                        break;
+                    }
+                }
             }
         }
     }
@@ -110,7 +118,7 @@ public class SmallMyceloid : BaseSlimeController
             // Trigger attack animation
             if (animator != null)
             {
-                animator.SetTrigger("MeleeAttack");
+                animator.SetTrigger("Poke"); // Use Poke trigger instead of MeleeAttack
             }
             
             // Perform melee attack
@@ -207,11 +215,22 @@ public class SmallMyceloid : BaseSlimeController
 
     protected override void UpdateAnimations()
     {
-        base.UpdateAnimations();
-        
         if (animator == null) return;
         
-        // Set bouncing state
+        // Update movement animation based on velocity
+        bool isMoving = rb != null && rb.linearVelocity.magnitude > 0.1f;
+        bool isJogging = isMoving && currentSlimeState == SlimeState.Roaming;
+        bool isIdle = !isMoving && currentSlimeState == SlimeState.Idle;
+        bool isDead = currentSlimeState == SlimeState.Dead;
+        bool isPoking = isAttacking && currentSlimeState == SlimeState.Attacking;
+        
+        // Set animation parameters to match your animator
+        animator.SetBool("IsIdle", isIdle);
+        animator.SetBool("IsJogging", isJogging);
+        animator.SetBool("IsDead", isDead);
+        animator.SetBool("IsPoking", isPoking);
+        
+        // Set bouncing state (if you want to keep this)
         animator.SetBool("IsBouncing", useBounceMovement && currentSlimeState == SlimeState.Roaming);
         
         // Set attack state

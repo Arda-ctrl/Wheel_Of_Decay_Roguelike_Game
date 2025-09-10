@@ -1,83 +1,43 @@
 using UnityEngine;
+using System.Collections;
 
 public class RapidDecayElfArcher : DecayElfArcher
 {
     [Header("Rapid Decay Elf Archer Specific")]
     [SerializeField] private GameObject shortBowPrefab;
     [SerializeField] private GameObject smallArrowPrefab;
-    [SerializeField] private float rapidFireRate = 0.1f;
-    [SerializeField] private int rapidFireCount = 5;
-    [SerializeField] private float movingAttackChance = 0.6f;
+    [SerializeField] private float rapidFireRate = 0.3f; // Time between shots in rapid fire
+    [SerializeField] private int rapidFireCount = 5; // Number of arrows in rapid fire
+    [SerializeField] private float rapidFireCooldown = 6f; // Cooldown between rapid fire sequences
+    [SerializeField] private float smallArrowSpeed = 12f;
+    [SerializeField] private float smallArrowDamage = 8f;
     [SerializeField] private bool canShootWhileMoving = true;
-
+    
+    private float lastRapidFireTime = 0f;
     private bool isRapidFiring = false;
-    private bool isMovingAndShooting = false;
+    private bool isMoving = false;
 
     protected override void PerformAttack()
     {
         base.PerformAttack();
         
-        // Rapid Decay Elf specific attack logic
-        if (Random.value < movingAttackChance && canShootWhileMoving)
+        // Rapid Decay Elf can shoot while moving or do rapid fire
+        if (isMoving && canShootWhileMoving)
         {
-            // Shoot while moving
-            StartCoroutine(MovingAttackSequence());
+            ShootWhileMoving();
+        }
+        else if (Time.time >= lastRapidFireTime + rapidFireCooldown)
+        {
+            StartRapidFire();
         }
         else
         {
-            // Rapid fire from standing position
-            StartCoroutine(RapidFireSequence());
+            // Regular single shot
+            ShootSmallArrow();
         }
     }
 
-    private System.Collections.IEnumerator RapidFireSequence()
-    {
-        if (isRapidFiring) yield break;
-        
-        isRapidFiring = true;
-        
-        for (int i = 0; i < rapidFireCount; i++)
-        {
-            ShootRapidArrow();
-            yield return new WaitForSeconds(rapidFireRate);
-        }
-        
-        isRapidFiring = false;
-    }
-
-    private System.Collections.IEnumerator MovingAttackSequence()
-    {
-        if (isMovingAndShooting) yield break;
-        
-        isMovingAndShooting = true;
-        
-        // Move in a pattern while shooting
-        Vector2[] moveDirections = { Vector2.up, Vector2.right, Vector2.down, Vector2.left };
-        
-        for (int i = 0; i < 4; i++)
-        {
-            // Move in direction
-            if (rb != null)
-            {
-                rb.linearVelocity = moveDirections[i] * GetCurrentSpeed();
-            }
-            
-            // Shoot while moving
-            ShootRapidArrow();
-            
-            yield return new WaitForSeconds(0.3f);
-        }
-        
-        // Stop movement
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-        }
-        
-        isMovingAndShooting = false;
-    }
-
-    private void ShootRapidArrow()
+    private void ShootSmallArrow()
     {
         if (arrowSpawnPoint == null)
         {
@@ -94,7 +54,7 @@ public class RapidDecayElfArcher : DecayElfArcher
         var arrowComponent = arrow.GetComponent<EnemyProjectile>();
         if (arrowComponent != null)
         {
-            arrowComponent.Initialize(direction, arrowSpeed * 1.2f, arrowDamage * 0.8f, gameObject);
+            arrowComponent.Initialize(direction, smallArrowSpeed, smallArrowDamage, gameObject);
         }
         else
         {
@@ -102,52 +62,137 @@ public class RapidDecayElfArcher : DecayElfArcher
             Rigidbody2D arrowRb = arrow.GetComponent<Rigidbody2D>();
             if (arrowRb != null)
             {
-                arrowRb.linearVelocity = direction * arrowSpeed * 1.2f;
+                arrowRb.linearVelocity = direction * smallArrowSpeed;
             }
         }
         
-        Debug.Log($"🏹 {enemyData.enemyName} shot a rapid arrow!");
+        Debug.Log($"🏹 {enemyData.enemyName} shot a small arrow!");
+    }
+
+    private void ShootWhileMoving()
+    {
+        // Shoot while moving - less accurate but faster
+        Vector2 direction = (playerTransform.position - transform.position).normalized;
+        
+        // Add some spread when moving
+        float spreadAngle = Random.Range(-15f, 15f);
+        direction = Quaternion.Euler(0, 0, spreadAngle) * direction;
+        
+        GameObject arrow = Instantiate(smallArrowPrefab, transform.position, Quaternion.identity);
+        
+        var arrowComponent = arrow.GetComponent<EnemyProjectile>();
+        if (arrowComponent != null)
+        {
+            arrowComponent.Initialize(direction, smallArrowSpeed * 0.8f, smallArrowDamage * 0.7f, gameObject);
+        }
+        else
+        {
+            Rigidbody2D arrowRb = arrow.GetComponent<Rigidbody2D>();
+            if (arrowRb != null)
+            {
+                arrowRb.linearVelocity = direction * smallArrowSpeed * 0.8f;
+            }
+        }
+        
+        Debug.Log($"🏃‍♂️ {enemyData.enemyName} shot while moving!");
+    }
+
+    private void StartRapidFire()
+    {
+        if (isRapidFiring) return;
+        
+        StartCoroutine(RapidFireSequence());
+        lastRapidFireTime = Time.time;
+    }
+
+    private IEnumerator RapidFireSequence()
+    {
+        isRapidFiring = true;
+        
+        Debug.Log($"⚡ {enemyData.enemyName} started rapid fire!");
+        
+        // Stop movement during rapid fire for accuracy
+        Vector2 originalVelocity = rb.linearVelocity;
+        rb.linearVelocity = Vector2.zero;
+        
+        for (int i = 0; i < rapidFireCount; i++)
+        {
+            ShootSmallArrow();
+            yield return new WaitForSeconds(rapidFireRate);
+        }
+        
+        // Resume movement
+        rb.linearVelocity = originalVelocity;
+        
+        isRapidFiring = false;
+        Debug.Log($"⚡ {enemyData.enemyName} finished rapid fire!");
     }
 
     protected override void UpdateAI()
     {
-        if (isRapidFiring || isMovingAndShooting) return; // Don't update AI while in special attack mode
+        if (isRapidFiring) return; // Don't update AI while rapid firing
+        
+        // Track if we're moving
+        isMoving = rb != null && rb.linearVelocity.magnitude > 0.1f;
         
         base.UpdateAI();
     }
 
-    protected override void PerformDecayElfSpecialAbility()
+    protected override void MoveTowardsPlayer()
     {
-        // Rapid Decay Elf special ability - Barrage
-        Debug.Log($"🏹 {enemyData.enemyName} used Barrage!");
+        if (isRapidFiring) return; // Don't move while rapid firing
         
-        // Shoot a barrage of arrows in all directions
-        StartCoroutine(BarrageSequence());
+        base.MoveTowardsPlayer();
     }
 
-    private System.Collections.IEnumerator BarrageSequence()
+    protected override void PerformDecayElfSpecialAbility()
     {
-        for (int i = 0; i < 12; i++)
+        // Rapid Decay Elf special ability - Enhanced Rapid Fire
+        if (Time.time >= lastRapidFireTime + rapidFireCooldown)
         {
-            float angle = i * 30f;
-            Vector2 direction = Quaternion.Euler(0, 0, angle) * Vector2.right;
-            
-            // Create small arrow
-            GameObject arrow = Instantiate(smallArrowPrefab, transform.position, Quaternion.identity);
-            
-            var arrowComponent = arrow.GetComponent<EnemyProjectile>();
-            if (arrowComponent != null)
-            {
-                arrowComponent.Initialize(direction, arrowSpeed * 1.5f, arrowDamage * 0.6f, gameObject);
-            }
-            
-            yield return new WaitForSeconds(0.05f);
+            StartCoroutine(EnhancedRapidFire());
         }
+    }
+
+    private IEnumerator EnhancedRapidFire()
+    {
+        Debug.Log($"⚡ {enemyData.enemyName} used Enhanced Rapid Fire!");
+        
+        // Enhanced rapid fire with more arrows and faster rate
+        int enhancedCount = rapidFireCount + 3;
+        float enhancedRate = rapidFireRate * 0.7f;
+        
+        isRapidFiring = true;
+        lastRapidFireTime = Time.time;
+        
+        // Stop movement for accuracy
+        Vector2 originalVelocity = rb.linearVelocity;
+        rb.linearVelocity = Vector2.zero;
+        
+        for (int i = 0; i < enhancedCount; i++)
+        {
+            ShootSmallArrow();
+            yield return new WaitForSeconds(enhancedRate);
+        }
+        
+        // Resume movement
+        rb.linearVelocity = originalVelocity;
+        
+        isRapidFiring = false;
     }
 
     protected override void OnEnemySpawned()
     {
         base.OnEnemySpawned();
-        Debug.Log($"🏹 Rapid Decay Elf Archer spawned! Kingdom: {enemyData.kingdomType}");
+        Debug.Log($"⚡ Rapid Decay Elf Archer spawned! Kingdom: {enemyData.kingdomType}");
     }
-} 
+
+    protected override void OnDrawGizmosSelected()
+    {
+        base.OnDrawGizmosSelected();
+        
+        // Draw rapid fire range
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, enemyData.attackRange);
+    }
+}

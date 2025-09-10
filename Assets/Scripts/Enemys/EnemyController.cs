@@ -15,6 +15,9 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
     [Header("References")]
     [SerializeField] protected SpriteRenderer spriteRenderer;
     [SerializeField] private bool facingRightByDefault = true; // Sprite varsayılan olarak sağa mı bakıyor?
+    [Header("Flip Settings")]
+    [SerializeField] private bool useYRotationFlip = false; // true: Y rotasyonu ile flip (0/180)
+    [SerializeField] private Transform flipRoot; // Boşsa spriteRenderer.transform ya da this.transform kullanılır
 
     [Header("UI Settings")]
     [SerializeField] private Vector2 statsOffset = new Vector2(0f, 50f);
@@ -109,14 +112,11 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
                     rb.linearVelocity = Vector2.zero;
                 }
 
-                // Sprite yönünü güncelle
-                if (spriteRenderer != null)
+                // Sprite yönünü güncelle (spriteRenderer olmasa da flipRoot ile çalışır)
+                bool shouldFaceRight = playerTransform.position.x > transform.position.x;
+                if (shouldFaceRight != isFacingRight)
                 {
-                    bool shouldFaceRight = playerTransform.position.x > transform.position.x;
-                    if (shouldFaceRight != isFacingRight)
-                    {
-                        FlipSprite();
-                    }
+                    FlipSprite();
                 }
             }
             else
@@ -135,14 +135,36 @@ public class EnemyController : MonoBehaviour, IHealth, IMoveable, IStatusEffect
 
     private void UpdateSpriteDirection(bool facingRight)
     {
-        if (spriteRenderer != null)
+        // Hangi kökü flip edeceğiz?
+        Transform target = flipRoot != null ? flipRoot : (spriteRenderer != null ? spriteRenderer.transform : transform);
+
+        if (useYRotationFlip)
         {
-            // Eğer sprite varsayılan olarak sağa bakıyorsa
+            // Y-rotasyonu ile flip (rig/çoklu renderer için güvenli)
+            // facingRightByDefault'a göre 0/180 atama
+            float yAngle;
+            if (facingRightByDefault)
+            {
+                // Varsayılan sağa bakıyor: sağ => 0°, sol => 180°
+                yAngle = facingRight ? 0f : 180f;
+            }
+            else
+            {
+                // Varsayılan sola bakıyor: sağ => 180°, sol => 0°
+                yAngle = facingRight ? 180f : 0f;
+            }
+
+            Vector3 euler = target.localEulerAngles;
+            euler.y = yAngle;
+            target.localEulerAngles = euler;
+        }
+        else if (spriteRenderer != null)
+        {
+            // flipX ile flip (tek renderer için uygun)
             if (facingRightByDefault)
             {
                 spriteRenderer.flipX = !facingRight;
             }
-            // Eğer sprite varsayılan olarak sola bakıyorsa
             else
             {
                 spriteRenderer.flipX = facingRight;

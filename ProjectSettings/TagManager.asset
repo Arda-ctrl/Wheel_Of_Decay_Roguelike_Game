@@ -9,6 +9,7 @@ TagManager:
   - Box
   - Room
   - FxTemporaire
+  - Wall
   layers:
   - Default
   - TransparentFX
@@ -40,7 +41,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - Wall
   - 
   m_SortingLayers:
   - name: Default

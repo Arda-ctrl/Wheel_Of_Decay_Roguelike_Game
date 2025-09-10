@@ -6,8 +6,9 @@ public class TrapperGoblin : GoblinController
 {
     [Header("Trapper Settings")]
     [SerializeField] private GameObject bearTrapPrefab;
+    [SerializeField] private Transform trapPlacementArea; // Empty object for trap placement area
     [SerializeField] private float trapPlacementRange = 6f;
-    [SerializeField] private float trapCooldown = 8f;
+    [SerializeField] private float trapCooldown = 5f;
     [SerializeField] private int maxTraps = 3;
     [SerializeField] private float minTrapDistance = 2f;
     [SerializeField] private float trapPlacementTime = 1.5f;
@@ -17,12 +18,28 @@ public class TrapperGoblin : GoblinController
     [SerializeField] private float retreatDistance = 6f;
     [SerializeField] private LayerMask groundLayer = 1;
     
+    [Header("Random Movement Settings")]
+    [SerializeField] private float roamRadius = 8f;
+    [SerializeField] private float roamSpeed = 3f;
+    [SerializeField] private float idleTime = 1f;
+    [SerializeField] private float roamTime = 3f;
+    [SerializeField] private float directionChangeInterval = 1f;
+    [SerializeField] private bool useRandomDirectionChange = true;
+    [SerializeField] private float fleeSpeedMultiplier = 1.2f;
+    
     protected float lastTrapTime;
     protected List<GameObject> placedTraps = new List<GameObject>();
     protected bool isPlacingTrap = false;
     
-    [Header("Animation")]
-    [SerializeField] private Animator animator;
+    // Random movement variables (Myceloid style)
+    protected Vector2 spawnPosition;
+    protected Vector2 roamTarget;
+    protected float stateTimer = 0f;
+    protected float directionTimer = 0f;
+    protected Vector2 currentRoamDirection;
+    
+    [Header("Animation (deprecated local refs)")]
+    [SerializeField] private Animator animatorOverride; // use base.animator when available
     
     protected override void Start()
     {
@@ -54,47 +71,65 @@ public class TrapperGoblin : GoblinController
         {
             Debug.Log($"Animator bulundu: {animator.name}");
         }
+
+        // Initialize random movement (Myceloid style)
+        spawnPosition = transform.position;
+        GenerateNewRoamTarget();
         
-        // SpriteRenderer kaldırıldı - test için
+        // Disable detection range for trapper - it doesn't chase
+        detectionRange = 0f;
+        
+        // Start with Idle state
+        Debug.Log("TrapperGoblin Start completed, changing to Idle state");
+        ChangeState(GoblinState.Idle);
     }
     
     protected override IEnumerator GoblinAI()
     {
+        Debug.Log("GoblinAI coroutine started!");
+        
         while (currentState != GoblinState.Dead)
         {
-            switch (currentState)
+            Debug.Log($"GoblinAI loop - Current State: {currentState}, isPlacingTrap: {isPlacingTrap}");
+            
+            // If placing trap, don't move at all
+            if (isPlacingTrap)
             {
-                case GoblinState.Idle:
-                    // Pozisyon kaymasını önle - velocity'yi sıfırla
-                    rb.linearVelocity = Vector2.zero;
-                    rb.angularVelocity = 0f;
-                    
-                    // Look for opportunities to place traps
-                    if (ShouldPlaceTrap())
-                    {
-                        ChangeState(GoblinState.PlacingTrap);
-                    }
-                    break;
-                    
-                case GoblinState.Chasing:
-                    HandleChasing();
-                    break;
-                    
-                case GoblinState.PlacingTrap:
-                    if (!isPlacingTrap)
-                    {
-                        StartCoroutine(PlaceTrapBehavior());
-                    }
-                    break;
-                    
-                case GoblinState.Fleeing:
-                    // Fleeing behavior handled in base class
-                    // But also try to place traps while fleeing
-                    if (ShouldPlaceTrap())
-                    {
-                        StartCoroutine(PlaceTrapWhileFleeing());
-                    }
-                    break;
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
+            else
+            {
+                // Update state timer
+                stateTimer += Time.fixedDeltaTime;
+                
+                Debug.Log($"GoblinAI - Current State: {currentState}, Timer: {stateTimer:F2}");
+                
+                switch (currentState)
+                {
+                    case GoblinState.Idle:
+                        Debug.Log("Handling Idle State");
+                        HandleIdleState();
+                        break;
+                        
+                    case GoblinState.Chasing:
+                        Debug.Log("Handling Chasing State (Roaming)");
+                        HandleRoamingState();
+                        break;
+                        
+                    case GoblinState.PlacingTrap:
+                        Debug.Log("Handling PlacingTrap State");
+                        if (!isPlacingTrap)
+                        {
+                            StartCoroutine(PlaceTrapBehavior());
+                        }
+                        break;
+                        
+                    case GoblinState.Fleeing:
+                        Debug.Log("Handling Fleeing State");
+                        HandleFleeingBehavior();
+                        break;
+                }
             }
             
             // Clean up destroyed traps from list
@@ -105,57 +140,214 @@ public class TrapperGoblin : GoblinController
             
             yield return new WaitForFixedUpdate();
         }
+        
+        Debug.Log("GoblinAI coroutine ended!");
     }
     
-    // Basit animasyon kontrolü - mevcut animasyonlara göre
+    // Basit animasyon kontrolü - unified params
     private void UpdateAnimation()
     {
         if (animator != null)
         {
-            // Hareket hızı - Rigidbody2D velocity kullan
-            float currentSpeed = rb.linearVelocity.magnitude;
-            animator.SetFloat("Speed", currentSpeed);
-            
-            // Durum parametreleri - mevcut animasyonlara göre ayarla
-            animator.SetBool("IsChasing", currentState == GoblinState.Chasing);
-            animator.SetBool("IsPlacingTrap", isPlacingTrap);
-            animator.SetBool("IsDead", currentState == GoblinState.Dead);
-            
-            // Can durumu
-            animator.SetFloat("Health", currentHealth);
+            // locomotion booleans (IsIdle/IsJogging) are updated in base; set additional flags here
+            animator.SetBool(AnimIsSettingUp, isPlacingTrap);
+            animator.SetBool(AnimIsDead, currentState == GoblinState.Dead);
         }
     }
     
-    private void HandleChasing()
+    // Idle state - wait and occasionally place traps
+    private void HandleIdleState()
+    {
+        StopMoving();
+        
+        Debug.Log($"Idle State - Timer: {stateTimer:F2}/{idleTime}, Current State: {currentState}");
+        
+        if (stateTimer >= idleTime)
+        {
+            Debug.Log("Idle time finished, switching to Chasing (Roaming)");
+            ChangeState(GoblinState.Chasing); // Use Chasing state for roaming
+        }
+        
+        // Occasionally place traps while idle
+        if (ShouldPlaceTrap())
+        {
+            Debug.Log("Should place trap, switching to PlacingTrap");
+            ChangeState(GoblinState.PlacingTrap);
+        }
+    }
+    
+    // Roaming state - move randomly around spawn area
+    private void HandleRoamingState()
+    {
+        Debug.Log("HandleRoamingState called");
+        
+        if (PlayerController.Instance == null) 
+        {
+            Debug.Log("PlayerController.Instance is null, returning");
+            return;
+        }
+        
+        float distanceToPlayer = Vector2.Distance(transform.position, PlayerController.Instance.transform.position);
+        
+        Debug.Log($"Roaming State - Timer: {stateTimer:F2}/{roamTime}, Target: {roamTarget}, Distance to target: {Vector2.Distance(transform.position, roamTarget):F2}");
+        
+        // If player is too close, flee
+        if (distanceToPlayer < keepDistanceFromPlayer)
+        {
+            Debug.Log("Player too close, switching to Fleeing");
+            ChangeState(GoblinState.Fleeing);
+            return;
+        }
+        
+        MoveTowardsRoamTarget();
+        
+        // Change direction randomly if enabled
+        if (useRandomDirectionChange)
+        {
+            directionTimer += Time.deltaTime;
+            if (directionTimer >= directionChangeInterval)
+            {
+                Debug.Log("Changing roam direction");
+                ChangeRoamDirection();
+                directionTimer = 0f;
+            }
+        }
+        
+        // Check if reached target or time limit
+        if (Vector2.Distance(transform.position, roamTarget) < 1f || stateTimer >= roamTime)
+        {
+            Debug.Log("Roaming finished, switching to Idle");
+            ChangeState(GoblinState.Idle);
+        }
+        
+        // Occasionally place traps while roaming
+        if (ShouldPlaceTrap())
+        {
+            Debug.Log("Should place trap while roaming, switching to PlacingTrap");
+            ChangeState(GoblinState.PlacingTrap);
+        }
+    }
+    
+    // Move towards roam target
+    private void MoveTowardsRoamTarget()
+    {
+        if (rb != null)
+        {
+            Vector2 direction = (roamTarget - (Vector2)transform.position).normalized;
+            rb.linearVelocity = direction * roamSpeed;
+            
+            Debug.Log($"Moving towards target: {roamTarget}, Direction: {direction}, Velocity: {rb.linearVelocity}, Speed: {roamSpeed}");
+            
+            // Update sprite direction
+            bool shouldFaceRight = direction.x > 0;
+            if (shouldFaceRight != _isFacingRight)
+            {
+                FlipSprite();
+            }
+        }
+        else
+        {
+            Debug.LogError("Rigidbody2D is null!");
+        }
+    }
+    
+    // Local facing direction tracking
+    private bool _isFacingRight = true;
+    
+    // Flip sprite method
+    private void FlipSprite()
+    {
+        _isFacingRight = !_isFacingRight;
+        
+        // Flip the sprite
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = !_isFacingRight;
+        }
+    }
+    
+    // Generate new roam target
+    private void GenerateNewRoamTarget()
+    {
+        Vector2 basePosition = trapPlacementArea != null ? trapPlacementArea.position : spawnPosition;
+        Vector2 randomDirection = Random.insideUnitCircle.normalized;
+        float randomDistance = Random.Range(2f, roamRadius);
+        roamTarget = basePosition + randomDirection * randomDistance;
+        
+        // Ensure target is within roam radius
+        if (Vector2.Distance(basePosition, roamTarget) > roamRadius)
+        {
+            roamTarget = basePosition + (roamTarget - basePosition).normalized * roamRadius;
+        }
+    }
+    
+    // Change roam direction
+    private void ChangeRoamDirection()
+    {
+        Vector2 randomDirection = Random.insideUnitCircle.normalized;
+        currentRoamDirection = randomDirection;
+        
+        // Update roam target to continue in new direction
+        roamTarget = (Vector2)transform.position + currentRoamDirection * Random.Range(2f, 5f);
+        
+        // Keep within roam radius
+        Vector2 basePosition = trapPlacementArea != null ? trapPlacementArea.position : spawnPosition;
+        if (Vector2.Distance(basePosition, roamTarget) > roamRadius)
+        {
+            Vector2 directionFromBase = roamTarget - basePosition;
+            roamTarget = basePosition + directionFromBase.normalized * roamRadius;
+        }
+    }
+    
+    // Stop moving
+    private void StopMoving()
+    {
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+    }
+    
+    // Override ChangeState to reset stateTimer
+    protected new void ChangeState(GoblinState newState)
+    {
+        if (currentState == newState) return;
+        
+        Debug.Log($"Changing state from {currentState} to {newState}");
+        
+        // Reset state timer when changing states
+        stateTimer = 0f;
+        
+        // Call base ChangeState
+        base.ChangeState(newState);
+    }
+    
+    // Fleeing behavior - runs away from player
+    private void HandleFleeingBehavior()
     {
         if (PlayerController.Instance == null) return;
         
         float distanceToPlayer = Vector2.Distance(transform.position, PlayerController.Instance.transform.position);
         
-        // Try to maintain distance from player while placing traps
-        if (distanceToPlayer < keepDistanceFromPlayer)
+        // If player is far enough, go back to random movement
+        if (distanceToPlayer > retreatDistance)
         {
-            // Move away from player
-            Vector2 retreatDirection = (transform.position - PlayerController.Instance.transform.position).normalized;
-            rb.linearVelocity = retreatDirection * GetCurrentSpeed();
+            ChangeState(GoblinState.Idle);
+            return;
         }
-        else if (distanceToPlayer > retreatDistance)
+        
+        // Flee from player
+        Vector2 fleeDirection = (transform.position - PlayerController.Instance.transform.position).normalized;
+        rb.linearVelocity = fleeDirection * GetCurrentSpeed() * fleeSpeedMultiplier;
+        
+        // Occasionally place traps while fleeing
+        if (ShouldPlaceTrap())
         {
-            // Move closer to player (but not too close)
-            Vector2 approachDirection = (PlayerController.Instance.transform.position - transform.position).normalized;
-            rb.linearVelocity = approachDirection * GetCurrentSpeed() * 0.7f; // Move slower when approaching
-        }
-        else
-        {
-            // In optimal range, stop and consider placing trap
-            rb.linearVelocity = Vector2.zero;
-            
-            if (ShouldPlaceTrap())
-            {
-                ChangeState(GoblinState.PlacingTrap);
-            }
+            StartCoroutine(PlaceTrapWhileFleeing());
         }
     }
+    
+    
     
     protected virtual bool ShouldPlaceTrap()
     {
@@ -163,42 +355,23 @@ public class TrapperGoblin : GoblinController
         if (placedTraps.Count >= maxTraps) return false;
         if (PlayerController.Instance == null) return false;
         
-        // Check if player is in range and there's a good spot for a trap
-        float distanceToPlayer = Vector2.Distance(transform.position, PlayerController.Instance.transform.position);
-        if (distanceToPlayer > trapPlacementRange) return false;
-        
-        // Find a good trap placement position
+        // Always try to place trap when cooldown is ready (no distance check)
         Vector2 trapPosition = FindTrapPlacementPosition();
         return trapPosition != Vector2.zero;
     }
     
     protected virtual Vector2 FindTrapPlacementPosition()
     {
-        if (PlayerController.Instance == null) return Vector2.zero;
-        
-        // Try to place trap between goblin and player, or near player's path
-        Vector2 playerPos = PlayerController.Instance.transform.position;
-        Vector2 goblinPos = transform.position;
-        
-        // Calculate potential positions
-        Vector2[] candidatePositions = new Vector2[]
+        // Always place trap at the assigned transform position
+        if (trapPlacementArea != null)
         {
-            Vector2.Lerp(goblinPos, playerPos, 0.6f), // Between goblin and player
-            playerPos + (Vector2)PlayerController.Instance.transform.right * 2f, // To the side of player
-            playerPos + (Vector2)PlayerController.Instance.transform.right * -2f, // Other side of player
-            playerPos + (Vector2)PlayerController.Instance.transform.up * 2f, // Above player
-            playerPos + (Vector2)PlayerController.Instance.transform.up * -2f // Below player
-        };
-        
-        foreach (Vector2 pos in candidatePositions)
-        {
-            if (IsValidTrapPosition(pos))
-            {
-                return pos;
-            }
+            return trapPlacementArea.position;
         }
-        
-        return Vector2.zero;
+        else
+        {
+            // Fallback: place at goblin position
+            return transform.position;
+        }
     }
     
     protected virtual bool IsValidTrapPosition(Vector2 position)
@@ -212,26 +385,27 @@ public class TrapperGoblin : GoblinController
             }
         }
         
-        // Check if position is on valid ground (you might want to add ground detection here)
-        // For now, just check if it's not too far from the goblin
-        if (Vector2.Distance(position, transform.position) > trapPlacementRange)
-        {
-            return false;
-        }
-        
         return true;
+    }
+
+    // Trapper için saldırı kullanılmıyor: Attacking durumuna geçişi engellemek için State güncellemesini özelleştir
+    protected new void UpdateState()
+    {
+        // Disable UpdateState for TrapperGoblin - we handle state transitions in GoblinAI
+        // This prevents the base class from interfering with our custom state logic
+        return;
     }
     
     protected virtual IEnumerator PlaceTrapBehavior()
     {
         isPlacingTrap = true;
+        
+        // Stop all movement immediately and keep it stopped
         rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
         
         // Trap Placement animasyonunu başlat
-        if (animator != null)
-        {
-            animator.SetBool("IsPlacingTrap", true);
-        }
+        if (animator != null) animator.SetBool(AnimIsSettingUp, true);
         
         // Find placement position
         Vector2 trapPosition = FindTrapPlacementPosition();
@@ -240,17 +414,53 @@ public class TrapperGoblin : GoblinController
         {
             // No valid position found, return to previous state
             isPlacingTrap = false;
-            ChangeState(GoblinState.Chasing);
+            if (animator != null) animator.SetBool(AnimIsSettingUp, false);
+            ChangeState(GoblinState.Idle);
             yield break;
         }
         
-        // Play trap placement animation
+        // Store trap position for animation event
+        _pendingTrapPosition = trapPosition;
+        
+        // Wait for animation event to place trap
         yield return new WaitForSeconds(trapPlacementTime);
         
-        // Create the trap
+        // Fallback: if animation event didn't trigger, place trap anyway
+        if (_pendingTrapPosition != Vector2.zero)
+        {
+            PlaceTrapAtPosition(_pendingTrapPosition);
+        }
+        
+        lastTrapTime = Time.time;
+        isPlacingTrap = false;
+        
+        // Reset animation state to prevent freezing
+        if (animator != null) animator.SetBool(AnimIsSettingUp, false);
+        
+        // Reset state timer and return to idle (random movement)
+        stateTimer = 0f;
+        ChangeState(GoblinState.Idle);
+    }
+    
+    // Store trap position for animation event
+    private Vector2 _pendingTrapPosition = Vector2.zero;
+    
+    // Animation Event method - called from SettingUp animation
+    public void OnTrapPlacementEvent()
+    {
+        if (_pendingTrapPosition != Vector2.zero)
+        {
+            PlaceTrapAtPosition(_pendingTrapPosition);
+            _pendingTrapPosition = Vector2.zero;
+        }
+    }
+    
+    // Place trap at specified position
+    private void PlaceTrapAtPosition(Vector2 position)
+    {
         if (bearTrapPrefab != null)
         {
-            GameObject newTrap = Instantiate(bearTrapPrefab, trapPosition, Quaternion.identity);
+            GameObject newTrap = Instantiate(bearTrapPrefab, position, Quaternion.identity);
             placedTraps.Add(newTrap);
             
             // Configure the trap
@@ -261,20 +471,8 @@ public class TrapperGoblin : GoblinController
                 trapComponent.SetTrapDamage(20f);
             }
             
-            Debug.Log($"{gameObject.name} placed a bear trap at {trapPosition}");
+            Debug.Log($"{gameObject.name} placed a bear trap at {position}");
         }
-        
-        lastTrapTime = Time.time;
-        isPlacingTrap = false;
-        
-        // Reset animation state to prevent freezing
-        if (animator != null)
-        {
-            animator.SetBool("IsPlacingTrap", false);
-        }
-        
-        // Return to chasing
-        ChangeState(GoblinState.Chasing);
     }
     
     protected virtual IEnumerator PlaceTrapWhileFleeing()
@@ -285,69 +483,25 @@ public class TrapperGoblin : GoblinController
         
         if (bearTrapPrefab != null && placedTraps.Count < maxTraps)
         {
-            GameObject newTrap = Instantiate(bearTrapPrefab, trapPosition, Quaternion.identity);
-            placedTraps.Add(newTrap);
-            
-            var trapComponent = newTrap.GetComponent<GoblinTrap>();
-            if (trapComponent != null)
-            {
-                trapComponent.SetTrapType(TrapType.BearTrap);
-                trapComponent.SetTrapDamage(15f); // Slightly less damage when placed while fleeing
-            }
-            
+            PlaceTrapAtPosition(trapPosition);
             lastTrapTime = Time.time;
             Debug.Log($"{gameObject.name} placed a bear trap while fleeing!");
         }
     }
     
+    // Trapper'da saldırı kullanılmaz: olası Attacking state'ine düşerse hızlıca çık
     protected override IEnumerator AttackBehavior()
     {
+        // Güvenlik: saldırı davranışı devre dışı, hemen Idle'a dön
         rb.linearVelocity = Vector2.zero;
-        
-        // Saldırı animasyonunu başlat
-        if (animator != null)
-        {
-            animator.SetTrigger("Attack");
-        }
-        
-        // Trapper goblin "attacks" by swinging its bear trap weapon
-        yield return new WaitForSeconds(0.5f);
-        
-        PerformTrapAttack();
-        PlaySound(attackSound);
-        
-        lastAttackTime = Time.time;
-        
-        yield return new WaitForSeconds(0.5f);
-        
+        yield return null;
         if (currentState == GoblinState.Attacking)
         {
-            ChangeState(GoblinState.Chasing);
+            ChangeState(GoblinState.Idle);
         }
     }
     
-    protected virtual void PerformTrapAttack()
-    {
-        // Melee attack with the bear trap weapon
-        Collider2D hitPlayer = Physics2D.OverlapCircle(transform.position, goblinStats.attackRange);
-        
-        if (hitPlayer != null && hitPlayer.CompareTag("Player"))
-        {
-            var playerHealth = hitPlayer.GetComponent<PlayerHealthController>();
-            if (playerHealth != null)
-            {
-                playerHealth.DamagePlayer();
-                Debug.Log($"{gameObject.name} hit player with bear trap weapon for {goblinStats.attackDamage} damage!");
-            }
-            
-            // Apply brief slow effect
-            var playerMoveable = hitPlayer.GetComponent<IMoveable>();
-            if (playerMoveable != null)
-            {
-                StartCoroutine(ApplyBriefSlow(playerMoveable));
-            }
-        }
-    }
+    // Trapper melee saldırı kaldırıldı
     
     protected virtual IEnumerator ApplyBriefSlow(IMoveable target)
     {
@@ -360,10 +514,10 @@ public class TrapperGoblin : GoblinController
     {
         base.OnGoblinDamaged();
         
-        // When damaged, try to place a trap if possible
-        if (!isPlacingTrap && ShouldPlaceTrap())
+        // When damaged, flee immediately
+        if (currentState != GoblinState.Fleeing)
         {
-            ChangeState(GoblinState.PlacingTrap);
+            ChangeState(GoblinState.Fleeing);
         }
     }
     
@@ -372,11 +526,16 @@ public class TrapperGoblin : GoblinController
         base.OnDrawGizmosSelected();
         
         // Draw trap placement range
+        Vector2 basePosition = trapPlacementArea != null ? trapPlacementArea.position : transform.position;
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, trapPlacementRange);
+        Gizmos.DrawWireSphere(basePosition, trapPlacementRange);
         
         // Draw keep distance range
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, keepDistanceFromPlayer);
+        
+        // Draw retreat distance range
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, retreatDistance);
     }
 }

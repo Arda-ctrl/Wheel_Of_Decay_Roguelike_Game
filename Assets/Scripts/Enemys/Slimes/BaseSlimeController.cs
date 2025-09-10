@@ -68,6 +68,15 @@ public abstract class BaseSlimeController : BaseEnemy
         // Update current state
         UpdateSlimeState();
     }
+    
+    // Override BaseEnemy's UpdateAI to prevent conflicts
+    protected override void Update()
+    {
+        if (isDead) return;
+        UpdateStatusEffects();
+        UpdateAI(); // Use our custom AI instead of BaseEnemy's
+        UpdateAnimations();
+    }
 
     protected virtual void UpdateSlimeState()
     {
@@ -205,7 +214,7 @@ public abstract class BaseSlimeController : BaseEnemy
         }
     }
 
-    protected virtual void FlipSprite()
+    protected override void FlipSprite()
     {
         isFacingRight = !isFacingRight;
         UpdateSpriteDirection(isFacingRight);

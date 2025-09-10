@@ -12,22 +12,29 @@ public class DaggerGoblinBomber : DaggerGoblin
     
     private bool isExploding = false;
     private bool hasExploded = false;
+    private bool pendingExplosionEvent = false;
     
     protected override void Start()
     {
         goblinType = GoblinType.DaggerGoblinBomber;
         
-        // Bomber has slightly more health but same speed
-        goblinStats.health = 35f;
-        goblinStats.speed = 5f;
-        goblinStats.attackDamage = 15f; // Lower dagger damage since it has explosion
-        goblinStats.attackRange = 1.2f;
-        goblinStats.attackCooldown = 1.2f;
-        goblinStats.canFlee = false; // Bombers don't flee, they explode
-        goblinStats.explosionDamage = explosionDamage;
-        goblinStats.explosionRadius = explosionRadius;
+        if (statsAsset == null)
+        {
+            // Defaults when no SO is provided
+            goblinStats.health = 35f;
+            goblinStats.speed = 5.5f;
+            goblinStats.attackDamage = 15f; // Lower dagger damage since it has explosion
+            goblinStats.attackRange = 1.2f;
+            goblinStats.attackCooldown = 1.2f;
+            goblinStats.canFlee = false; // Bombers don't flee, they explode
+            goblinStats.explosionDamage = explosionDamage;
+            goblinStats.explosionRadius = explosionRadius;
+        }
         
         base.Start();
+        allowSOTypeOverride = false; // SO goblinType'ı değiştirmesin
+
+        // Locomotion booleans are driven by base from speed
     }
     
     protected override void OnGoblinDamaged()
@@ -60,6 +67,12 @@ public class DaggerGoblinBomber : DaggerGoblin
         
         isExploding = true;
         ChangeState(GoblinState.Exploding);
+        // No dedicated param; can reuse Throw or Attack as wind-up if desired
+        if (animator != null)
+        {
+            animator.SetTrigger(AnimAttack);
+            animator.SetBool(AnimIsAttacking, true);
+        }
         StartCoroutine(ExplodeAfterDelay());
     }
     
@@ -118,34 +131,46 @@ public class DaggerGoblinBomber : DaggerGoblin
         
         hasExploded = true;
         isExploding = false;
-        
-        // Create explosion effect
+        // Ölümü görünür yap: Death state'e geçir ve patlamayı anim event'e bırak
+        ChangeState(GoblinState.Dead);
+        if (animator != null) animator.SetBool(AnimIsDead, true);
+        pendingExplosionEvent = true;
+    }
+
+    // Death animasyonuna eklenecek event
+    public void OnBomberDeathEvent()
+    {
+        Debug.Log($"OnBomberDeathEvent fired for {name}");
+        // VFX
         if (explosionEffectPrefab != null)
         {
             Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
         }
-        
-        // Play explosion sound
+        // SFX
         PlaySound(explosionSound);
-        
-        // Deal damage to all entities in explosion radius
+
+        // Damage & knockback
         Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, explosionRadius, damageableLayers);
-        
         foreach (var hitCollider in hitColliders)
         {
-            if (hitCollider.gameObject == gameObject) continue; // Don't damage self
-            
-            // Damage player
+            if (hitCollider.gameObject == gameObject) continue;
+
+            var health = hitCollider.GetComponent<IHealth>();
+            if (health != null)
+            {
+                if (hitCollider.CompareTag("Player"))
+                {
+                    health.TakeDamage(explosionDamage);
+                }
+                else
+                {
+                    health.TakeDamage(explosionDamage * 0.5f);
+                }
+            }
+
+            // Knockback only for player (optional for others)
             if (hitCollider.CompareTag("Player"))
             {
-                var playerHealth = hitCollider.GetComponent<PlayerHealthController>();
-                if (playerHealth != null)
-                {
-                    playerHealth.DamagePlayer();
-                    Debug.Log($"{gameObject.name} explosion hit player for {explosionDamage} damage!");
-                }
-                
-                // Knockback player
                 var playerRb = hitCollider.GetComponent<Rigidbody2D>();
                 if (playerRb != null)
                 {
@@ -153,16 +178,8 @@ public class DaggerGoblinBomber : DaggerGoblin
                     playerRb.AddForce(knockbackDirection * 10f, ForceMode2D.Impulse);
                 }
             }
-            
-            // Damage other enemies (friendly fire)
-            var enemyHealth = hitCollider.GetComponent<IHealth>();
-            if (enemyHealth != null && hitCollider.gameObject != gameObject)
-            {
-                enemyHealth.TakeDamage(explosionDamage * 0.5f); // Reduced friendly fire damage
-            }
         }
-        
-        // Destroy self after explosion
+
         Destroy(gameObject);
     }
     

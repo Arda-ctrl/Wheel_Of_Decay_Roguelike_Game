@@ -124,12 +124,22 @@ public class GoblinTrap : MonoBehaviour
     {
         if (target.CompareTag("Player"))
         {
-            // Deal immediate damage
-            var playerHealth = target.GetComponent<PlayerHealthController>();
+            // Deal immediate damage using IHealth interface
+            var playerHealth = target.GetComponent<IHealth>();
             if (playerHealth != null)
             {
-                playerHealth.DamagePlayer();
+                playerHealth.TakeDamage(damage);
                 Debug.Log($"Bear trap hit player for {damage} damage!");
+            }
+            else
+            {
+                // Fallback to PlayerHealthController
+                var playerHealthController = target.GetComponent<PlayerHealthController>();
+                if (playerHealthController != null)
+                {
+                    playerHealthController.DamagePlayer();
+                    Debug.Log($"Bear trap hit player for {damage} damage (fallback)!");
+                }
             }
             
             // Apply bleeding effect
@@ -153,11 +163,24 @@ public class GoblinTrap : MonoBehaviour
         // Bomb trap would have explosion logic here
         if (target.CompareTag("Player"))
         {
-            var playerHealth = target.GetComponent<PlayerHealthController>();
+            float bombDamage = damage * 1.5f;
+            
+            // Deal damage using IHealth interface
+            var playerHealth = target.GetComponent<IHealth>();
             if (playerHealth != null)
             {
-                playerHealth.DamagePlayer(); // More damage for bomb trap
-                Debug.Log($"Bomb trap hit player for {damage * 1.5f} damage!");
+                playerHealth.TakeDamage(bombDamage);
+                Debug.Log($"Bomb trap hit player for {bombDamage} damage!");
+            }
+            else
+            {
+                // Fallback to PlayerHealthController
+                var playerHealthController = target.GetComponent<PlayerHealthController>();
+                if (playerHealthController != null)
+                {
+                    playerHealthController.DamagePlayer();
+                    Debug.Log($"Bomb trap hit player for {bombDamage} damage (fallback)!");
+                }
             }
             
             // Knockback effect
