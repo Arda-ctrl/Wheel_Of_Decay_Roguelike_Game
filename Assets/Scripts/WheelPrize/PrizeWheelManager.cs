@@ -448,17 +448,36 @@ public SegmentPlacementManager segmentPlacementManager; // Hierarchy'den atanaca
     
     void HidePrizeWheelAndShowWheelUI()
     {
-        // Prize wheel'i gizle
-        gameObject.SetActive(false);
+        // Prize wheel GameObject'ini bul (ana parent)
+        GameObject wheelPrizeParent = transform.parent.gameObject;
         
-        // Indicator'ı da gizle
+        // Önce indicator'ı gizle
         if (indicatorTransform != null)
         {
             indicatorTransform.gameObject.SetActive(false);
         }
         
-        // WheelUIAnimator'ı bul ve wheel UI'ını göster
+        // Ana parent'ı deaktif etmeden önce, WheelUIAnimator'a referansını kaydet
         WheelUIAnimator wheelUIAnimator = FindFirstObjectByType<WheelUIAnimator>();
+        if (wheelUIAnimator != null)
+        {
+            // wheelPrizeObject referansını güncelle
+            wheelUIAnimator.SetWheelPrizeReference(wheelPrizeParent);
+        }
+        
+        // Prize wheel'i gizle (ana parent)
+        if (wheelPrizeParent != null)
+        {
+            wheelPrizeParent.SetActive(false);
+        }
+        else
+        {
+            // Parent bulunamazsa sadece bu GameObject'i gizle
+            gameObject.SetActive(false);
+        }
+        
+        // WheelUIAnimator'ı kullan (yukarıda zaten bulduk)
+        // WheelUIAnimator wheelUIAnimator = FindFirstObjectByType<WheelUIAnimator>(); // Tekrar aramaya gerek yok
         if (wheelUIAnimator != null)
         {
             // Tab tuşuna basmış gibi wheel UI'ını göster
@@ -641,6 +660,26 @@ public void AcceptWheelResult()
         }
         
         Debug.Log("🔄 Pending result resetlendi, çark tekrar döndürülebilir.");
+    }
+    
+    // Yeni prize wheel oluştur (Tab tuşu ile ana çark kapatıldığında)
+    public void CreateNewWheel()
+    {
+        // Mevcut durumu temizle
+        ResetPendingResult();
+        
+        // Yeni wheel oluştur
+        PrizeWheelGenerator generator = FindFirstObjectByType<PrizeWheelGenerator>();
+        if (generator != null)
+        {
+            segments = generator.GenerateRandomPrizeWheel();
+            UpdateShaderProperties();
+            Debug.Log("🎰 Yeni prize wheel oluşturuldu!");
+        }
+        else
+        {
+            Debug.LogError("❌ PrizeWheelGenerator bulunamadı!");
+        }
     }
     
     // Çarkı 0°'ye döndür (1. ability ve 6. ability için)

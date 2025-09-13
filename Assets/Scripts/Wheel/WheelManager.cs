@@ -193,6 +193,31 @@ public class WheelManager : MonoBehaviour
             }
         }
     }
+    
+    // Ana çark pozisyonu değiştiğinde tooltip sistemini düzelt
+    public void ResetTooltipSystem()
+    {
+        // Global tooltip disable flag'ini sıfırla
+        PlayerPrefs.SetInt("GlobalTooltipDisabled", 0);
+        
+        // Tüm mevcut segmentlerin tooltip'lerini aktif et
+        for (int i = 0; i < slotCount; i++)
+        {
+            if (slotOccupied[i])
+            {
+                foreach (Transform child in slots[i])
+                {
+                    var segment = child.GetComponent<SegmentInstance>();
+                    if (segment != null && segment.data != null)
+                    {
+                        segment.data.tooltipDisabled = false;
+                    }
+                }
+            }
+        }
+        
+        Debug.Log("🔄 Ana çark tooltip sistemi sıfırlandı!");
+    }
     private bool AreSlotsAvailable(int startIndex, int size)
     {
         if (size > slotCount) return false;

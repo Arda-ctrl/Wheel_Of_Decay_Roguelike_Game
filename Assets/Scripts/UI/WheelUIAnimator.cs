@@ -26,6 +26,10 @@ public class WheelUIAnimator : MonoBehaviour
     [Header("Input Settings")]
     [SerializeField] private KeyCode toggleKey = KeyCode.Tab;
     
+    [Header("Prize Wheel Integration")]
+    [SerializeField] private GameObject wheelPrizeObject; // Direkt WheelPrize GameObject'i
+    [SerializeField] private PrizeWheelManager prizeWheelManager;
+    
     // Panel pozisyonları
     private Vector3 wheelOriginalPos;
     private Vector3 wheelHiddenPos;
@@ -33,6 +37,8 @@ public class WheelUIAnimator : MonoBehaviour
     private Vector2 statsHiddenPos;
     private Vector2 buttonsOriginalPos;
     private Vector2 buttonsHiddenPos;
+    
+    // Prize wheel pozisyonu artık kullanılmıyor, direkt GameObject referansı kullanıyoruz
     
     private bool isWheelUIVisible = false;
     private bool isAnimating = false;
@@ -50,6 +56,17 @@ public class WheelUIAnimator : MonoBehaviour
         InitializePanelPositions();
         // Başlangıçta UI'ları gizli konuma al
         HideUIInstantly();
+        
+        // Başlangıçta prize wheel'i aktif et
+        if (wheelPrizeObject != null)
+        {
+            wheelPrizeObject.SetActive(true);
+            Debug.Log("🎰 WheelPrize GameObject başlangıçta aktif edildi");
+        }
+        else
+        {
+            Debug.LogError("❌ WheelPrize GameObject atanmamış! Lütfen Inspector'dan atayın.");
+        }
     }
     
     private void Update()
@@ -97,6 +114,25 @@ public class WheelUIAnimator : MonoBehaviour
     {
         if (isAnimating || isWheelUIVisible) return;
         
+        // WheelPrize GameObject'i varsa deaktif et
+        if (wheelPrizeObject != null)
+        {
+            // Direkt GameObject'i deaktif et
+            wheelPrizeObject.SetActive(false);
+            Debug.Log("🎰 WheelPrize GameObject deaktif edildi - Ana çark açılıyor");
+        }
+        else
+        {
+            // WheelPrize GameObject'i bulunamadıysa, hierarchy'den tekrar bul
+            GameObject wheelPrizeInScene = GameObject.Find("WheelPrize");
+            if (wheelPrizeInScene != null)
+            {
+                wheelPrizeObject = wheelPrizeInScene;
+                wheelPrizeObject.SetActive(false);
+                Debug.Log("🎰 WheelPrize GameObject runtime'da bulundu ve deaktif edildi");
+            }
+        }
+        
         isAnimating = true;
         isWheelUIVisible = true;
         
@@ -131,6 +167,13 @@ public class WheelUIAnimator : MonoBehaviour
         showSequence.OnComplete(() => {
             isAnimating = false;
             OnWheelUIShown();
+            
+            // Ana çarkın tooltip sistemini düzelt
+            WheelManager wheelManager = FindFirstObjectByType<WheelManager>();
+            if (wheelManager != null)
+            {
+                wheelManager.ResetTooltipSystem();
+            }
         });
     }
     
@@ -168,6 +211,59 @@ public class WheelUIAnimator : MonoBehaviour
         hideSequence.OnComplete(() => {
             isAnimating = false;
             OnWheelUIHidden();
+            
+            // Ana çark kapatıldıktan sonra WheelPrize GameObject'i aktif et ve yeni çark oluştur
+            if (wheelPrizeObject != null && prizeWheelManager != null)
+            {
+                // WheelPrize GameObject'i aktif et
+                wheelPrizeObject.SetActive(true);
+                
+                // Tüm alt GameObject'leri aktif et
+                foreach (Transform child in wheelPrizeObject.transform)
+                {
+                    child.gameObject.SetActive(true);
+                    Debug.Log($"🎰 Alt GameObject aktif edildi: {child.name}");
+                }
+                
+                
+                // Yeni çark oluştur
+                prizeWheelManager.CreateNewWheel();
+                Debug.Log("🎰 WheelPrize GameObject aktif edildi ve yeni çark oluşturuldu - Ana çark kapatıldı");
+            }
+            else
+            {
+                // WheelPrize GameObject'i bulunamadıysa, hierarchy'den tekrar bul
+                GameObject wheelPrizeInScene = GameObject.Find("WheelPrize");
+                if (wheelPrizeInScene != null)
+                {
+                    wheelPrizeObject = wheelPrizeInScene;
+                    wheelPrizeObject.SetActive(true);
+                    
+                    // Tüm alt GameObject'leri aktif et
+                    foreach (Transform child in wheelPrizeObject.transform)
+                    {
+                        child.gameObject.SetActive(true);
+                        Debug.Log($"🎰 Alt GameObject aktif edildi: {child.name}");
+                    }
+                    
+                    
+                    // PrizeWheelManager bileşenini bul
+                    prizeWheelManager = wheelPrizeInScene.GetComponent<PrizeWheelManager>();
+                    if (prizeWheelManager != null)
+                    {
+                        prizeWheelManager.CreateNewWheel();
+                        Debug.Log("🎰 WheelPrize GameObject runtime'da bulundu, aktif edildi ve yeni çark oluşturuldu");
+                    }
+                    else
+                    {
+                        Debug.LogError("❌ WheelPrize GameObject'inde PrizeWheelManager bileşeni bulunamadı!");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("❌ WheelPrize GameObject bulunamadı! Lütfen Inspector'dan atayın.");
+                }
+            }
         });
     }
     
@@ -216,6 +312,17 @@ public class WheelUIAnimator : MonoBehaviour
     // Public properties
     public bool IsWheelUIVisible => isWheelUIVisible;
     public bool IsAnimating => isAnimating;
+    
+    // PrizeWheelManager tarafından çağrılır - referansları günceller
+    public void SetWheelPrizeReference(GameObject wheelPrizeObj)
+    {
+        if (wheelPrizeObj != null)
+        {
+            wheelPrizeObject = wheelPrizeObj;
+            prizeWheelManager = wheelPrizeObj.GetComponentInChildren<PrizeWheelManager>();
+            Debug.Log($"🎰 WheelPrize referansı güncellendi: {wheelPrizeObj.name}");
+        }
+    }
     
     // Manuel kontrol için
     public void SetToggleKey(KeyCode newKey)
